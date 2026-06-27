@@ -1,0 +1,157 @@
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { X, ShoppingBag, Plus, Minus, Trash2 } from 'lucide-react';
+import { useCartStore } from '@/lib/store';
+import { formatPrice } from '@/lib/data';
+
+export default function CartDrawer() {
+  const { items, isOpen, closeCart, updateQuantity, removeItem, getTotalPrice, getTotalItems } = useCartStore();
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-text-main opacity-50 transition-opacity"
+        onClick={closeCart}
+      />
+
+      <div className="absolute inset-y-0 right-0 max-w-full flex">
+        <div className="w-screen max-w-md transform transition-all duration-500 ease-in-out border-l border-border flex flex-col h-full bg-primary shadow-2xl">
+          {/* Header */}
+          <div className="px-6 py-6 border-b border-border flex items-center justify-between">
+            <h2 className="text-xl font-display text-text-main">Your Bag ({getTotalItems()})</h2>
+            <button
+              onClick={closeCart}
+              className="text-text-main hover:opacity-60 transition-opacity p-1"
+            >
+              <X size={24} strokeWidth={1.5} />
+            </button>
+          </div>
+
+          {/* Cart items list */}
+          <div className="flex-1 overflow-y-auto py-6 px-6 no-scrollbar">
+            {items.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                <h3 className="font-display text-2xl text-text-main">Your bag is empty</h3>
+                <p className="text-sm text-text-muted max-w-xs font-light">
+                  Discover our collections and find your new favorites.
+                </p>
+                <Link
+                  href="/products"
+                  onClick={closeCart}
+                  className="btn-primary text-xs mt-6 uppercase tracking-widest"
+                >
+                  Shop Collection
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {items.map((item) => {
+                  const itemPrice = item.product.salePrice || item.product.price;
+                  return (
+                    <div key={item.product.id} className="flex items-start space-x-4 border-b border-border pb-6 last:border-0 last:pb-0">
+                      {/* Image */}
+                      <div className="relative w-24 h-24 bg-secondary rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+                        <Image
+                          src={item.product.images[0]}
+                          alt={item.product.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+
+                      {/* Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-[10px] font-semibold text-text-muted tracking-widest uppercase block mb-1">
+                              {item.product.brand}
+                            </span>
+                            <h4 className="text-sm font-medium text-text-main truncate hover:opacity-70 transition-opacity">
+                              <Link href={`/products/${item.product.slug}`} onClick={closeCart}>
+                                {item.product.name}
+                              </Link>
+                            </h4>
+                          </div>
+                          <span className="text-sm font-semibold text-text-main">
+                            {formatPrice(itemPrice * item.quantity)}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between mt-4">
+                          {/* Quantity Controls */}
+                          <div className="flex items-center border border-border rounded-lg overflow-hidden h-8">
+                            <button
+                              onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                              className="px-2 text-text-main hover:bg-secondary transition-colors h-full flex items-center"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="px-3 text-xs font-medium text-text-main">{item.quantity}</span>
+                            <button
+                              onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                              className="px-2 text-text-main hover:bg-secondary transition-colors h-full flex items-center"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => removeItem(item.product.id)}
+                            className="text-xs uppercase tracking-widest font-semibold text-text-muted hover:text-text-main transition-colors"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Footer summary */}
+          {items.length > 0 && (
+            <div className="px-6 py-6 bg-primary border-t border-border">
+              <div className="flex justify-between text-sm text-text-muted mb-4">
+                <span>Subtotal</span>
+                <span>{formatPrice(getTotalPrice())}</span>
+              </div>
+              <div className="flex justify-between text-sm text-text-muted mb-6">
+                <span>Shipping</span>
+                <span>{getTotalPrice() >= 499 ? 'Complimentary' : formatPrice(49)}</span>
+              </div>
+              <div className="flex justify-between text-base font-semibold text-text-main mb-8 pt-4 border-t border-border">
+                <span>Total</span>
+                <span>{formatPrice(getTotalPrice() + (getTotalPrice() >= 499 ? 0 : 49))}</span>
+              </div>
+
+              <div className="flex flex-col space-y-3">
+                <Link
+                  href="/checkout"
+                  onClick={closeCart}
+                  className="btn-primary w-full justify-center text-xs uppercase tracking-widest"
+                >
+                  Proceed to Checkout
+                </Link>
+                <button
+                  onClick={closeCart}
+                  className="w-full text-center text-xs font-semibold uppercase tracking-widest text-text-muted hover:text-text-main transition-colors py-3"
+                >
+                  Continue Shopping
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
