@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Search, Heart, ShoppingBag, Menu, X } from 'lucide-react';
+import { Search, Heart, ShoppingBag, Menu, X, User } from 'lucide-react';
 import { useCartStore, useWishlistStore } from '@/lib/store';
+import { createClient } from '@/lib/supabase/client';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -15,6 +16,23 @@ export default function Navbar() {
   const cartItemsCount = useCartStore((state) => state.getTotalItems());
   const openCart = useCartStore((state) => state.openCart);
   const wishlistCount = useWishlistStore((state) => state.items.length);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    // Check initial session
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoggedIn(!!user);
+    });
+
+    // Subscribe to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -111,6 +129,14 @@ export default function Navbar() {
                   </span>
                 )}
               </button>
+
+              <Link
+                href={isLoggedIn ? '/account' : '/login'}
+                className="hidden sm:flex items-center text-text-main hover:text-accent transition-colors"
+                title={isLoggedIn ? 'My Account' : 'Sign In'}
+              >
+                <User size={20} strokeWidth={1.25} />
+              </Link>
             </div>
           </div>
         </div>
@@ -176,9 +202,9 @@ export default function Navbar() {
                 <Heart size={20} strokeWidth={1.25} />
                 <span className="text-[11px] tracking-[0.15em] uppercase font-medium">Wishlist ({wishlistCount})</span>
               </Link>
-              <Link href="/account" className="flex items-center space-x-4 text-text-main hover:text-accent transition-colors">
-                <Search size={20} strokeWidth={1.25} />
-                <span className="text-[11px] tracking-[0.15em] uppercase font-medium">Search</span>
+              <Link href={isLoggedIn ? '/account' : '/login'} className="flex items-center space-x-4 text-text-main hover:text-accent transition-colors">
+                <User size={20} strokeWidth={1.25} />
+                <span className="text-[11px] tracking-[0.15em] uppercase font-medium">{isLoggedIn ? 'My Account' : 'Sign In'}</span>
               </Link>
             </div>
           </div>

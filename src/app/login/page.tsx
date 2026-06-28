@@ -3,16 +3,34 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from 'lucide-react';
+import { signInWithEmail, signInWithGoogle } from '@/app/actions/auth';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert('Supabase Auth integration coming soon! Logged in as demo user.');
+  const handleLogin = async (formData: FormData) => {
+    setError(null);
+    setLoading(true);
+    const result = await signInWithEmail(formData);
+    if (result?.error) {
+      setError(result.error);
+      setLoading(false);
+    }
+    // If no error, the server action redirects — no need to setLoading(false)
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    const result = await signInWithGoogle();
+    if (result?.error) {
+      setError(result.error);
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -34,17 +52,23 @@ export default function LoginPage() {
           <p className="text-xs text-[#706A60]">Sign in to your premium beauty account</p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-xs px-4 py-3 rounded-lg animate-in fade-in">
+            {error}
+          </div>
+        )}
+
         {/* Form */}
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form action={handleLogin} className="space-y-4">
           {/* Email */}
           <div className="flex flex-col">
             <label className="text-xs text-[#5C554D] mb-1 font-medium">Email Address</label>
             <div className="relative">
               <input
                 type="email"
+                name="email"
                 placeholder="e.g. sneha@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full input-dark text-sm pl-10"
               />
@@ -63,9 +87,8 @@ export default function LoginPage() {
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
+                name="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full input-dark text-sm pl-10 pr-10"
               />
@@ -80,9 +103,13 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <button type="submit" className="btn-gold w-full flex items-center justify-center space-x-2 py-3.5 text-sm mt-6 shadow-sm">
-            <LogIn size={16} />
-            <span>Sign In</span>
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-gold w-full flex items-center justify-center space-x-2 py-3.5 text-sm mt-6 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
+            <span>{loading ? 'Signing In...' : 'Sign In'}</span>
           </button>
         </form>
 
@@ -95,15 +122,17 @@ export default function LoginPage() {
 
         {/* Social login */}
         <button
-          onClick={() => alert('Google authentication coming soon!')}
-          className="btn-outline-gold w-full text-xs py-3 flex items-center justify-center space-x-2 bg-white"
+          onClick={handleGoogleLogin}
+          disabled={googleLoading}
+          className="btn-outline-gold w-full text-xs py-3 flex items-center justify-center space-x-2 bg-white disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <span>Continue with Google</span>
+          {googleLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+          <span>{googleLoading ? 'Redirecting...' : 'Continue with Google'}</span>
         </button>
 
         {/* Footer link */}
         <p className="text-xs text-center text-[#706A60] pt-2">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/register" className="text-[#9A7B2F] hover:underline font-semibold">
             Sign Up
           </Link>

@@ -3,30 +3,36 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, EyeOff, Mail, Lock, User, Phone, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Phone, UserPlus, Loader2 } from 'lucide-react';
+import { signUp } from '@/app/actions/auth';
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-  });
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const handleRegister = async (formData: FormData) => {
+    const password = formData.get('password') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
 
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match!');
       return;
     }
-    alert('Supabase Auth integration coming soon! Account created successfully.');
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
+    const result = await signUp(formData);
+    if (result?.error) {
+      setError(result.error);
+      setLoading(false);
+    }
+    // If no error, the server action redirects
   };
 
   return (
@@ -45,11 +51,18 @@ export default function RegisterPage() {
             className="rounded-full border border-[#C9A94E] mx-auto shadow-sm"
           />
           <h2 className="font-display font-semibold text-2xl text-[#9A7B2F] tracking-wider">Create Account</h2>
-          <p className="text-xs text-[#706A60]">Join our premium cosmetics & skincare family</p>
+          <p className="text-xs text-[#706A60]">Join our premium cosmetics &amp; skincare family</p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-xs px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        )}
+
         {/* Form */}
-        <form onSubmit={handleRegister} className="space-y-4">
+        <form action={handleRegister} className="space-y-4">
           {/* Name */}
           <div className="flex flex-col">
             <label className="text-xs text-[#5C554D] mb-1 font-medium">Full Name</label>
@@ -58,8 +71,6 @@ export default function RegisterPage() {
                 type="text"
                 name="fullName"
                 placeholder="e.g. Priya Sharma"
-                value={formData.fullName}
-                onChange={handleInputChange}
                 required
                 className="w-full input-dark text-sm pl-10"
               />
@@ -75,8 +86,6 @@ export default function RegisterPage() {
                 type="email"
                 name="email"
                 placeholder="e.g. priya@example.com"
-                value={formData.email}
-                onChange={handleInputChange}
                 required
                 className="w-full input-dark text-sm pl-10"
               />
@@ -92,8 +101,6 @@ export default function RegisterPage() {
                 type="tel"
                 name="phone"
                 placeholder="e.g. 9876543210"
-                value={formData.phone}
-                onChange={handleInputChange}
                 required
                 className="w-full input-dark text-sm pl-10"
               />
@@ -109,9 +116,8 @@ export default function RegisterPage() {
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 placeholder="••••••••"
-                value={formData.password}
-                onChange={handleInputChange}
                 required
+                minLength={6}
                 className="w-full input-dark text-sm pl-10 pr-10"
               />
               <Lock className="absolute left-3.5 top-3 text-[#8A8177]" size={16} />
@@ -133,18 +139,21 @@ export default function RegisterPage() {
                 type={showPassword ? 'text' : 'password'}
                 name="confirmPassword"
                 placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
                 required
+                minLength={6}
                 className="w-full input-dark text-sm pl-10"
               />
               <Lock className="absolute left-3.5 top-3 text-[#8A8177]" size={16} />
             </div>
           </div>
 
-          <button type="submit" className="btn-gold w-full flex items-center justify-center space-x-2 py-3.5 text-sm mt-6 shadow-sm">
-            <UserPlus size={16} />
-            <span>Create Account</span>
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-gold w-full flex items-center justify-center space-x-2 py-3.5 text-sm mt-6 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+            <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
           </button>
         </form>
 
