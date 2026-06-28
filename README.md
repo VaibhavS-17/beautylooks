@@ -365,5 +365,5 @@ This project is maintained by the **Data Matrix Club (DMX)** at RGIT. Contributi
 ---
 
 <p align="center">
-  Made with ❤️ in Mumbai by <strong>Data Matrix Club (DMX)</strong> at RGIT
+  Made with ❤️ in Mumbai
 </p>
