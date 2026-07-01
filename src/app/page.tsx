@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
-import { products, categories, blogPosts, formatPrice } from '@/lib/data';
+import { products as staticProducts, categories, blogPosts, formatPrice } from '@/lib/data';
 import { useCartStore } from '@/lib/store';
+import { useAdminStore } from '@/lib/adminStore';
 
 export default function Homepage() {
   const [email, setEmail] = useState('');
@@ -13,8 +14,12 @@ export default function Homepage() {
 
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
+  const adminProducts = useAdminStore((state) => state.adminProducts);
+  const adminCategories = useAdminStore((state) => state.adminCategories);
 
-  const featuredProducts = products.filter((p) => p.isFeatured).slice(0, 4);
+  const allProducts = [...adminProducts, ...staticProducts];
+  const featuredProducts = allProducts.filter((p) => p.isFeatured).slice(0, 4);
+  const allCategories = [...categories, ...adminCategories];
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,19 +71,27 @@ export default function Homepage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {categories.map((category) => (
+          {allCategories.map((category) => (
             <Link
               href={`/products?category=${category.slug}`}
               key={category.id}
               className="group block"
             >
               <div className="relative h-[400px] w-full bg-secondary mb-4 rounded-2xl overflow-hidden shadow-sm">
-                <Image
-                  src={category.imageUrl}
-                  alt={category.name}
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
+                {category.imageUrl && !category.imageUrl.includes('facial-kits.png') ? (
+                  <Image
+                    src={category.imageUrl}
+                    alt={category.name}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#C88E75] to-[#2C1E16] flex items-center justify-center p-6 text-center text-white transition-transform duration-700 group-hover:scale-105">
+                    <span className="font-serif text-2xl font-bold tracking-tight uppercase" style={{ fontFamily: 'Playfair Display, serif' }}>
+                      {category.name}
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="text-center">
                 <h3 className="text-sm font-semibold uppercase tracking-widest text-text-main">
