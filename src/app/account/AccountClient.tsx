@@ -86,7 +86,7 @@ export default function AccountClient({ user, initialAddresses, initialOrders }:
 
   return (
     <div className="w-full min-h-screen bg-[#FCFBF9] py-12 text-left relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="border-b border-[#EFECE6] pb-6 mb-10">

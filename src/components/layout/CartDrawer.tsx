@@ -44,7 +44,7 @@ export default function CartDrawer() {
                 <Link
                   href="/products"
                   onClick={closeCart}
-                  className="btn-primary text-xs mt-6 uppercase tracking-widest"
+                  className="w-full mt-6 bg-brand-dark text-primary px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-accent hover:text-brand-dark transition-all rounded-xl"
                 >
                   Shop Collection
                 </Link>
@@ -137,7 +137,7 @@ export default function CartDrawer() {
                 <Link
                   href="/checkout"
                   onClick={closeCart}
-                  className="btn-primary w-full justify-center text-xs uppercase tracking-widest"
+                  className="flex items-center justify-center w-full bg-brand-dark text-primary px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-accent hover:text-brand-dark transition-all rounded-xl"
                 >
                   Proceed to Checkout
                 </Link>

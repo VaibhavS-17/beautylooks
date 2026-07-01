@@ -1,0 +1,111 @@
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, Search, ShoppingBag, Heart, User } from 'lucide-react';
+import { useCartStore, useWishlistStore } from '@/lib/store';
+import { createClient } from '@/lib/supabase/client';
+
+export default function MobileBottomNav() {
+  const pathname = usePathname();
+  const cartItemsCount = useCartStore((state) => state.getTotalItems());
+  const openCart = useCartStore((state) => state.openCart);
+  const wishlistCount = useWishlistStore((state) => state.items.length);
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+
+  React.useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoggedIn(!!user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const navItems = [
+    {
+      name: 'Home',
+      href: '/',
+      icon: Home,
+    },
+    {
+      name: 'Search',
+      href: '/products',
+      icon: Search,
+    },
+    {
+      name: 'Wishlist',
+      href: '/wishlist',
+      icon: Heart,
+      badge: wishlistCount,
+    },
+    {
+      name: 'Account',
+      href: isLoggedIn ? '/account' : '/login',
+      icon: User,
+    },
+  ];
+
+  return (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-border/50 z-50 pb-safe">
+      <div className="flex items-center justify-around h-16 px-2">
+        {navItems.slice(0, 2).map((item) => {
+          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
+                isActive ? 'text-accent' : 'text-text-muted hover:text-text-main'
+              } transition-colors`}
+            >
+              <item.icon size={20} strokeWidth={isActive ? 2 : 1.5} />
+              <span className="text-[9px] uppercase tracking-widest font-semibold">{item.name}</span>
+            </Link>
+          );
+        })}
+
+        {/* Center Cart Button */}
+        <button
+          onClick={openCart}
+          className="relative flex flex-col items-center justify-center -mt-6"
+        >
+          <div className="bg-brand-dark text-primary h-14 w-14 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(202,138,4,0.3)] border-4 border-white">
+            <ShoppingBag size={22} strokeWidth={1.5} />
+            {cartItemsCount > 0 && (
+              <span className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-white">
+                {cartItemsCount}
+              </span>
+            )}
+          </div>
+        </button>
+
+        {navItems.slice(2).map((item) => {
+          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`relative flex flex-col items-center justify-center w-full h-full space-y-1 ${
+                isActive ? 'text-accent' : 'text-text-muted hover:text-text-main'
+              } transition-colors`}
+            >
+              <item.icon size={20} strokeWidth={isActive ? 2 : 1.5} />
+              {(item.badge || 0) > 0 && (
+                <span className="absolute top-1 right-2 bg-accent text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
+                  {item.badge}
+                </span>
+              )}
+              <span className="text-[9px] uppercase tracking-widest font-semibold">{item.name}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

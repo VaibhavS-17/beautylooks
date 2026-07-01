@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import WhatsAppButton from "@/components/layout/WhatsAppButton";
-import CartDrawer from "@/components/layout/CartDrawer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,6 +20,8 @@ export const metadata: Metadata = {
   keywords: "beauty, cosmetics, facial kits, skincare, mumbai, natural beauty, serum, cleansers, face mask",
 };
 
+import RootLayoutClient from "@/components/layout/RootLayoutClient";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,12 +29,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-[#FFFFFF] text-[#000000] font-sans">
-        <Navbar />
-        <main className="flex-grow">{children}</main>
-        <Footer />
-        <WhatsAppButton />
-        <CartDrawer />
+      <body className="min-h-full flex flex-col bg-primary text-text-main font-sans">
+        <RootLayoutClient>{children}</RootLayoutClient>
       </body>
     </html>
   );

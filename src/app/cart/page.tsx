@@ -18,7 +18,7 @@ export default function CartPage() {
 
   return (
     <div className="w-full min-h-screen bg-primary py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Title */}
         <div className="border-b border-border pb-6 mb-12">

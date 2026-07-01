@@ -8,7 +8,7 @@ import { ShieldCheck, Truck, Sparkles, Star, User, Heart, MessageCircle } from '
 export default function AboutPage() {
   return (
     <div className="w-full min-h-screen bg-[#FCFBF9] py-12 text-left">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="border-b border-[#EFECE6] pb-6 mb-12">

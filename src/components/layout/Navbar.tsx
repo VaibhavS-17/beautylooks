@@ -66,7 +66,7 @@ export default function Navbar() {
   return (
     <>
       {/* Top Announcement Bar */}
-      <div className="bg-[#2C1E16] text-white text-center py-2 text-[10px] tracking-[0.2em] uppercase font-medium overflow-hidden">
+      <div className="bg-[var(--color-text-main)] text-white text-center py-2 text-[10px] tracking-[0.2em] uppercase font-medium overflow-hidden">
         <div className="flex items-center justify-center gap-8">
           <span>✦ Free Delivery on Orders Above ₹499 ✦</span>
           <span className="hidden sm:inline">100% Authentic Products ✦ Mumbai's Trusted Beauty Store</span>
@@ -74,21 +74,26 @@ export default function Navbar() {
       </div>
 
       <nav
-        className={`sticky top-0 w-full z-40 transition-all duration-500 ${
+        className={`sticky top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 px-4 sm:px-6 lg:px-8 mb-4 ${
           isScrolled
-            ? 'bg-white/95 backdrop-blur-xl shadow-[0_4px_24px_-4px_rgba(44,30,22,0.12)] border-b border-[#E8E2D9] py-0'
-            : 'bg-[#FAF9F6] py-0 border-b border-[#E8E2D9]'
+            ? 'py-0'
+            : 'py-0'
         }`}
       >
+        <div className={`transition-all duration-500 rounded-2xl border ${
+          isScrolled
+            ? 'bg-white/70 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border-white/40'
+            : 'bg-[var(--color-primary)]/90 backdrop-blur-md shadow-sm border-[var(--color-border)]'
+        }`}>
         {/* Main Navbar Row */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="px-4 sm:px-6">
           <div className="flex justify-between items-center h-16 sm:h-20 relative">
 
             {/* Left: Mobile Menu Button */}
             <div className="flex items-center md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="text-[#2C1E16] hover:text-[#C88E75] transition-colors mr-4"
+                className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors mr-4"
                 aria-label="Open menu"
               >
                 <Menu size={22} strokeWidth={1.5} />
@@ -96,24 +101,24 @@ export default function Navbar() {
             </div>
 
             {/* Logo Section */}
-            <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
+            <Link href="/" className="flex items-center gap-3.5 group flex-shrink-0">
               {/* Logo Image */}
-              <div className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-full overflow-hidden border-2 border-[#C88E75]/30 shadow-md group-hover:border-[#C88E75] group-hover:shadow-[0_0_16px_rgba(200,142,117,0.3)] transition-all duration-300">
+              <div className="relative h-11 w-11 sm:h-13 sm:w-13 overflow-hidden transition-all duration-350 ease-out group-hover:scale-105">
                 <Image
                   src="/images/brand/logo.png"
                   alt="Beauty Looks Mumbai Logo"
                   fill
-                  className="object-cover scale-110"
+                  className="object-contain"
                   priority
                 />
               </div>
               {/* Brand Name Text */}
               <div className="hidden sm:block">
-                <div className="text-[#2C1E16] font-bold text-base leading-tight tracking-tight" style={{ fontFamily: 'Playfair Display, serif' }}>
+                <div className="text-[var(--color-text-main)] font-semibold text-base leading-none tracking-tight font-display mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
                   Beauty Looks
                 </div>
-                <div className="text-[9px] text-[#C88E75] tracking-[0.2em] uppercase font-semibold">
-                  Premium Cosmetics · Mumbai
+                <div className="text-[8px] text-[var(--color-accent)] tracking-[0.25em] uppercase font-semibold">
+                  Premium Cosmetics
                 </div>
               </div>
             </Link>
@@ -127,11 +132,11 @@ export default function Navbar() {
                     key={link.name}
                     href={link.href}
                     className={`relative text-[11px] tracking-[0.15em] uppercase font-semibold transition-colors group ${
-                      isActive ? 'text-[#C88E75]' : 'text-[#2C1E16] hover:text-[#C88E75]'
+                      isActive ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-main)] hover:text-[var(--color-accent)]'
                     }`}
                   >
                     {link.name}
-                    <span className={`absolute -bottom-0.5 left-0 h-px bg-[#C88E75] transition-all duration-300 ${
+                    <span className={`absolute -bottom-0.5 left-0 h-px bg-[var(--color-accent)] transition-all duration-300 ${
                       isActive ? 'w-full' : 'w-0 group-hover:w-full'
                     }`} />
                   </Link>
@@ -144,17 +149,17 @@ export default function Navbar() {
               {/* Search Toggle */}
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="text-[#2C1E16] hover:text-[#C88E75] transition-colors hidden sm:block"
+                className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden sm:block"
                 aria-label="Search"
               >
                 <Search size={19} strokeWidth={1.5} />
               </button>
 
               {/* Wishlist */}
-              <Link href="/wishlist" className="relative text-[#2C1E16] hover:text-[#C88E75] transition-colors hidden sm:block">
+              <Link href="/wishlist" className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden sm:block">
                 <Heart size={19} strokeWidth={1.5} />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 bg-[#C88E75] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
+                  <span className="absolute -top-1.5 -right-2 bg-[var(--color-accent)] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
                     {wishlistCount}
                   </span>
                 )}
@@ -163,12 +168,12 @@ export default function Navbar() {
               {/* Cart */}
               <button
                 onClick={openCart}
-                className="relative text-[#2C1E16] hover:text-[#C88E75] transition-colors"
+                className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block"
                 aria-label="Cart"
               >
                 <ShoppingBag size={19} strokeWidth={1.5} />
                 {cartItemsCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 bg-[#2C1E16] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
+                  <span className="absolute -top-1.5 -right-2 bg-[var(--color-text-main)] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
                     {cartItemsCount}
                   </span>
                 )}
@@ -177,7 +182,7 @@ export default function Navbar() {
               {/* Account */}
               <Link
                 href={isLoggedIn ? '/account' : '/login'}
-                className="text-[#2C1E16] hover:text-[#C88E75] transition-colors"
+                className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block"
                 title={isLoggedIn ? 'My Account' : 'Sign In'}
                 aria-label="Account"
               >
@@ -188,16 +193,16 @@ export default function Navbar() {
         </div>
 
         {/* Perks Bar — fills the empty space near logo on wider screens */}
-        <div className="hidden lg:block border-t border-[#E8E2D9] bg-[#FDF8F5]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="hidden lg:block border-t border-[var(--color-border)] bg-[var(--color-secondary)]/50 rounded-b-2xl">
+          <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-center gap-12 py-2">
               {perks.map(({ icon: Icon, label }) => (
-                <div key={label} className="flex items-center gap-2 text-[10px] text-[#6B5C52] tracking-[0.12em] uppercase font-semibold">
-                  <Icon size={12} className="text-[#C88E75]" strokeWidth={2} />
+                <div key={label} className="flex items-center gap-2 text-[10px] text-[var(--color-text-muted)] tracking-[0.12em] uppercase font-semibold">
+                  <Icon size={12} className="text-[var(--color-accent)]" strokeWidth={2} />
                   <span>{label}</span>
                 </div>
               ))}
-              <div className="flex items-center gap-2 text-[10px] text-[#6B5C52] tracking-[0.12em] uppercase font-semibold">
+              <div className="flex items-center gap-2 text-[10px] text-[var(--color-text-muted)] tracking-[0.12em] uppercase font-semibold">
                 <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
                 <span>WhatsApp Support · 8879655807</span>
               </div>
@@ -207,19 +212,20 @@ export default function Navbar() {
 
         {/* Search Bar — slides down */}
         <div className={`overflow-hidden transition-all duration-300 ${isSearchOpen ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
-          <div className="border-t border-[#E8E2D9] bg-white px-4 sm:px-8 py-3">
+          <div className="border-t border-[var(--color-border)] bg-white px-4 sm:px-8 py-3">
             <div className="max-w-lg mx-auto relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B5C52]" />
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
               <input
                 type="text"
                 value={searchVal}
                 onChange={e => setSearchVal(e.target.value)}
                 placeholder="Search for products, brands..."
-                className="w-full pl-9 pr-4 py-2.5 text-sm border border-[#E8E2D9] rounded-xl focus:outline-none focus:border-[#C88E75] bg-[#FAF9F6] text-[#2C1E16] placeholder:text-[#6B5C52]/50"
+                className="w-full pl-9 pr-4 py-2.5 text-sm border border-[var(--color-border)] rounded-xl focus:outline-none focus:border-[var(--color-accent)] bg-[var(--color-primary)] text-[var(--color-text-main)] placeholder:text-[var(--color-text-muted)]/50"
                 autoFocus={isSearchOpen}
               />
             </div>
           </div>
+        </div>
         </div>
       </nav>
 
@@ -231,25 +237,25 @@ export default function Navbar() {
           className={`absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-500 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0'}`}
           onClick={() => setIsMobileMenuOpen(false)}
         />
-        <div className="absolute inset-y-0 left-0 w-4/5 max-w-sm bg-white shadow-2xl flex flex-col border-r border-[#E8E2D9]">
-          <div className="px-6 py-6 flex justify-between items-center border-b border-[#E8E2D9]">
+        <div className="absolute inset-y-0 left-0 w-4/5 max-w-sm bg-white shadow-2xl flex flex-col border-r border-[var(--color-border)]">
+          <div className="px-6 py-6 flex justify-between items-center border-b border-[var(--color-border)]">
             <Link href="/" className="flex items-center gap-3" onClick={() => setIsMobileMenuOpen(false)}>
-              <div className="relative h-10 w-10 rounded-full overflow-hidden border-2 border-[#C88E75]/30">
+              <div className="relative h-9 w-9 overflow-hidden">
                 <Image
                   src="/images/brand/logo.png"
                   alt="Beauty Looks Mumbai"
                   fill
-                  className="object-cover scale-110"
+                  className="object-contain"
                 />
               </div>
               <div>
-                <div className="text-[#2C1E16] font-bold text-sm" style={{ fontFamily: 'Playfair Display, serif' }}>Beauty Looks</div>
-                <div className="text-[8px] text-[#C88E75] tracking-[0.15em] uppercase font-semibold">Premium Cosmetics</div>
+                <div className="text-[var(--color-text-main)] font-semibold text-sm font-display mb-0.5" style={{ fontFamily: 'Playfair Display, serif' }}>Beauty Looks</div>
+                <div className="text-[8px] text-[var(--color-accent)] tracking-[0.15em] uppercase font-semibold">Premium Cosmetics</div>
               </div>
             </Link>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-[#6B5C52] hover:text-[#2C1E16] transition-colors p-2 bg-[#FAF9F6] rounded-full"
+              className="text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] transition-colors p-2 bg-[var(--color-primary)] rounded-full"
             >
               <X size={18} strokeWidth={1.5} />
             </button>
@@ -268,16 +274,16 @@ export default function Navbar() {
               >
                 <Link
                   href={link.href}
-                  className="flex items-center justify-between py-3.5 px-4 rounded-xl hover:bg-[#FAF9F6] text-[12px] tracking-[0.12em] uppercase font-semibold text-[#2C1E16] hover:text-[#C88E75] transition-all group"
+                  className="flex items-center justify-between py-3.5 px-4 rounded-xl hover:bg-[var(--color-primary)] text-[12px] tracking-[0.12em] uppercase font-semibold text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-all group"
                 >
                   <span>{link.name}</span>
-                  <span className="text-[#C88E75] opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                  <span className="text-[var(--color-accent)] opacity-0 group-hover:opacity-100 transition-opacity">→</span>
                 </Link>
               </div>
             ))}
 
             <div
-              className="pt-6 mt-6 border-t border-[#E8E2D9] space-y-3"
+              className="pt-6 mt-6 border-t border-[var(--color-border)] space-y-3"
               style={{
                 opacity: isMobileMenuOpen ? 1 : 0,
                 transitionDelay: `${navLinks.length * 60}ms`,
@@ -285,21 +291,14 @@ export default function Navbar() {
                 transition: 'opacity 500ms'
               }}
             >
-              <Link href="/wishlist" className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-[#FAF9F6] text-[#2C1E16] hover:text-[#C88E75] transition-all">
-                <Heart size={18} strokeWidth={1.5} />
-                <span className="text-[11px] tracking-[0.12em] uppercase font-semibold">Wishlist ({wishlistCount})</span>
-              </Link>
-              <Link href={isLoggedIn ? '/account' : '/login'} className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-[#FAF9F6] text-[#2C1E16] hover:text-[#C88E75] transition-all">
-                <User size={18} strokeWidth={1.5} />
-                <span className="text-[11px] tracking-[0.12em] uppercase font-semibold">{isLoggedIn ? 'My Account' : 'Sign In'}</span>
-              </Link>
+              {/* Removed redundant links that are now in MobileBottomNav */}
             </div>
           </div>
 
-          <div className="p-5 bg-[#FAF9F6] border-t border-[#E8E2D9]">
-            <p className="text-[10px] tracking-[0.15em] text-[#6B5C52] text-center uppercase">
+          <div className="p-5 bg-[var(--color-primary)] border-t border-[var(--color-border)]">
+            <p className="text-[10px] tracking-[0.15em] text-[var(--color-text-muted)] text-center uppercase">
               Need help?{' '}
-              <a href="tel:+918879655807" className="text-[#C88E75] hover:text-[#2C1E16] transition-colors font-semibold">
+              <a href="tel:+918879655807" className="text-[var(--color-accent)] hover:text-[var(--color-text-main)] transition-colors font-semibold">
                 8879655807
               </a>
             </p>
