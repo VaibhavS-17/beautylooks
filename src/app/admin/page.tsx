@@ -1,5 +1,8 @@
-'use client';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import AdminClient from './AdminClient';
 
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import {
   Package, ShoppingBag, IndianRupee, Users, ArrowUpRight,
@@ -62,12 +65,89 @@ export default function AdminDashboardPage() {
     { label: 'Gross Revenue', value: formatPrice(grossRevenue), icon: IndianRupee, change: '+18% growth', color: 'from-emerald-50 to-teal-50', iconBg: 'bg-emerald-100 text-emerald-600' },
     { label: 'Active Customers', value: activeCustomers.toString(), icon: Users, change: '+24 new signups', color: 'from-violet-50 to-purple-50', iconBg: 'bg-violet-100 text-violet-600' },
   ];
+=======
+export default async function AdminDashboardPage() {
+  const supabase = await createClient();
+  
+  // Verify admin access
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect('/login?redirect=/admin');
+  }
 
-  const handleStatusChange = (orderId: string, currentStatus: string) => {
-    const statuses: AdminOrder['status'][] = ['pending', 'confirmed', 'shipped', 'delivered'];
-    const currentIndex = statuses.indexOf(currentStatus as AdminOrder['status']);
-    const nextStatus = statuses[(currentIndex + 1) % statuses.length];
-    updateOrderStatus(orderId, nextStatus);
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.role !== 'admin') {
+    redirect('/account');
+  }
+>>>>>>> 58bf54a70e694778aedb044d20c8563e9cc75a20
+
+  // Fetch real statistics
+  const { count: totalProducts } = await supabase
+    .from('products')
+    .select('*', { count: 'exact', head: true });
+
+  const { count: totalOrders } = await supabase
+    .from('orders')
+    .select('*', { count: 'exact', head: true });
+
+  const { count: activeCustomers } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact', head: true })
+    .eq('role', 'customer');
+
+  const { data: revenueData } = await supabase
+    .from('orders')
+    .select('total_amount')
+    .not('status', 'eq', 'cancelled');
+
+  const grossRevenue = (revenueData || []).reduce((sum, item) => sum + Number(item.total_amount), 0);
+
+  // Fetch recent orders with customer profile join
+  const { data: recentOrdersData } = await supabase
+    .from('orders')
+    .select(`
+      id,
+      total_amount,
+      status,
+      created_at,
+      profiles (
+        full_name,
+        phone
+      )
+    `)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  const mappedOrders = (recentOrdersData || []).map((ord: any) => ({
+    id: ord.id,
+    customerName: ord.profiles?.full_name || 'Anonymous Customer',
+    customerEmail: ord.profiles?.phone ? `+91 ${ord.profiles.phone}` : 'Registered Customer',
+    amount: Number(ord.total_amount),
+    status: ord.status,
+    date: new Date(ord.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })
+  }));
+
+  // Fetch categories & brands for dropdowns
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name')
+    .order('name');
+
+  const { data: brands } = await supabase
+    .from('brands')
+    .select('id, name')
+    .order('name');
+
+  const stats = {
+    totalProducts: totalProducts || 0,
+    totalOrders: totalOrders || 0,
+    grossRevenue: grossRevenue || 0,
+    activeCustomers: activeCustomers || 0
   };
 
   const handleFormChange = (field: keyof NewProductForm, value: string | boolean) => {
@@ -97,6 +177,7 @@ export default function AdminDashboardPage() {
   };
 
   return (
+<<<<<<< HEAD
     <div className="w-full min-h-screen bg-[#FAF9F6] py-10 text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -609,5 +690,13 @@ export default function AdminDashboardPage() {
         </div>
       )}
     </div>
+=======
+    <AdminClient 
+      stats={stats} 
+      recentOrders={mappedOrders}
+      categories={categories || []}
+      brands={brands || []}
+    />
+>>>>>>> 58bf54a70e694778aedb044d20c8563e9cc75a20
   );
 }
