@@ -24,6 +24,8 @@ interface HomeClientProps {
 export default function HomeClient({ featuredProducts, categories, blogPosts, siteSettings }: HomeClientProps) {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const heroImageUrl = siteSettings.hero_image_url || '/images/hero-beauty.png';
+  const fallbackProductImage = '/images/products/facial-kit-1.png';
 
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
@@ -43,7 +45,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
       <section className="relative w-full h-[85vh] flex items-center justify-center bg-secondary">
         <div className="absolute inset-0 z-0">
           <Image
-            src={siteSettings.hero_image_url}
+            src={heroImageUrl}
             alt={siteSettings.hero_title}
             fill
             className="object-cover"
@@ -140,7 +142,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                   <Link href={`/products/${product.slug}`} className="block">
                     <div className="relative h-[280px] sm:h-[350px] rounded-xl overflow-hidden bg-primary/20">
                       <Image
-                        src={product.images[0]}
+                        src={product.images?.[0] || fallbackProductImage}
                         alt={product.name}
                         fill
                         className="object-cover product-image transition-transform duration-700 group-hover:scale-105"

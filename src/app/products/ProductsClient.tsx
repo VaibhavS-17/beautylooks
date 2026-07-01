@@ -29,6 +29,7 @@ interface ProductsClientProps {
 function ProductCatalogContent({ products, allCategories, allBrands }: ProductsClientProps) {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
+  const fallbackProductImage = '/images/products/facial-kit-1.png';
 
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
@@ -455,7 +456,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                         <Link href={`/products/${product.slug}`} className="block overflow-hidden rounded-t-2xl">
                           <div className="product-image-container h-[250px] sm:h-[350px] relative overflow-hidden rounded-xl bg-primary/20">
                             <Image
-                              src={product.images[0]}
+                              src={product.images?.[0] || fallbackProductImage}
                               alt={product.name}
                               fill
                               className="object-cover product-image transition-transform duration-700 group-hover:scale-105"

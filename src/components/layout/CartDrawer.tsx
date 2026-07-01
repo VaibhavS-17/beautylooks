@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/data';
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, updateQuantity, removeItem, getTotalPrice, getTotalItems } = useCartStore();
+  const fallbackProductImage = '/images/products/facial-kit-1.png';
 
   if (!isOpen) return null;
 
@@ -58,7 +59,7 @@ export default function CartDrawer() {
                       {/* Image */}
                       <div className="relative w-24 h-24 bg-secondary rounded-xl overflow-hidden shadow-sm flex-shrink-0">
                         <Image
-                          src={item.product.images[0]}
+                          src={item.product.images?.[0] || fallbackProductImage}
                           alt={item.product.name}
                           fill
                           className="object-cover"

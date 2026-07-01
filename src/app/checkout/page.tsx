@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/data';
 
 export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart, getTotalItems } = useCartStore();
+  const fallbackProductImage = '/images/products/facial-kit-1.png';
   
   // Checkout Form State
   const [formData, setFormData] = useState({
@@ -278,7 +279,7 @@ export default function CheckoutPage() {
                     <div className="flex items-start space-x-4">
                       <div className="relative w-16 h-16 bg-primary rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-border">
                         <Image
-                          src={item.product.images[0]}
+                          src={item.product.images?.[0] || fallbackProductImage}
                           alt={item.product.name}
                           fill
                           className="object-cover"

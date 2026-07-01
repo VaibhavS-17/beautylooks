@@ -17,6 +17,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
+  const fallbackProductImage = '/images/products/facial-kit-1.png';
   
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
@@ -62,7 +63,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
           <div className="space-y-4">
             <div className="relative aspect-square w-full bg-primary/20 rounded-2xl overflow-hidden group">
               <Image
-                src={product.images[0]}
+                src={product.images?.[0] || fallbackProductImage}
                 alt={product.name}
                 fill
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -261,7 +262,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 <Link href={`/products/${relProduct.slug}`} key={relProduct.id} className="group block">
                   <div className="relative h-[250px] sm:h-[300px] w-full bg-primary/20 rounded-2xl border border-border/50 mb-4 overflow-hidden transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)]">
                     <Image
-                      src={relProduct.images[0]}
+                      src={relProduct.images?.[0] || fallbackProductImage}
                       alt={relProduct.name}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-105"

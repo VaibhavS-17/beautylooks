@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/data';
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, getTotalPrice, getTotalItems, getSubtotal } = useCartStore();
+  const fallbackProductImage = '/images/products/facial-kit-1.png';
 
   const subtotal = getSubtotal();
   const totalPrice = getTotalPrice();
@@ -61,7 +62,7 @@ export default function CartPage() {
                     <div className="flex items-start space-x-6">
                       <div className="relative w-32 h-32 bg-secondary rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
                         <Image
-                          src={item.product.images[0]}
+                          src={item.product.images?.[0] || fallbackProductImage}
                           alt={item.product.name}
                           fill
                           className="object-cover"
