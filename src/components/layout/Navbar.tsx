@@ -4,11 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-<<<<<<< HEAD
 import { Search, Heart, ShoppingBag, Menu, X, Truck, Shield, Sparkles, User } from 'lucide-react';
-=======
-import { Search, Heart, ShoppingBag, Menu, X, User } from 'lucide-react';
->>>>>>> 58bf54a70e694778aedb044d20c8563e9cc75a20
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
 
@@ -178,11 +174,11 @@ export default function Navbar() {
                 )}
               </button>
 
-<<<<<<< HEAD
               {/* Account */}
               <Link
-                href="/account"
+                href={isLoggedIn ? '/account' : '/login'}
                 className="text-[#2C1E16] hover:text-[#C88E75] transition-colors"
+                title={isLoggedIn ? 'My Account' : 'Sign In'}
                 aria-label="Account"
               >
                 <User size={19} strokeWidth={1.5} />
@@ -222,15 +218,6 @@ export default function Navbar() {
                 className="w-full pl-9 pr-4 py-2.5 text-sm border border-[#E8E2D9] rounded-xl focus:outline-none focus:border-[#C88E75] bg-[#FAF9F6] text-[#2C1E16] placeholder:text-[#6B5C52]/50"
                 autoFocus={isSearchOpen}
               />
-=======
-              <Link
-                href={isLoggedIn ? '/account' : '/login'}
-                className="hidden sm:flex items-center text-text-main hover:text-accent transition-colors"
-                title={isLoggedIn ? 'My Account' : 'Sign In'}
-              >
-                <User size={20} strokeWidth={1.25} />
-              </Link>
->>>>>>> 58bf54a70e694778aedb044d20c8563e9cc75a20
             </div>
           </div>
         </div>
@@ -302,15 +289,9 @@ export default function Navbar() {
                 <Heart size={18} strokeWidth={1.5} />
                 <span className="text-[11px] tracking-[0.12em] uppercase font-semibold">Wishlist ({wishlistCount})</span>
               </Link>
-<<<<<<< HEAD
-              <Link href="/account" className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-[#FAF9F6] text-[#2C1E16] hover:text-[#C88E75] transition-all">
+              <Link href={isLoggedIn ? '/account' : '/login'} className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-[#FAF9F6] text-[#2C1E16] hover:text-[#C88E75] transition-all">
                 <User size={18} strokeWidth={1.5} />
-                <span className="text-[11px] tracking-[0.12em] uppercase font-semibold">Account</span>
-=======
-              <Link href={isLoggedIn ? '/account' : '/login'} className="flex items-center space-x-4 text-text-main hover:text-accent transition-colors">
-                <User size={20} strokeWidth={1.25} />
-                <span className="text-[11px] tracking-[0.15em] uppercase font-medium">{isLoggedIn ? 'My Account' : 'Sign In'}</span>
->>>>>>> 58bf54a70e694778aedb044d20c8563e9cc75a20
+                <span className="text-[11px] tracking-[0.12em] uppercase font-semibold">{isLoggedIn ? 'My Account' : 'Sign In'}</span>
               </Link>
             </div>
           </div>

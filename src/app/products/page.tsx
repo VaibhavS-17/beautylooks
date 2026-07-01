@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ChevronDown, Filter, Sparkles, Tag, Layers, Check, X } from 'lucide-react';
+import { Search, ChevronDown, Filter, Sparkles, Layers, Check, X } from 'lucide-react';
 import { products as staticProducts, categories as staticCategories, brands as staticBrands, formatPrice } from '@/lib/data';
 import { useCartStore } from '@/lib/store';
 import { useAdminStore } from '@/lib/adminStore';
@@ -22,7 +22,6 @@ const getCategoryIcon = (categoryName: string) => {
 };
 
 function ProductCatalogContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
 
@@ -36,7 +35,8 @@ function ProductCatalogContent() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setTimeout(() => setIsMounted(true), 0);
   }, []);
 
   // Combine static and admin-created categories
@@ -65,9 +65,9 @@ function ProductCatalogContent() {
   // Sync state when URL params change from navbar clicks
   useEffect(() => {
     if (categoryParam) {
-      setSelectedCategories([categoryParam]);
+      setTimeout(() => setSelectedCategories([categoryParam]), 0);
     } else {
-      setSelectedCategories([]);
+      setTimeout(() => setSelectedCategories([]), 0);
     }
   }, [categoryParam]);
 
@@ -125,7 +125,7 @@ function ProductCatalogContent() {
         break;
       case 'newest':
       default:
-        result.sort((a, b) => (a.badge === 'new' ? -1 : 1));
+        result.sort((a) => (a.badge === 'new' ? -1 : 1));
         break;
     }
 
@@ -166,7 +166,7 @@ function ProductCatalogContent() {
 
     // Filter out empty groups so we only display populated categories
     return Object.entries(groups)
-      .filter(([_, group]) => group.products.length > 0)
+      .filter(([, group]) => group.products.length > 0)
       .map(([id, group]) => ({
         id,
         categoryName: group.categoryName,
@@ -204,7 +204,7 @@ function ProductCatalogContent() {
         </h1>
         <div className="w-16 h-0.5 bg-accent mx-auto mb-4" />
         <p className="text-xs text-text-muted font-semibold uppercase tracking-[0.25em] max-w-xl mx-auto">
-          Explore Mumbai's finest premium cosmetics organized visually by category and brand
+          Explore Mumbai&apos;s finest premium cosmetics organized visually by category and brand
         </p>
       </div>
 

@@ -234,7 +234,7 @@ export default function ProductDetailPage() {
             
             {activeTab === 'ingredients' && (
               <div className="text-sm text-text-muted font-light leading-relaxed">
-                <p>We believe in full transparency. Our products are formulated with the highest quality ingredients to ensure maximum efficacy without compromising your skin's health.</p>
+                <p>We believe in full transparency. Our products are formulated with the highest quality ingredients to ensure maximum efficacy without compromising your skin&apos;s health.</p>
                 <p className="mt-4 italic">Please refer to the physical product packaging for the most accurate and up-to-date list of ingredients.</p>
               </div>
             )}

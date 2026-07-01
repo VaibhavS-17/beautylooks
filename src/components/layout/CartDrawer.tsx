@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { X, ShoppingBag, Plus, Minus, Trash2 } from 'lucide-react';
+import { X, Plus, Minus } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
 

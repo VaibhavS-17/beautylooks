@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useWishlistStore, useCartStore } from '@/lib/store';
 import { products, formatPrice } from '@/lib/data';
 
