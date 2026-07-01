@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Search, Heart, ShoppingBag, Menu, X, Truck, Shield, Sparkles, User } from 'lucide-react';
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
@@ -14,6 +14,7 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState('');
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const cartItemsCount = useCartStore((state) => state.getTotalItems());
   const openCart = useCartStore((state) => state.openCart);
@@ -68,28 +69,26 @@ export default function Navbar() {
       {/* Top Announcement Bar */}
       <div className="bg-[var(--color-text-main)] text-white text-center py-2 text-[10px] tracking-[0.2em] uppercase font-medium overflow-hidden">
         <div className="flex items-center justify-center gap-8">
-          <span>✦ Free Delivery on Orders Above ₹499 ✦</span>
-          <span className="hidden sm:inline">100% Authentic Products ✦ Mumbai's Trusted Beauty Store</span>
+          <span>• Free Delivery on Orders Above ₹499 •</span>
+          <span className="hidden sm:inline">100% Authentic Products • Mumbai's Trusted Beauty Store</span>
         </div>
       </div>
 
       <nav
         className={`sticky top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 px-4 sm:px-6 lg:px-8 mb-4 ${
-          isScrolled
-            ? 'py-0'
-            : 'py-0'
+          isScrolled ? 'translate-y-[-4px]' : ''
         }`}
       >
         <div className={`transition-all duration-500 rounded-2xl border ${
           isScrolled
-            ? 'bg-white/70 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] border-white/40'
-            : 'bg-[var(--color-primary)]/90 backdrop-blur-md shadow-sm border-[var(--color-border)]'
+            ? 'bg-white/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border-white/60'
+            : 'bg-[var(--color-primary)]/95 backdrop-blur-md shadow-sm border-[var(--color-border)]'
         }`}>
         {/* Main Navbar Row */}
         <div className="px-4 sm:px-6">
-          <div className="flex justify-between items-center h-16 sm:h-20 relative">
+          <div className={`flex justify-between items-center relative transition-all duration-500 ${isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'}`}>
 
-            {/* Left: Mobile Menu Button */}
+            {/* Left: Mobile Menu Button (Hamburger) */}
             <div className="flex items-center md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
@@ -100,39 +99,46 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Logo Section */}
-            <Link href="/" className="flex items-center gap-3.5 group flex-shrink-0">
-              {/* Logo Image */}
-              <div className="relative h-11 w-11 sm:h-13 sm:w-13 overflow-hidden transition-all duration-350 ease-out group-hover:scale-105">
-                <Image
-                  src="/images/brand/logo.png"
-                  alt="Beauty Looks Mumbai Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-              {/* Brand Name Text */}
-              <div className="hidden sm:block">
-                <div className="text-[var(--color-text-main)] font-semibold text-base leading-none tracking-tight font-display mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
-                  Beauty Looks
+            {/* Left: Desktop Logo */}
+            <div className="hidden md:flex items-center flex-1">
+              <Link href="/" className="flex items-center gap-3.5 group flex-shrink-0">
+                {/* Logo Image (Properly scaled) */}
+                <div className="relative h-12 w-12 rounded-full overflow-hidden border border-[var(--color-accent)]/30 shadow-sm shrink-0 bg-black transition-all duration-500 ease-out group-hover:scale-105 group-hover:shadow-md">
+                  <Image
+                    src="/images/brand/logo.png"
+                    alt="Beauty Looks Logo"
+                    fill
+                    className="object-contain p-0.5"
+                    priority
+                  />
                 </div>
-                <div className="text-[8px] text-[var(--color-accent)] tracking-[0.25em] uppercase font-semibold">
-                  Premium Cosmetics
+                {/* Brand Name Text */}
+                <div className="transition-transform duration-500 group-hover:translate-x-1 flex flex-col justify-center">
+                  <div className="text-[var(--color-text-main)] font-semibold text-xl leading-none tracking-wide font-display mb-1 transition-colors duration-300 group-hover:text-[var(--color-accent)]" style={{ fontFamily: 'Playfair Display, serif' }}>
+                    Beauty Looks
+                  </div>
+                  <div className="text-[9px] text-[var(--color-accent)] tracking-[0.3em] uppercase font-bold opacity-90 group-hover:opacity-100 transition-opacity duration-300">
+                    Premium Cosmetics
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </div>
 
-            {/* Desktop Navigation (Center) */}
-            <div className="hidden md:flex items-center gap-8 absolute left-1/2 transform -translate-x-1/2">
+            {/* Center: Desktop Nav Links */}
+            <div className="hidden md:flex absolute left-1/2 transform -translate-x-1/2 items-center justify-center gap-6 lg:gap-10">
               {navLinks.map((link) => {
-                const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href.split('?')[0]));
+                const [linkPath, linkQuery] = link.href.split('?');
+                const isActive = pathname === linkPath && (
+                  !linkQuery 
+                    ? !searchParams.get('category') 
+                    : searchParams.get('category') === new URLSearchParams(linkQuery).get('category')
+                );
                 return (
                   <Link
                     key={link.name}
                     href={link.href}
-                    className={`relative text-[11px] tracking-[0.15em] uppercase font-semibold transition-colors group ${
-                      isActive ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-main)] hover:text-[var(--color-accent)]'
+                    className={`relative text-[11px] tracking-[0.15em] uppercase font-semibold transition-all duration-300 group px-2 py-1 ${
+                      isActive ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-main)] hover:text-[var(--color-accent)] hover:-translate-y-0.5'
                     }`}
                   >
                     {link.name}
@@ -144,19 +150,35 @@ export default function Navbar() {
               })}
             </div>
 
+            {/* Logo Section for Mobile Layout (Centered & Circle cropped logo + Premium brand text beside it) */}
+            <Link href="/" className="absolute left-1/2 transform -translate-x-1/2 flex md:hidden items-center gap-2 group flex-shrink-0">
+              <div className="relative h-8 w-8 rounded-full overflow-hidden border border-[var(--color-accent)]/20 shadow-sm shrink-0 bg-white p-0.5">
+                <Image
+                  src="/images/brand/logo.png"
+                  alt="Beauty Looks Logo"
+                  fill
+                  className="object-cover rounded-full"
+                  priority
+                />
+              </div>
+              <span className="text-[14px] font-semibold tracking-wider font-display text-[var(--color-text-main)] uppercase" style={{ fontFamily: 'Playfair Display, serif' }}>
+                Beauty Looks
+              </span>
+            </Link>
+
             {/* Right Icons */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              {/* Search Toggle */}
+            <div className="flex items-center justify-end gap-3 sm:gap-4 flex-1">
+              {/* Search Toggle (Visible on both mobile and desktop) */}
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden sm:block"
+                className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors p-2 rounded-full hover:bg-[var(--color-secondary)]/50"
                 aria-label="Search"
               >
                 <Search size={19} strokeWidth={1.5} />
               </button>
 
-              {/* Wishlist */}
-              <Link href="/wishlist" className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden sm:block">
+              {/* Wishlist (Desktop only) */}
+              <Link href="/wishlist" className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block">
                 <Heart size={19} strokeWidth={1.5} />
                 {wishlistCount > 0 && (
                   <span className="absolute -top-1.5 -right-2 bg-[var(--color-accent)] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
@@ -165,7 +187,7 @@ export default function Navbar() {
                 )}
               </Link>
 
-              {/* Cart */}
+              {/* Cart (Desktop only) */}
               <button
                 onClick={openCart}
                 className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block"
@@ -179,7 +201,7 @@ export default function Navbar() {
                 )}
               </button>
 
-              {/* Account */}
+              {/* Account (Desktop only) */}
               <Link
                 href={isLoggedIn ? '/account' : '/login'}
                 className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block"

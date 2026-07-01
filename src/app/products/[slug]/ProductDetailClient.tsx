@@ -50,7 +50,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
           <ChevronRight size={12} className="mx-2" />
           <Link href="/products" className="hover:text-text-main transition-colors">Collection</Link>
           <ChevronRight size={12} className="mx-2" />
-          <Link href={`/products?category=${product.categoryId}`} className="hover:text-text-main transition-colors">{product.categoryId.replace('-', ' ')}</Link>
+          <Link href={`/products?category=${product.categoryId}`} className="hover:text-text-main transition-colors">{product.category}</Link>
           <ChevronRight size={12} className="mx-2" />
           <span className="text-text-main">{product.name}</span>
         </nav>

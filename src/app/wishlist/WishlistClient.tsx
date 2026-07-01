@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { X } from 'lucide-react';
+import { X, Heart } from 'lucide-react';
 import { useWishlistStore, useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
 
@@ -37,12 +37,24 @@ export default function WishlistClient({ products }: WishlistClientProps) {
 
         {wishlistedProducts.length === 0 ? (
           /* Empty State */
-          <div className="flex flex-col items-center justify-center py-24 text-center max-w-xl mx-auto space-y-8">
-            <h2 className="font-display text-3xl text-text-main">Your wishlist is empty</h2>
-            <p className="text-sm text-text-muted max-w-sm font-light">
-              Save products here to review them later or quickly add them to your bag.
-            </p>
-            <Link href="/products" className="btn-primary">
+          <div className="flex flex-col items-center justify-center py-20 text-center max-w-md mx-auto space-y-6">
+            <div className="relative flex items-center justify-center w-24 h-24 rounded-full bg-secondary/50 border border-border/40 shadow-inner">
+              <Heart size={38} strokeWidth={1.2} className="text-accent fill-accent/5" />
+              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent/20 animate-ping" />
+              <div className="absolute -bottom-1 -left-1 w-3 h-3 rounded-full bg-accent/15" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="font-display text-3xl text-text-main font-semibold" style={{ fontFamily: 'Playfair Display, serif' }}>
+                Your wishlist is empty
+              </h2>
+              <p className="text-sm text-text-muted max-w-xs font-light leading-relaxed">
+                Save products here to review them later or quickly add them to your bag. Discover our catalog to find items you love.
+              </p>
+            </div>
+            <Link
+              href="/products"
+              className="mt-4 px-8 py-3.5 bg-brand-dark text-primary hover:bg-accent hover:text-brand-dark text-xs uppercase tracking-widest font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg active:scale-95"
+            >
               Discover Products
             </Link>
           </div>

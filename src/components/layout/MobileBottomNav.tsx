@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, ShoppingBag, Heart, User } from 'lucide-react';
+import { Home, Tag, ShoppingBag, Heart, User } from 'lucide-react';
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
 
@@ -34,9 +34,9 @@ export default function MobileBottomNav() {
       icon: Home,
     },
     {
-      name: 'Search',
+      name: 'Categories',
       href: '/products',
-      icon: Search,
+      icon: Tag,
     },
     {
       name: 'Wishlist',

@@ -4,20 +4,19 @@ import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ChevronDown, Filter, Sparkles, Layers, Check, X } from 'lucide-react';
+import { Search, ChevronDown, Filter, Sparkles, Layers, Check, X, Droplets, SprayCan, Package, Component } from 'lucide-react';
 import { formatPrice } from '@/lib/data';
 import { useCartStore } from '@/lib/store';
 
 // Dynamic category icons helper
-const getCategoryIcon = (categoryName: string) => {
+const getCategoryIcon = (categoryName: string, size = 16) => {
   const name = categoryName.toLowerCase();
-  if (name.includes('facial') || name.includes('kit')) return '💄';
-  if (name.includes('serum') || name.includes('oil')) return '🧴';
-  if (name.includes('cleanser') || name.includes('wash')) return '🧼';
-  if (name.includes('mask') || name.includes('pack')) return '🎭';
-  if (name.includes('shampoo')) return '💇';
-  if (name.includes('conditioner')) return '🧴';
-  return '✨'; // default beauty sparkle icon
+  if (name.includes('facial') || name.includes('kit')) return <Package size={size} className="text-[var(--color-accent)]" />;
+  if (name.includes('serum') || name.includes('oil')) return <Droplets size={size} className="text-[var(--color-accent)]" />;
+  if (name.includes('cleanser') || name.includes('wash')) return <SprayCan size={size} className="text-[var(--color-accent)]" />;
+  if (name.includes('mask') || name.includes('pack')) return <Component size={size} className="text-[var(--color-accent)]" />;
+  if (name.includes('shampoo') || name.includes('conditioner')) return <Droplets size={size} className="text-[var(--color-accent)]" />;
+  return <Sparkles size={size} className="text-[var(--color-accent)]" />; // default beauty sparkle icon
 };
 
 interface ProductsClientProps {
@@ -43,9 +42,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
   }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(
-    categoryParam ? [categoryParam] : []
-  );
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('newest');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -162,25 +159,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
       }));
   }, [filteredProducts, allCategories]);
 
-  // Server-rendered fallback skeleton placeholder
-  if (!isMounted) {
-    return (
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-16 text-left">
-        <div className="text-center mb-16 animate-pulse">
-          <div className="h-10 w-48 bg-[#E8E2D9] rounded-xl mx-auto mb-4" />
-          <div className="h-4 w-72 bg-[#E8E2D9] rounded-lg mx-auto" />
-        </div>
-        <div className="flex flex-col lg:flex-row gap-12">
-          <div className="w-full lg:w-1/4 h-80 bg-white rounded-2xl border border-border shimmer" />
-          <div className="w-full lg:w-3/4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="h-96 bg-white rounded-2xl border border-border shimmer" />
-            <div className="h-96 bg-white rounded-2xl border border-border shimmer" />
-            <div className="h-96 bg-white rounded-2xl border border-border shimmer" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // No skeleton loader
 
   return (
     <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 text-left">

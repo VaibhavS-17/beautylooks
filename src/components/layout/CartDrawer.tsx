@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { X, Plus, Minus } from 'lucide-react';
+import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
 
@@ -37,15 +37,24 @@ export default function CartDrawer() {
           {/* Cart items list */}
           <div className="flex-1 overflow-y-auto py-6 px-6 no-scrollbar">
             {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-                <h3 className="font-display text-2xl text-text-main">Your bag is empty</h3>
-                <p className="text-sm text-text-muted max-w-xs font-light">
-                  Discover our collections and find your new favorites.
-                </p>
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-6 px-4">
+                <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-secondary/50 border border-border/40 shadow-inner">
+                  <ShoppingBag size={30} strokeWidth={1.2} className="text-accent" />
+                  <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-accent/20 animate-ping" />
+                  <div className="absolute -bottom-0.5 -left-0.5 w-2 h-2 rounded-full bg-accent/15" />
+                </div>
+                <div className="space-y-1.5">
+                  <h3 className="font-display text-2xl text-text-main font-semibold" style={{ fontFamily: 'Playfair Display, serif' }}>
+                    Your bag is empty
+                  </h3>
+                  <p className="text-xs text-text-muted max-w-[240px] font-light leading-relaxed">
+                    Discover our premium collections and find your new favorites.
+                  </p>
+                </div>
                 <Link
                   href="/products"
                   onClick={closeCart}
-                  className="w-full mt-6 bg-brand-dark text-primary px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-accent hover:text-brand-dark transition-all rounded-xl"
+                  className="w-full mt-4 bg-brand-dark text-primary px-4 py-3.5 text-xs font-semibold uppercase tracking-widest hover:bg-accent hover:text-brand-dark transition-all rounded-xl text-center shadow-md active:scale-95"
                 >
                   Shop Collection
                 </Link>
