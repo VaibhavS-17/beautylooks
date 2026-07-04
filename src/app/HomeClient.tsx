@@ -48,6 +48,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
             src={heroImageUrl}
             alt={siteSettings.hero_title}
             fill
+            sizes="100vw"
             className="object-cover"
             priority
           />
@@ -92,6 +93,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                     src={category.imageUrl}
                     alt={category.name}
                     fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 ) : (
@@ -145,6 +147,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                         src={product.images?.[0] || fallbackProductImage}
                         alt={product.name}
                         fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         className="object-cover product-image transition-transform duration-700 group-hover:scale-105"
                       />
                       <div className="absolute top-4 left-4 flex flex-col space-y-2 z-10">

@@ -71,6 +71,7 @@ export default function CartDrawer() {
                           src={item.product.images?.[0] || fallbackProductImage}
                           alt={item.product.name}
                           fill
+                          sizes="96px"
                           className="object-cover"
                         />
                       </div>

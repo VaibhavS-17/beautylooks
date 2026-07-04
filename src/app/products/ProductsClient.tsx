@@ -265,6 +265,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                       src={b.logoUrl}
                       alt={b.name}
                       fill
+                      sizes="80px"
                       className="object-contain p-2"
                     />
                   ) : (
@@ -438,6 +439,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                               src={product.images?.[0] || fallbackProductImage}
                               alt={product.name}
                               fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                               className="object-cover product-image transition-transform duration-700 group-hover:scale-105"
                             />
                             <div className="absolute top-4 left-4 flex flex-col space-y-2 z-10">

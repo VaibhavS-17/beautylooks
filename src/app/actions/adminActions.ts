@@ -42,7 +42,18 @@ export async function createProduct(formData: FormData) {
   const stockQuantity = parseInt(formData.get('stockQuantity') as string || '0');
   const isFeatured = formData.get('isFeatured') === 'true';
   const isActive = formData.get('isActive') === 'true';
-  const imageInput = formData.get('image') as string || '/images/products/facial-kit-1.png';
+  const imagesInput = formData.get('images') as string || formData.get('image') as string;
+  let images: string[] = ['/images/products/facial-kit-1.png'];
+  if (imagesInput) {
+    try {
+      images = JSON.parse(imagesInput);
+      if (!Array.isArray(images) || images.length === 0) {
+        images = [imagesInput];
+      }
+    } catch {
+      images = [imagesInput];
+    }
+  }
 
   if (!name || !description || isNaN(price)) {
     return { error: 'Name, Description, and Price are required.' };
@@ -71,7 +82,7 @@ export async function createProduct(formData: FormData) {
         stock_quantity: stockQuantity,
         is_featured: isFeatured,
         is_active: isActive,
-        images: [imageInput],
+        images: images,
       });
 
     if (error) {
@@ -109,7 +120,7 @@ export async function updateProduct(formData: FormData) {
   const stockQuantity = parseInt(formData.get('stockQuantity') as string || '0');
   const isFeatured = formData.get('isFeatured') === 'true';
   const isActive = formData.get('isActive') === 'true';
-  const imageInput = formData.get('image') as string;
+  const imagesInput = formData.get('images') as string;
 
   if (!id || !name || !description || isNaN(price)) {
     return { error: 'ID, Name, Description, and Price are required.' };
@@ -139,8 +150,13 @@ export async function updateProduct(formData: FormData) {
       updated_at: new Date().toISOString(),
     };
 
-    if (imageInput) {
-      updateData.images = [imageInput];
+    if (imagesInput) {
+      try {
+        const parsed = JSON.parse(imagesInput);
+        updateData.images = Array.isArray(parsed) ? parsed : [imagesInput];
+      } catch {
+        updateData.images = [imagesInput];
+      }
     }
 
     const { error } = await supabase

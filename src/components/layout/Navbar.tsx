@@ -108,6 +108,7 @@ export default function Navbar() {
                     src="/images/brand/logo.png"
                     alt="Beauty Looks Logo"
                     fill
+                    sizes="48px"
                     className="object-contain p-0.5"
                     priority
                   />
@@ -157,6 +158,7 @@ export default function Navbar() {
                   src="/images/brand/logo.png"
                   alt="Beauty Looks Logo"
                   fill
+                  sizes="32px"
                   className="object-cover rounded-full"
                   priority
                 />
@@ -267,6 +269,7 @@ export default function Navbar() {
                   src="/images/brand/logo.png"
                   alt="Beauty Looks Mumbai"
                   fill
+                  sizes="36px"
                   className="object-contain"
                 />
               </div>
