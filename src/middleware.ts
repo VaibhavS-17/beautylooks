@@ -1,7 +1,22 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+// Define routes that require authentication or redirect logic
+const PROTECTED_PATHS = ['/account', '/admin'];
+const AUTH_PATHS = ['/login', '/register'];
+
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // 1. Fast-Path: If the route is a public e-commerce page, bypass session validation entirely
+  const isProtected = PROTECTED_PATHS.some((path) => pathname.startsWith(path));
+  const isAuthPage = AUTH_PATHS.some((path) => pathname.startsWith(path));
+
+  if (!isProtected && !isAuthPage) {
+    return NextResponse.next();
+  }
+
+  // 2. Only initialize Supabase & check session for protected or authentication pages
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -29,31 +44,20 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // IMPORTANT: Do not use getSession() — it doesn't validate the JWT.
-  // Always use getUser() for secure auth checks.
+  // IMPORTANT: Secure check using getUser() instead of getSession()
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect /account and /admin routes — redirect to login if unauthenticated
-  const protectedPaths = ['/account', '/admin'];
-  const isProtected = protectedPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  );
-
+  // 3. Handle redirects for protected pages
   if (isProtected && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    url.searchParams.set('redirect', request.nextUrl.pathname);
+    url.searchParams.set('redirect', pathname);
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from /login and /register
-  const authPages = ['/login', '/register'];
-  const isAuthPage = authPages.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  );
-
+  // 4. Redirect authenticated users away from login/register to account
   if (isAuthPage && user) {
     const url = request.nextUrl.clone();
     url.pathname = '/account';
@@ -70,8 +74,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization)
      * - favicon.ico (favicon)
-     * - public assets (images, etc.)
+     * - public assets (images, fonts, stylesheets, scripts)
      */
-    '/((?!_next/static|_next/image|favicon.ico|images/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|images/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2)$).*)',
   ],
 };

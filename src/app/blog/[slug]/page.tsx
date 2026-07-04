@@ -2,13 +2,14 @@ import { createClient } from '@/lib/supabase/server';
 import BlogDetailClient from './BlogDetailClient';
 import { notFound } from 'next/navigation';
 
-export default async function BlogPostDetailPage({ params }: { params: { slug: string } }) {
+export default async function BlogPostDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const supabase = await createClient();
 
   const { data: postData, error } = await supabase
     .from('blog_posts')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single();
 
   if (error || !postData || !postData.is_published) {

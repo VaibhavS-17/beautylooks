@@ -2,7 +2,10 @@ import { createClient } from '@/lib/supabase/server';
 import ProductDetailClient from './ProductDetailClient';
 import { notFound } from 'next/navigation';
 
-export default async function ProductDetailPage({ params }: { params: { slug: string } }) {
+export const runtime = 'edge';
+
+export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const supabase = await createClient();
 
   const { data: productData, error } = await supabase
@@ -24,7 +27,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
       brands (name),
       categories (name)
     `)
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single();
 
   if (error || !productData) {
