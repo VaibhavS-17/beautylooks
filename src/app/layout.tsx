@@ -21,16 +21,20 @@ export const metadata: Metadata = {
 };
 
 import RootLayoutClient from "@/components/layout/RootLayoutClient";
+import { createClient } from '@/lib/supabase/server';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data: categories } = await supabase.from('categories').select('*').order('created_at', { ascending: true });
+
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-primary text-text-main font-sans">
-        <RootLayoutClient>{children}</RootLayoutClient>
+        <RootLayoutClient categories={categories || []}>{children}</RootLayoutClient>
       </body>
     </html>
   );

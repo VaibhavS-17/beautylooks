@@ -7,7 +7,7 @@ import Footer from "@/components/layout/Footer";
 import CartDrawer from "@/components/layout/CartDrawer";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 
-export default function RootLayoutClient({ children }: { children: React.ReactNode }) {
+export default function RootLayoutClient({ children, categories = [] }: { children: React.ReactNode, categories?: { id: string, name: string, slug: string }[] }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
 
@@ -18,10 +18,10 @@ export default function RootLayoutClient({ children }: { children: React.ReactNo
   return (
     <>
       <Suspense fallback={<div className="h-20 bg-[var(--color-primary)]" />}>
-        <Navbar />
+        <Navbar categories={categories} />
       </Suspense>
       <main className="flex-grow pb-24 md:pb-0">{children}</main>
-      <Footer />
+      <Footer categories={categories} />
       <MobileBottomNav />
       <CartDrawer />
     </>

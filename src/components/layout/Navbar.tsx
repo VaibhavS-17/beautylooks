@@ -8,7 +8,7 @@ import { Search, Heart, ShoppingBag, Menu, X, Truck, Shield, Sparkles, User } fr
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
 
-export default function Navbar() {
+export default function Navbar({ categories = [] }: { categories?: { id: string, name: string, slug: string }[] }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -52,8 +52,7 @@ export default function Navbar() {
 
   const navLinks = [
     { name: 'Shop All', href: '/products' },
-    { name: 'Facial Kits', href: '/products?category=facial-kits' },
-    { name: 'Skincare', href: '/products?category=serums-oils' },
+    ...categories.slice(0, 2).map((c: { id: string, name: string, slug: string }) => ({ name: c.name, href: `/products?category=${c.slug}` })),
     { name: 'Blog', href: '/blog' },
     { name: 'Contact', href: '/contact' },
   ];

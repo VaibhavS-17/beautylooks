@@ -224,7 +224,13 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                     : 'bg-white text-[#2C1E16] border-[#E8E2D9] hover:border-accent hover:-translate-y-0.5 hover:shadow-sm'
                 }`}
               >
-                <span className="text-lg">{icon}</span>
+                {cat.imageUrl ? (
+                  <div className="relative w-5 h-5 overflow-hidden rounded-full border border-black/10 shrink-0">
+                    <Image src={cat.imageUrl} alt={cat.name} fill className="object-cover" sizes="20px" />
+                  </div>
+                ) : (
+                  <span className="text-lg">{icon}</span>
+                )}
                 <span>{cat.name}</span>
                 {isSelected && <Check size={12} className="ml-1 text-accent" />}
               </button>

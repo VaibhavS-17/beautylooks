@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
-export default function Footer() {
+export default function Footer({ categories = [] }: { categories?: { id: string, name: string, slug: string }[] }) {
   return (
     <footer className="bg-brand-dark pt-16 pb-8 border-t border-brand-dark">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,9 +25,9 @@ export default function Footer() {
             <h4 className="font-semibold text-primary uppercase tracking-widest text-xs mb-6">Shop</h4>
             <ul className="space-y-4">
               <li><Link href="/products" className="text-primary/70 hover:text-accent text-sm transition-colors">All Products</Link></li>
-              <li><Link href="/products?category=facial-kits" className="text-primary/70 hover:text-accent text-sm transition-colors">Facial Kits</Link></li>
-              <li><Link href="/products?category=serums-oils" className="text-primary/70 hover:text-accent text-sm transition-colors">Serums & Oils</Link></li>
-              <li><Link href="/products?category=cleansers-toners" className="text-primary/70 hover:text-accent text-sm transition-colors">Cleansers</Link></li>
+              {categories.slice(0, 3).map((c: { id: string, name: string, slug: string }) => (
+                <li key={c.id}><Link href={`/products?category=${c.slug}`} className="text-primary/70 hover:text-accent text-sm transition-colors">{c.name}</Link></li>
+              ))}
             </ul>
           </div>
 

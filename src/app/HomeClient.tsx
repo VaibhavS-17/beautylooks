@@ -244,10 +244,19 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                 <Link href={`/blog/${post.slug}`} className="block">
                   <div className="relative h-[250px] sm:h-[300px] w-full bg-primary/20 mb-6 overflow-hidden rounded-2xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)]">
                     <div className="absolute inset-0 bg-text-main opacity-5 group-hover:opacity-10 transition-opacity z-10" />
-                    {/* Placeholder for editorial image */}
-                    <div className="w-full h-full bg-primary-dark flex items-center justify-center font-display text-3xl text-border">
-                      Editorial
-                    </div>
+                    {post.coverImage ? (
+                      <Image
+                        src={post.coverImage}
+                        alt={post.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-primary-dark flex items-center justify-center font-display text-3xl text-border">
+                        Editorial
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-3">
                     <span className="text-[10px] font-semibold text-accent tracking-widest uppercase">

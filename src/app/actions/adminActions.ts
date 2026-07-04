@@ -286,18 +286,33 @@ export async function deleteBrand(brandId: string) {
   if (!authCheck.verified) return { error: authCheck.error };
 
   try {
+    // Prevent foreign key constraint violations by unlinking products first
+    const { error: unlinkError } = await supabase
+      .from('products')
+      .update({ brand_id: null })
+      .eq('brand_id', brandId);
+      
+    if (unlinkError) {
+      console.error('Error unlinking products from brand:', unlinkError);
+    }
+
     const { error } = await supabase
       .from('brands')
       .delete()
       .eq('id', brandId);
 
-    if (error) return { error: error.message };
+    if (error) {
+      console.error('Error deleting brand:', error);
+      return { error: error.message };
+    }
 
     revalidatePath('/admin');
     revalidatePath('/products');
     revalidatePath('/');
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (err: any) {
+    console.error('Delete brand exception:', err);
     return { error: err.message || 'Failed to delete brand.' };
   }
 }
@@ -389,12 +404,25 @@ export async function deleteCategory(categoryId: string) {
   if (!authCheck.verified) return { error: authCheck.error };
 
   try {
+    // Prevent foreign key constraint violations by unlinking products first
+    const { error: unlinkError } = await supabase
+      .from('products')
+      .update({ category_id: null })
+      .eq('category_id', categoryId);
+      
+    if (unlinkError) {
+      console.error('Error unlinking products from category:', unlinkError);
+    }
+
     const { error } = await supabase
       .from('categories')
       .delete()
       .eq('id', categoryId);
 
-    if (error) return { error: error.message };
+    if (error) {
+      console.error('Error deleting category:', error);
+      return { error: error.message };
+    }
 
     revalidatePath('/admin');
     revalidatePath('/products');
@@ -402,6 +430,7 @@ export async function deleteCategory(categoryId: string) {
     revalidatePath('/', 'layout');
     return { success: true };
   } catch (err: any) {
+    console.error('Delete category exception:', err);
     return { error: err.message || 'Failed to delete category.' };
   }
 }
