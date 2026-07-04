@@ -109,6 +109,7 @@ export default function BrandsTab({
                   currentValue={uploadedBrandLogo}
                   onChange={setUploadedBrandLogo}
                 />
+                <input type="hidden" name="logoUrl" value={uploadedBrandLogo} />
               </div>
               <div className="flex justify-end space-x-3 pt-4 border-t border-[#EFECE6]">
                 <button type="button" onClick={() => setIsAddBrandOpen(false)} className="px-4 py-2 border border-[#EFECE6] rounded-xl text-xs font-semibold">Cancel</button>
@@ -147,6 +148,7 @@ export default function BrandsTab({
                   currentValue={uploadedBrandLogo}
                   onChange={setUploadedBrandLogo}
                 />
+                <input type="hidden" name="logoUrl" value={uploadedBrandLogo} />
               </div>
               <div className="flex justify-end space-x-3 pt-4 border-t border-[#EFECE6]">
                 <button type="button" onClick={() => setEditBrandItem(null)} className="px-4 py-2 border border-[#EFECE6] rounded-xl text-xs font-semibold">Cancel</button>

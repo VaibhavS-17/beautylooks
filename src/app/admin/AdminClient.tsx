@@ -97,9 +97,20 @@ type TabType = 'dashboard' | 'orders' | 'products' | 'categories' | 'brands' | '
 
 // Dynamic imports of heavy components to optimize compilation speeds
 const TabLoader = () => (
-  <div className="h-[40vh] w-full flex flex-col items-center justify-center space-y-3">
-    <Loader2 className="animate-spin text-[#CA8A04]" size={32} />
-    <span className="text-xs font-semibold text-[#8A8177]">Loading console workspace...</span>
+  <div className="w-full h-full animate-pulse space-y-6">
+    <div className="flex justify-between items-center pb-6 border-b border-[#EFECE6]">
+      <div className="space-y-2">
+        <div className="h-8 w-48 bg-stone-100 rounded-lg"></div>
+        <div className="h-4 w-64 bg-stone-100 rounded-lg"></div>
+      </div>
+      <div className="h-10 w-32 bg-stone-100 rounded-xl"></div>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} className="h-32 bg-stone-50 rounded-2xl border border-[#EFECE6]"></div>
+      ))}
+    </div>
+    <div className="h-[400px] w-full bg-stone-50 rounded-2xl border border-[#EFECE6]"></div>
   </div>
 );
 
@@ -326,7 +337,7 @@ export default function AdminClient({
             </div>
             <div>
               <h1 className="font-display font-semibold text-sm tracking-wide text-white">Beauty Looks</h1>
-              <p className="text-[9px] text-[#CA8A04] tracking-widest uppercase font-bold">Admin Console</p>
+              <p className="text-[9px] text-[#CA8A04] tracking-widest uppercase font-bold">Store Management</p>
             </div>
           </div>
 

@@ -334,6 +334,7 @@ export async function createCategory(formData: FormData) {
     revalidatePath('/admin');
     revalidatePath('/products');
     revalidatePath('/');
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (err: any) {
     return { error: err.message || 'An unexpected error occurred.' };
@@ -375,6 +376,7 @@ export async function updateCategory(formData: FormData) {
     revalidatePath('/admin');
     revalidatePath('/products');
     revalidatePath('/');
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (err: any) {
     return { error: err.message || 'An unexpected error occurred.' };
@@ -397,6 +399,7 @@ export async function deleteCategory(categoryId: string) {
     revalidatePath('/admin');
     revalidatePath('/products');
     revalidatePath('/');
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (err: any) {
     return { error: err.message || 'Failed to delete category.' };

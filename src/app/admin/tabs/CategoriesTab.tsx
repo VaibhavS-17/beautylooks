@@ -64,7 +64,7 @@ export default function CategoriesTab({
               <h4 className="font-display font-semibold text-base">{c.name}</h4>
               <p className="text-xs text-[#8C8885] line-clamp-2 font-light leading-relaxed">{c.description || 'No description added yet.'}</p>
               <div className="flex justify-between items-center pt-2 border-t border-[#FBF9F6]">
-                <span className="text-[10px] uppercase font-bold tracking-widest text-[#8A8177]">Slug: /{c.slug}</span>
+                <span className="text-[10px] font-medium tracking-wide text-[#8A8177]">Web Link: /{c.slug}</span>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
@@ -117,6 +117,7 @@ export default function CategoriesTab({
                   currentValue={uploadedCategoryImg}
                   onChange={setUploadedCategoryImg}
                 />
+                <input type="hidden" name="imageUrl" value={uploadedCategoryImg} />
               </div>
               <div className="flex justify-end space-x-3 pt-4 border-t border-[#EFECE6]">
                 <button type="button" onClick={() => setIsAddCategoryOpen(false)} className="px-4 py-2 border border-[#EFECE6] rounded-xl text-xs font-semibold">Cancel</button>
@@ -130,6 +131,7 @@ export default function CategoriesTab({
         </div>
       )}
 
+      {/* EDIT CATEGORY MODAL */}
       {editCategoryItem && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-[#EFECE6] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col animate-fade-in">
@@ -159,6 +161,7 @@ export default function CategoriesTab({
                   currentValue={uploadedCategoryImg}
                   onChange={setUploadedCategoryImg}
                 />
+                <input type="hidden" name="imageUrl" value={uploadedCategoryImg} />
               </div>
               <div className="flex justify-end space-x-3 pt-4 border-t border-[#EFECE6]">
                 <button type="button" onClick={() => setEditCategoryItem(null)} className="px-4 py-2 border border-[#EFECE6] rounded-xl text-xs font-semibold">Cancel</button>

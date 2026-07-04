@@ -168,6 +168,7 @@ export default function BlogsTab({
                   currentValue={uploadedBlogImg}
                   onChange={setUploadedBlogImg}
                 />
+                <input type="hidden" name="coverImage" value={uploadedBlogImg} />
               </div>
               <div className="flex items-center space-x-2 pt-2">
                 <input type="checkbox" name="isPublished" value="true" id="isPublishedAdd" className="rounded border-border text-[#CA8A04] focus:ring-[#CA8A04]" />
@@ -218,6 +219,7 @@ export default function BlogsTab({
                   currentValue={uploadedBlogImg}
                   onChange={setUploadedBlogImg}
                 />
+                <input type="hidden" name="coverImage" value={uploadedBlogImg} />
               </div>
               <div className="flex items-center space-x-2 pt-2">
                 <input type="checkbox" name="isPublished" value="true" id="isPublishedEdit" defaultChecked={editBlogItem.is_published} className="rounded border-border text-[#CA8A04] focus:ring-[#CA8A04]" />
