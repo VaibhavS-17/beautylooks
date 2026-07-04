@@ -64,7 +64,7 @@ export default function CategoriesTab({
               <h4 className="font-display font-semibold text-base">{c.name}</h4>
               <p className="text-xs text-[#8C8885] line-clamp-2 font-light leading-relaxed">{c.description || 'No description added yet.'}</p>
               <div className="flex justify-between items-center pt-2 border-t border-[#FBF9F6]">
-                <span className="text-[10px] font-medium tracking-wide text-[#8A8177]">Web Link: /{c.slug}</span>
+                <span className="text-[10px] font-medium tracking-wide text-[#8A8177]">URL Link: /{c.name.toLowerCase().replace(/\s+/g, '-')}</span>
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {

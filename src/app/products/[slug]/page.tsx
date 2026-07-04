@@ -1,8 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import ProductDetailClient from './ProductDetailClient';
 import { notFound } from 'next/navigation';
-
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

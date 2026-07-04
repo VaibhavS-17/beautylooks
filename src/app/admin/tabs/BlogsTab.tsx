@@ -99,7 +99,7 @@ export default function BlogsTab({
                     </div>
                     <div>
                       <span className="font-semibold block truncate" title={blog.title}>{blog.title}</span>
-                      <span className="text-[10px] text-[#8C8885] block">/{blog.slug}</span>
+                      <span className="text-[10px] text-[#8C8885] block truncate max-w-[150px]">Link: /{blog.title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-')}</span>
                     </div>
                   </td>
                   <td className="p-4 max-w-xs truncate text-[#8C8885]">{blog.excerpt || 'No description tagline.'}</td>

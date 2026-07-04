@@ -1,13 +1,13 @@
 'use client';
 
-export const runtime = 'edge';
-
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, CheckCircle2, ShieldCheck, CreditCard } from 'lucide-react';
+import Script from 'next/script';
+import { ArrowLeft, CheckCircle2, ShieldCheck, CreditCard, Loader2 } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
+import { createOrder, verifyPayment } from '@/app/actions/orderActions';
 
 export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart, getTotalItems } = useCartStore();
@@ -27,6 +27,8 @@ export default function CheckoutPage() {
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const totalPrice = getTotalPrice();
   const shippingCharge = totalPrice >= 499 ? 0 : 49;
@@ -43,14 +45,86 @@ export default function CheckoutPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage('');
+    setIsProcessing(true);
     
-    // Simulate order placement
-    const randomOrderId = 'BLM-' + Math.floor(100000 + Math.random() * 900000);
-    setOrderId(randomOrderId);
-    setOrderPlaced(true);
-    clearCart();
+    try {
+      // Create order on server
+      const orderItems = items.map(item => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+      }));
+
+      const res = await createOrder({
+        items: orderItems,
+        shippingAddress: formData,
+        totalAmount: finalTotal
+      });
+
+      if (!res.success) {
+        throw new Error(res.error || 'Failed to create order');
+      }
+
+      // Initialize Razorpay
+      const options = {
+        key: res.keyId,
+        amount: res.amount,
+        currency: 'INR',
+        name: 'Beauty Looks Mumbai',
+        description: 'Premium Beauty Products',
+        image: '/images/brand/logo.png',
+        order_id: res.razorpayOrderId,
+        handler: async function (response: any) {
+          try {
+            // Verify payment on server
+            const verifyRes = await verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              order_id: res.orderId
+            });
+
+            if (verifyRes.success) {
+              setOrderId(res.orderId);
+              setOrderPlaced(true);
+              clearCart();
+            } else {
+              setErrorMessage(verifyRes.error || 'Payment verification failed');
+            }
+          } catch (err: any) {
+            setErrorMessage('Payment verification error: ' + err.message);
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        prefill: {
+          name: formData.fullName,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: '#CA8A04',
+        },
+        modal: {
+          ondismiss: function() {
+            setIsProcessing(false);
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any){
+        setErrorMessage(response.error.description);
+        setIsProcessing(false);
+      });
+      rzp.open();
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage(err.message || 'Something went wrong');
+      setIsProcessing(false);
+    }
   };
 
   if (orderPlaced) {
@@ -104,7 +178,9 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-primary py-12">
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <div className="w-full min-h-screen bg-primary py-12">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Title */}
@@ -254,16 +330,21 @@ export default function CheckoutPage() {
               <div>
                 <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-8 flex items-center space-x-3">
                   <CreditCard size={20} strokeWidth={1.5} />
-                  <span>Payment Gateway</span>
+                  <span>Payment Details</span>
                 </h3>
                 <div className="bg-secondary rounded-2xl p-8 space-y-4 shadow-sm border border-border">
                   <p className="text-sm text-text-muted font-light leading-relaxed">
-                    Razorpay payments will be verified in production. For this demo, clicking "Place Order" will simulate a successful transaction.
+                    You will be redirected to the secure Razorpay checkout modal to complete your payment via UPI, Credit/Debit Cards, or Netbanking.
                   </p>
                   <div className="flex items-center space-x-3 text-xs text-text-main font-semibold uppercase tracking-widest pt-4 border-t border-border">
                     <ShieldCheck size={16} strokeWidth={1.5} className="text-accent" />
-                    <span>Secure Encrypted Payment</span>
+                    <span>Razorpay Secure Encrypted Payment</span>
                   </div>
+                  {errorMessage && (
+                    <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm border border-red-200 mt-4">
+                      {errorMessage}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -320,9 +401,11 @@ export default function CheckoutPage() {
 
               <button
                 type="submit"
-                className="btn-primary w-full justify-center"
+                disabled={isProcessing}
+                className="btn-primary w-full justify-center flex items-center space-x-2"
               >
-                Place Order
+                {isProcessing && <Loader2 size={16} className="animate-spin" />}
+                <span>{isProcessing ? 'Processing...' : 'Proceed to Payment'}</span>
               </button>
             </div>
 
@@ -331,5 +414,6 @@ export default function CheckoutPage() {
 
       </div>
     </div>
+    </>
   );
 }

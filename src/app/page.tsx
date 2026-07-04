@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import HomeClient from './HomeClient';
-
-export const revalidate = 600; // Cache the homepage for 10 minutes
+export const dynamic = 'force-dynamic';
 
 export default async function Homepage() {
   const supabase = await createClient();

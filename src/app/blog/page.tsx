@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import BlogClient from './BlogClient';
+export const dynamic = 'force-dynamic';
 
 export default async function BlogPage() {
   const supabase = await createClient();
