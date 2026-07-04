@@ -134,14 +134,17 @@ export default function ProductsTab({
                       <ImageIcon size={12} /> {product.images?.length || 0} Files
                     </span>
                   </td>
-                  <td className="p-4 font-bold">
+                  <td className="p-4">
                     {product.salePrice ? (
                       <div className="flex flex-col">
-                        <span className="text-[#CA8A04]">{formatPrice(product.salePrice)}</span>
-                        <span className="text-[10px] line-through text-[#8C8885] font-light">{formatPrice(product.price)}</span>
+                        <span className="text-[#CA8A04] font-bold text-xs">Sale: {formatPrice(product.salePrice)}</span>
+                        <span className="text-[10px] text-[#8C8885] font-light">Reg: {formatPrice(product.price)}</span>
                       </div>
                     ) : (
-                      formatPrice(product.price)
+                      <div className="flex flex-col">
+                        <span className="text-[#1C1917] font-semibold text-xs">{formatPrice(product.price)}</span>
+                        <span className="text-[10px] text-[#8C8885] font-light">No Sale</span>
+                      </div>
                     )}
                   </td>
                   <td className="p-4">

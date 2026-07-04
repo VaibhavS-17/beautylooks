@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, ChevronDown, Filter, Sparkles, Layers, Check, X, Droplets, SprayCan, Package, Component } from 'lucide-react';
-import { formatPrice } from '@/lib/data';
+import { formatPrice, getDiscountPercent } from '@/lib/data';
 import { useCartStore } from '@/lib/store';
 
 // Dynamic category icons helper
@@ -470,14 +470,19 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                             </div>
                           </div>
                           
-                          <div className="flex items-center space-x-2 mt-auto pt-4 border-t border-[#E8E2D9]/40">
+                           <div className="flex items-center gap-2 mt-auto pt-4 border-t border-[#E8E2D9]/40 flex-wrap">
                             <span className="text-sm font-semibold text-text-main">
                               {formatPrice(currentPrice)}
                             </span>
                             {isOnSale && (
-                              <span className="text-xs text-text-muted line-through">
-                                {formatPrice(product.price)}
-                              </span>
+                              <>
+                                <span className="text-xs text-text-muted line-through">
+                                  {formatPrice(product.price)}
+                                </span>
+                                <span className="bg-[#2C1E16] text-[#FAF9F6] text-[9px] uppercase tracking-widest font-semibold px-1.5 py-0.5 rounded">
+                                  {getDiscountPercent(product.price, product.salePrice!)}% OFF
+                                </span>
+                              </>
                             )}
                           </div>
                           

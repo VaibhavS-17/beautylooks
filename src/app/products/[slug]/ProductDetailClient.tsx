@@ -47,7 +47,8 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
     <div className="bg-primary">
       {/* Breadcrumbs */}
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <nav className="flex text-[10px] font-semibold tracking-widest uppercase text-text-muted">
+        {/* Desktop Breadcrumbs */}
+        <nav className="hidden sm:flex items-center text-[10px] font-semibold tracking-widest uppercase text-text-muted">
           <Link href="/" className="hover:text-text-main transition-colors">Home</Link>
           <ChevronRight size={12} className="mx-2" />
           <Link href="/products" className="hover:text-text-main transition-colors">Collection</Link>
@@ -55,6 +56,13 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
           <Link href={`/products?category=${product.categoryId}`} className="hover:text-text-main transition-colors">{product.category}</Link>
           <ChevronRight size={12} className="mx-2" />
           <span className="text-text-main">{product.name}</span>
+        </nav>
+        {/* Mobile Back Link */}
+        <nav className="flex sm:hidden items-center text-[10px] font-semibold tracking-widest uppercase text-text-muted">
+          <Link href={product.categoryId ? `/products?category=${product.categoryId}` : '/products'} className="flex items-center hover:text-text-main transition-colors gap-1">
+            <ChevronLeft size={12} className="-ml-1 shrink-0" />
+            <span>Back to {product.category || 'Collection'}</span>
+          </Link>
         </nav>
       </div>
 
