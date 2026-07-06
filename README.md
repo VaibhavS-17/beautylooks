@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  A premium e-commerce platform for beauty, skincare & cosmetics — built in Mumbai, for Mumbai.
+  A premium, production-grade e-commerce platform for beauty & skincare — built in Mumbai, for Mumbai.
 </p>
 
 <p align="center">
@@ -18,6 +18,7 @@
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss" alt="Tailwind" />
   <img src="https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?logo=supabase" alt="Supabase" />
+  <img src="https://img.shields.io/badge/UPI-Zero_Fee-FF9900?logo=googlepay" alt="UPI" />
 </p>
 
 ---
@@ -25,6 +26,7 @@
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
+- [Technical Highlights](#-technical-highlights)
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
 - [Design System — "Soft Glamour"](#-design-system--soft-glamour)
@@ -48,24 +50,47 @@ The platform is designed and maintained by the **Data Matrix Club (DMX)** at Raj
 
 ---
 
+## 🧠 Technical Highlights
+
+> These are the engineering decisions that set this project apart from typical e-commerce templates.
+
+| Feature | Detail |
+|---|---|
+| **Zero-Fee UPI Payments** | Custom-built payment system using UPI deep-linking (`upi://pay`) and dynamic QR codes — bypasses payment gateways entirely, saving 2% on every transaction. |
+| **Device-Adaptive Checkout** | Auto-detects mobile vs. desktop: mobile users get a native UPI Intent button (opens GPay/PhonePe directly), desktop users get a scannable QR code. |
+| **UTR-Based Reconciliation** | Users submit their 12-digit UTR (Transaction Reference) after paying. Orders are held in `payment_verifying` status until admin confirms against bank statements. |
+| **Row Level Security (RLS)** | Every table in Supabase has granular RLS policies — users can only access their own orders, addresses, and wishlists. Admin-only write access on products/categories. |
+| **Server-Side Price Validation** | Order totals are re-calculated on the server from database prices to prevent client-side price tampering. |
+| **Optimistic Stock Management** | Stock is decremented when UTR is submitted to reserve items, preventing overselling during verification. |
+| **Dynamic SEO & Open Graph** | Product pages generate dynamic `og:title`, `og:image`, and `og:description` metadata for rich previews when shared on WhatsApp, Twitter, and social media. |
+| **Zustand State Architecture** | Cart, Wishlist, and Admin Dashboard all use independent Zustand stores with `persist` middleware for cross-session state. |
+
+---
+
 ## ✨ Features
 
 ### 🛍️ Storefront
 - **Hero Banner** — Full-viewport animated hero with floating sparkle particles and dual CTA buttons.
 - **Category Browsing** — Shop by category (Facial Kits, Serums & Oils, Cleansers, Face Masks) with rich image cards.
 - **Product Catalog** — Multi-faceted filtering by category, brand, skin type, and price range. Sortable by price, popularity, and date.
-- **Product Detail Pages** — Image zoom on hover, tabbed description/reviews/shipping info, related product recommendations, breadcrumb navigation.
+- **Product Detail Pages** — Image zoom, tabbed description/reviews/shipping info, related product recommendations, breadcrumbs.
 - **Search** — Debounced real-time search across the product catalog.
 
 ### 🛒 Shopping Experience
 - **Cart** — Add/remove items, quantity controls, automatic delivery fee calculation (free above ₹499), persistent client-side state.
 - **Cart Drawer** — Slide-in side-panel for quick cart access without leaving the current page.
 - **Wishlist** — Save favorite products, move items to cart, heart icon toggle on product cards.
-- **Checkout** — Full shipping form with Indian state dropdown, order summary, Razorpay payment integration (ready for connection).
+- **Checkout** — Full shipping form with saved addresses, order summary, and zero-fee UPI payment integration.
+
+### 💳 Zero-Fee UPI Payment System
+- **Mobile** — UPI Intent deep-linking opens any installed UPI app (Google Pay, PhonePe, Paytm, BHIM).
+- **Desktop** — Dynamic QR code generation using `qrcode.react` for scan-to-pay.
+- **Reconciliation** — User-submitted UTR verification with admin approval workflow.
 
 ### 👤 User Accounts
-- **Login / Register** — Email-based auth forms with Google OAuth placeholder, password visibility toggle.
-- **My Account** — Profile info, order history with status badges, saved address management.
+- **Login / Register** — Email-based auth with Google OAuth, password visibility toggle.
+- **My Account** — Profile info, order history with status badges, saved address management (CRUD).
+- **Product Reviews** — Purchase-verified reviews with star ratings (only buyers can review).
 
 ### 📝 Content
 - **Blog** — Beauty tips & skincare guides with cover images, read-time estimates, and individual post pages.
@@ -73,8 +98,9 @@ The platform is designed and maintained by the **Data Matrix Club (DMX)** at Raj
 - **Contact** — Contact form with subject dropdown, WhatsApp/phone/email info cards.
 
 ### 🔧 Admin Dashboard
-- **Dashboard Stats** — Live stat cards for total products, orders, revenue, and customers (powered by Zustand store).
-- **Order Management** — Interactive recent-orders table with clickable status progression (pending → confirmed → shipped → delivered).
+- **Dashboard Stats** — Live stat cards for total products, orders, revenue, and customers.
+- **Order Management** — Interactive orders table with clickable status progression (pending → confirmed → shipped → delivered).
+- **UTR Verification** — View submitted UTRs for `payment_verifying` orders and approve/reject.
 - **Quick Actions** — Add product, create discount codes, and management shortcuts.
 
 ### 🎨 UI/UX
@@ -97,7 +123,8 @@ The platform is designed and maintained by the **Data Matrix Club (DMX)** at Raj
 | **Icons**        | [Lucide React](https://lucide.dev/)                               |
 | **Fonts**        | Google Fonts — Playfair Display (headings), Inter (body)           |
 | **Database**     | [Supabase](https://supabase.com/) (PostgreSQL + Row Level Security)|
-| **Payments**     | Razorpay (integration-ready)                                       |
+| **Payments**     | Custom Zero-Fee UPI (Intent + QR Code)                             |
+| **QR Codes**     | [qrcode.react](https://www.npmjs.com/package/qrcode.react)        |
 | **Deployment**   | [Vercel](https://vercel.com/)                                      |
 
 ---
@@ -131,89 +158,43 @@ The entire UI is built on a custom theme defined in `src/app/globals.css`:
 
 ```
 BeautyLooksMumbai/
-├── public/                              # Static assets served by Next.js
-│   └── images/
-│       ├── brand/
-│       │   └── logo.png                 # Brand logo
-│       ├── categories/
-│       │   ├── cleansers.png            # Category card images
-│       │   ├── facial-kits.png
-│       │   ├── masks.png
-│       │   └── serums.png
-│       ├── products/
-│       │   ├── cleanser-1.png           # Product images
-│       │   ├── facial-kit-1.png
-│       │   ├── mask-1.png
-│       │   ├── moisturizer-1.png
-│       │   ├── scrub-1.png
-│       │   ├── serum-1.png
-│       │   ├── sunscreen-1.png
-│       │   └── toner-1.png
-│       └── hero-beauty.png              # Homepage hero banner
-│
+├── public/images/                       # Static assets (brand, categories, products, hero)
 ├── src/
-│   ├── app/                             # Next.js App Router (pages & layouts)
+│   ├── app/                             # Next.js App Router
 │   │   ├── layout.tsx                   # Root layout — fonts, meta, TopBar, Navbar, Footer
-│   │   ├── page.tsx                     # Homepage — hero, categories, bestsellers, testimonials
+│   │   ├── page.tsx                     # Homepage — hero, categories, bestsellers
 │   │   ├── globals.css                  # Global styles & Soft Glamour design tokens
-│   │   ├── favicon.ico
-│   │   │
 │   │   ├── products/
 │   │   │   ├── page.tsx                 # Product catalog — filters, search, grid
 │   │   │   └── [slug]/
-│   │   │       └── page.tsx             # Product detail — image zoom, tabs, reviews
-│   │   │
-│   │   ├── cart/
-│   │   │   └── page.tsx                 # Shopping cart — items, quantity, summary
-│   │   ├── wishlist/
-│   │   │   └── page.tsx                 # Wishlist — saved products grid
-│   │   ├── checkout/
-│   │   │   └── page.tsx                 # Checkout — shipping form + order summary
-│   │   │
-│   │   ├── blog/
-│   │   │   ├── page.tsx                 # Blog listing — card grid
-│   │   │   └── [slug]/
-│   │   │       └── page.tsx             # Blog post detail
-│   │   │
-│   │   ├── about/
-│   │   │   └── page.tsx                 # About — brand story, values, team
-│   │   ├── contact/
-│   │   │   └── page.tsx                 # Contact — form + info cards
-│   │   │
-│   │   ├── login/
-│   │   │   └── page.tsx                 # Login page
-│   │   ├── register/
-│   │   │   └── page.tsx                 # Registration page
-│   │   ├── account/
-│   │   │   └── page.tsx                 # User dashboard — profile, orders, addresses
-│   │   │
-│   │   └── admin/
-│   │       └── page.tsx                 # Admin dashboard — stats, orders table, quick actions
-│   │
-│   ├── components/
-│   │   └── layout/
-│   │       ├── TopBar.tsx               # Slim announcement ribbon
-│   │       ├── Navbar.tsx               # Sticky glassmorphic navigation + mobile drawer
-│   │       ├── Footer.tsx               # Multi-column footer with newsletter signup
-│   │       ├── CartDrawer.tsx           # Slide-in cart side-panel
-│   │       └── WhatsAppButton.tsx       # Floating WhatsApp CTA button
-│   │
+│   │   │       ├── page.tsx             # Product detail — dynamic SEO, reviews
+│   │   │       └── ProductDetailClient.tsx
+│   │   ├── cart/page.tsx                # Shopping cart
+│   │   ├── wishlist/page.tsx            # Wishlist
+│   │   ├── checkout/page.tsx            # Checkout — UPI Intent + QR Code payment
+│   │   ├── blog/                        # Blog listing & posts
+│   │   ├── about/page.tsx               # About — brand story, values, team
+│   │   ├── contact/page.tsx             # Contact — form + info cards
+│   │   ├── login/page.tsx               # Login
+│   │   ├── register/page.tsx            # Registration
+│   │   ├── account/page.tsx             # User dashboard — profile, orders, addresses
+│   │   ├── admin/page.tsx               # Admin dashboard — stats, orders, UTR verification
+│   │   └── actions/
+│   │       └── orderActions.ts          # Server actions — UPI order creation, UTR verification
+│   ├── components/layout/
+│   │   ├── TopBar.tsx                   # Announcement ribbon
+│   │   ├── Navbar.tsx                   # Sticky glassmorphic navigation
+│   │   ├── Footer.tsx                   # Multi-column footer
+│   │   ├── CartDrawer.tsx               # Slide-in cart panel
+│   │   └── WhatsAppButton.tsx           # Floating WhatsApp CTA
 │   └── lib/
-│       ├── types.ts                     # TypeScript interfaces (Product, Order, CartItem, etc.)
-│       ├── data.ts                      # Mock product data, categories, brands, blog posts
-│       ├── store.ts                     # Zustand stores — useCartStore, useWishlistStore
-│       └── adminStore.ts               # Zustand store — useAdminStore (dashboard state)
-│
-├── supabase/
-│   └── migrations/
-│       └── 001_initial_schema.sql       # Full database schema + RLS policies
-│
-├── package.json                         # Dependencies & scripts
-├── tsconfig.json                        # TypeScript configuration
-├── next.config.ts                       # Next.js configuration
-├── postcss.config.mjs                   # PostCSS (Tailwind CSS plugin)
-├── eslint.config.mjs                    # ESLint configuration
-└── README.md                            # This file
+│       ├── types.ts                     # TypeScript interfaces
+│       ├── data.ts                      # Utility functions (formatPrice, getDiscountPercent)
+│       ├── store.ts                     # Zustand stores — Cart, Wishlist
+│       └── adminStore.ts               # Zustand store — Admin Dashboard
+├── supabase/migrations/                 # Database schema + RLS policies
+├── package.json
+└── README.md
 ```
 
 ---
@@ -222,12 +203,12 @@ BeautyLooksMumbai/
 
 | Route                      | Page                | Description                                    |
 | -------------------------- | ------------------- | ---------------------------------------------- |
-| `/`                        | Homepage            | Hero, categories, bestsellers, testimonials, newsletter |
+| `/`                        | Homepage            | Hero, categories, bestsellers, testimonials    |
 | `/products`                | Product Catalog     | Filterable & searchable product grid           |
-| `/products/[slug]`         | Product Detail      | Full product page with reviews & related items |
+| `/products/[slug]`         | Product Detail      | Full product page with reviews & dynamic SEO   |
 | `/cart`                    | Shopping Cart       | Cart items with quantity controls & summary    |
 | `/wishlist`                | Wishlist             | Saved products with move-to-cart option         |
-| `/checkout`                | Checkout            | Shipping form + order summary                  |
+| `/checkout`                | Checkout            | UPI payment — mobile intent + desktop QR       |
 | `/blog`                    | Blog Listing        | Beauty tips & skincare guides                  |
 | `/blog/[slug]`             | Blog Post           | Individual article with related posts          |
 | `/about`                   | About Us            | Brand story, mission, team                     |
@@ -235,13 +216,13 @@ BeautyLooksMumbai/
 | `/login`                   | Login               | Email/password + Google OAuth                  |
 | `/register`                | Register            | Account creation form                          |
 | `/account`                 | My Account          | Profile, orders, addresses                     |
-| `/admin`                   | Admin Dashboard     | Stats, order management, quick actions         |
+| `/admin`                   | Admin Dashboard     | Stats, order management, UTR verification      |
 
 ---
 
 ## 🗄 Database Schema
 
-The Supabase PostgreSQL schema is defined in `supabase/migrations/001_initial_schema.sql` and includes **10 tables** with full **Row Level Security (RLS)** policies:
+The Supabase PostgreSQL schema includes **10 tables** with full **Row Level Security (RLS)** policies:
 
 | Table            | Description                          | RLS Policy                                    |
 | ---------------- | ------------------------------------ | --------------------------------------------- |
@@ -250,16 +231,11 @@ The Supabase PostgreSQL schema is defined in `supabase/migrations/001_initial_sc
 | `products`       | Product catalog                      | Public read (active only), admin write        |
 | `profiles`       | User profiles (linked to auth.users) | Public read, users update own, admin full     |
 | `addresses`      | Shipping addresses                   | Users manage own addresses only               |
-| `orders`         | Customer orders                      | Users view own, admin full access             |
+| `orders`         | Customer orders + UPI UTR            | Users view own, admin full access             |
 | `order_items`    | Line items per order                 | Users view own order items, admin full        |
 | `reviews`        | Product reviews (1 per user/product) | Public read, users manage own                 |
 | `wishlist_items`  | Saved products per user              | Users manage own wishlist only                |
 | `blog_posts`     | Blog articles                        | Public read (published), admin full           |
-
-### Custom Enums
-- `skin_type_enum`: `all`, `oily`, `dry`, `combination`, `sensitive`
-- `order_status_enum`: `pending`, `confirmed`, `shipped`, `delivered`, `cancelled`
-- `user_role_enum`: `customer`, `admin`
 
 ---
 
@@ -269,7 +245,7 @@ The Supabase PostgreSQL schema is defined in `supabase/migrations/001_initial_sc
 
 - **Node.js** v18 or higher
 - **npm** v9 or higher
-- A [Supabase](https://supabase.com/) project (for production — the app runs with mock data by default)
+- A [Supabase](https://supabase.com/) project
 
 ### Installation
 
@@ -281,7 +257,10 @@ cd BeautyLooksMumbai
 # 2. Install dependencies
 npm install
 
-# 3. Start the development server
+# 3. Set up environment variables (see below)
+cp .env.example .env.local
+
+# 4. Start the development server
 npm run dev
 ```
 
@@ -291,14 +270,21 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🔐 Environment Variables
 
-Create a `.env.local` file in the project root (only needed when connecting to Supabase):
+Create a `.env.local` file in the project root:
 
 ```env
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
 
-> **Note**: The app ships with mock data in `src/lib/data.ts` and works fully without Supabase configured. Environment variables are only needed when you integrate the live database.
+# UPI Payment (Zero-Fee)
+MERCHANT_UPI_VPA=your-upi-id@bank
+MERCHANT_BUSINESS_NAME=Beauty Looks Mumbai
+
+# Razorpay (Legacy — optional fallback)
+RAZORPAY_KEY_ID=rzp_test_xxx
+RAZORPAY_KEY_SECRET=xxx
+```
 
 ---
 
@@ -319,7 +305,7 @@ This project is optimized for **Vercel** deployment:
 
 1. Push your code to GitHub.
 2. Import the repository in the [Vercel Dashboard](https://vercel.com/new).
-3. Add environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) in Vercel settings.
+3. Add all environment variables in Vercel settings.
 4. Deploy — Vercel auto-detects Next.js and handles the build.
 
 For the Supabase database:

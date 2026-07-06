@@ -178,7 +178,7 @@ export async function verifyPayment(data: {
 
 // ── UPI Payment Utilities ──
 
-export function generateUpiString(orderId: string, amount: number) {
+function generateUpiString(orderId: string, amount: number) {
   const params = new URLSearchParams({
     pa: MERCHANT_VPA,
     pn: BUSINESS_NAME,

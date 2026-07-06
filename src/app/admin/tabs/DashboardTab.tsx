@@ -101,7 +101,7 @@ export default function DashboardTab({ stats, orders, onViewAllOrders }: Dashboa
               />
               <Tooltip 
                 contentStyle={{ borderRadius: '12px', border: '1px solid #EFECE6', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                formatter={(value: number) => [formatPrice(value), 'Revenue']}
+                formatter={(value: any) => [formatPrice(value as number), 'Revenue']}
               />
               <Area type="monotone" dataKey="sales" stroke="#C9A94E" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
             </AreaChart>

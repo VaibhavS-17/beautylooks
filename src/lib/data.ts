@@ -1,5 +1,4 @@
-import { Product, Category, Brand, BlogPost, Testimonial } from './types';
-
+// Removed unused types imports
 // Helper: format price in INR
 export const formatPrice = (price: number): string =>
   new Intl.NumberFormat('en-IN', {

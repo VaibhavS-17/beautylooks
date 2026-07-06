@@ -1,7 +1,33 @@
 import { createClient } from '@/lib/supabase/server';
+import type { Metadata } from 'next';
 import ProductDetailClient from './ProductDetailClient';
 import { notFound } from 'next/navigation';
 export const dynamic = 'force-dynamic';
+
+// ── Dynamic SEO & Open Graph ──
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('products')
+    .select('name, short_description, images, price, sale_price')
+    .eq('slug', slug)
+    .single();
+
+  if (!data) return { title: 'Product Not Found' };
+
+  const price = data.sale_price || data.price;
+  const title = `${data.name} — ₹${price} | Beauty Looks Mumbai`;
+  const description = data.short_description || `Shop ${data.name} at Beauty Looks Mumbai. Premium beauty & skincare.`;
+  const image = data.images?.[0] || '/images/hero-beauty.png';
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, images: [{ url: image }], type: 'website' },
+    twitter: { card: 'summary_large_image', title, description, images: [image] },
+  };
+}
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
