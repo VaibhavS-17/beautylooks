@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import Script from 'next/script';
-import { ArrowLeft, CheckCircle2, ShieldCheck, CreditCard, Loader2, MapPin } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ShieldCheck, Loader2, MapPin, Smartphone, Monitor, Copy, Check } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
-import { createOrder, verifyPayment } from '@/app/actions/orderActions';
+import { createUpiOrder, submitPaymentReference } from '@/app/actions/orderActions';
 import { createClient } from '@/lib/supabase/client';
 
 interface SavedAddress {
@@ -23,29 +23,39 @@ interface SavedAddress {
   is_default: boolean;
 }
 
+// Simple mobile detection
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    setIsMobile(check);
+  }, []);
+  return isMobile;
+}
+
 export default function CheckoutPage() {
-  const { items, getTotalPrice, clearCart, getTotalItems } = useCartStore();
+  const { items, getTotalPrice, clearCart } = useCartStore();
+  const isMobile = useIsMobile();
   const fallbackProductImage = '/images/products/facial-kit-1.png';
-  
-  // Checkout Form State
+
+  // Form State
   const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    email: '',
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    pincode: '',
+    fullName: '', phone: '', email: '',
+    addressLine1: '', addressLine2: '', city: '', state: '', pincode: '',
   });
 
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  // Checkout flow states
+  const [checkoutStep, setCheckoutStep] = useState<'form' | 'payment' | 'success'>('form');
   const [orderId, setOrderId] = useState('');
+  const [upiString, setUpiString] = useState('');
+  const [utrInput, setUtrInput] = useState('');
   const [placedFinalTotal, setPlacedFinalTotal] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSubmittingUtr, setIsSubmittingUtr] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [copied, setCopied] = useState(false);
 
-  // Saved Addresses State
+  // Saved Addresses
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -55,225 +65,237 @@ export default function CheckoutPage() {
   const shippingCharge = totalPrice >= 499 ? 0 : 49;
   const finalTotal = totalPrice + shippingCharge;
 
-  // Indian States
   const indianStates = [
-    'Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu', 'Gujarat', 
+    'Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu', 'Gujarat',
     'Telangana', 'Uttar Pradesh', 'Rajasthan', 'West Bengal', 'Other'
   ];
 
-  // Fetch saved addresses on mount
+  // Load saved addresses
   useEffect(() => {
     async function loadSavedAddresses() {
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          setIsLoggedIn(false);
-          setAddressesLoading(false);
-          return;
-        }
-
+        if (!user) { setIsLoggedIn(false); setAddressesLoading(false); return; }
         setIsLoggedIn(true);
-
-        // Pre-fill email from user profile
-        if (user.email) {
-          setFormData(prev => ({ ...prev, email: user.email! }));
-        }
-
+        if (user.email) setFormData(prev => ({ ...prev, email: user.email! }));
         const { data: addresses } = await supabase
-          .from('addresses')
-          .select('*')
-          .eq('user_id', user.id)
+          .from('addresses').select('*').eq('user_id', user.id)
           .order('is_default', { ascending: false });
-
-        if (addresses && addresses.length > 0) {
-          setSavedAddresses(addresses);
-        }
-      } catch (err) {
-        console.error('Failed to load saved addresses:', err);
-      } finally {
-        setAddressesLoading(false);
-      }
+        if (addresses && addresses.length > 0) setSavedAddresses(addresses);
+      } catch (err) { console.error('Failed to load addresses:', err); }
+      finally { setAddressesLoading(false); }
     }
-
     loadSavedAddresses();
   }, []);
 
   const handleSelectAddress = (address: SavedAddress) => {
     setSelectedAddressId(address.id);
     setFormData(prev => ({
-      ...prev,
-      fullName: address.full_name,
-      phone: address.phone,
-      addressLine1: address.line1,
-      addressLine2: address.line2 || '',
-      city: address.city,
-      state: address.state,
-      pincode: address.pincode,
+      ...prev, fullName: address.full_name, phone: address.phone,
+      addressLine1: address.line1, addressLine2: address.line2 || '',
+      city: address.city, state: address.state, pincode: address.pincode,
     }));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear selected address highlight when user manually edits the form
-    if (selectedAddressId && name !== 'email') {
-      setSelectedAddressId(null);
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (selectedAddressId && name !== 'email') setSelectedAddressId(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Step 1: Create order and get UPI string
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
     setIsProcessing(true);
-    
+
     try {
-      // Create order on server
-      const orderItems = items.map(item => ({
-        productId: item.product.id,
-        quantity: item.quantity,
-      }));
+      const orderItems = items.map(item => ({ productId: item.product.id, quantity: item.quantity }));
+      const res = await createUpiOrder({ items: orderItems, shippingAddress: formData, totalAmount: finalTotal });
 
-      const res = await createOrder({
-        items: orderItems,
-        shippingAddress: formData,
-        totalAmount: finalTotal
-      });
+      if (!res.success) throw new Error(res.error || 'Failed to create order');
 
-      if (!res.success) {
-        throw new Error(res.error || 'Failed to create order');
-      }
-
-      // Initialize Razorpay
-      const options = {
-        key: res.keyId,
-        amount: res.amount,
-        currency: 'INR',
-        name: 'Beauty Looks Mumbai',
-        description: 'Premium Beauty Products',
-        image: '/images/brand/logo.png',
-        order_id: res.razorpayOrderId,
-        handler: async function (response: any) {
-          try {
-            // Verify payment on server
-            const verifyRes = await verifyPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              order_id: res.orderId
-            });
-
-            if (verifyRes.success) {
-              setOrderId(res.orderId);
-              setPlacedFinalTotal(finalTotal);
-              setOrderPlaced(true);
-              clearCart();
-            } else {
-              setErrorMessage(verifyRes.error || 'Payment verification failed');
-            }
-          } catch (err: any) {
-            setErrorMessage('Payment verification error: ' + err.message);
-          } finally {
-            setIsProcessing(false);
-          }
-        },
-        prefill: {
-          name: formData.fullName,
-          email: formData.email,
-          contact: formData.phone,
-        },
-        theme: {
-          color: '#CA8A04',
-        },
-        modal: {
-          ondismiss: function() {
-            setIsProcessing(false);
-          }
-        }
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', function (response: any){
-        setErrorMessage(response.error.description);
-        setIsProcessing(false);
-      });
-      rzp.open();
+      setOrderId(res.orderId!);
+      setUpiString(res.upiString!);
+      setPlacedFinalTotal(finalTotal);
+      setCheckoutStep('payment');
     } catch (err: any) {
-      console.error(err);
       setErrorMessage(err.message || 'Something went wrong');
+    } finally {
       setIsProcessing(false);
     }
   };
 
-  if (orderPlaced) {
+  // Step 2: User submits UTR after paying
+  const handleSubmitUtr = async () => {
+    setErrorMessage('');
+    setIsSubmittingUtr(true);
+    try {
+      const res = await submitPaymentReference({ order_id: orderId, utr: utrInput });
+      if (!res.success) throw new Error(res.error || 'Failed to submit');
+      clearCart();
+      setCheckoutStep('success');
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Something went wrong');
+    } finally {
+      setIsSubmittingUtr(false);
+    }
+  };
+
+  const handleCopyUpi = () => {
+    navigator.clipboard.writeText(upiString);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // ── Success Screen ──
+  if (checkoutStep === 'success') {
     return (
       <div className="w-full min-h-screen bg-primary py-24 text-center flex flex-col items-center justify-center px-4">
-        <div className="max-w-xl space-y-8 relative">
+        <div className="max-w-xl space-y-8">
           <div className="flex justify-center">
             <CheckCircle2 size={64} strokeWidth={1} className="text-accent" />
           </div>
-          <h2 className="font-display text-4xl text-text-main">Order Confirmed</h2>
+          <h2 className="font-display text-4xl text-text-main">Order Placed Successfully</h2>
           <p className="text-sm text-text-muted font-light max-w-md mx-auto leading-relaxed">
-            Thank you for your purchase. Your order is being processed and a confirmation email has been sent to <strong>{formData.email}</strong>.
+            Your payment reference has been submitted. We will verify it and confirm your order shortly. A confirmation will be sent to <strong>{formData.email}</strong>.
           </p>
-          
           <div className="bg-secondary border border-border p-8 text-left space-y-4 text-sm text-text-muted rounded-2xl shadow-sm">
             <div className="flex justify-between border-b border-border pb-4 font-semibold text-text-main">
-              <span>Order Reference</span>
-              <span>{orderId}</span>
-            </div>
-            <div className="flex justify-between pt-2">
-              <span>Customer Name</span>
-              <span className="font-medium text-text-main">{formData.fullName}</span>
+              <span>Order Reference</span><span>{orderId}</span>
             </div>
             <div className="flex justify-between">
-              <span>Shipping Address</span>
-              <span className="font-medium text-text-main truncate max-w-[200px]">
-                {formData.addressLine1}, {formData.city}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Contact Number</span>
-              <span className="font-medium text-text-main">{formData.phone}</span>
+              <span>UTR Submitted</span><span className="font-medium text-text-main">{utrInput}</span>
             </div>
             <div className="flex justify-between font-semibold border-t border-border pt-4 mt-2">
-              <span>Total Paid</span>
-              <span className="text-text-main">{formatPrice(placedFinalTotal)}</span>
+              <span>Total Amount</span><span className="text-text-main">{formatPrice(placedFinalTotal)}</span>
             </div>
           </div>
-
           <div className="pt-8 flex flex-col space-y-4 justify-center items-center">
-            <Link href="/products" className="btn-primary w-full sm:w-64 justify-center">
-              Continue Shopping
-            </Link>
-            <Link href="/" className="text-xs font-semibold uppercase tracking-widest text-text-muted hover:text-text-main transition-colors py-2">
-              Return Home
-            </Link>
+            <Link href="/products" className="btn-primary w-full sm:w-64 justify-center">Continue Shopping</Link>
+            <Link href="/" className="text-xs font-semibold uppercase tracking-widest text-text-muted hover:text-text-main transition-colors py-2">Return Home</Link>
           </div>
         </div>
       </div>
     );
   }
 
-  return (
-    <>
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+  // ── Payment Screen (UPI QR / Intent) ──
+  if (checkoutStep === 'payment') {
+    return (
       <div className="w-full min-h-screen bg-primary py-12">
+        <div className="max-w-lg mx-auto px-4 sm:px-6">
+          {/* Header */}
+          <div className="border-b border-border pb-6 mb-8 flex items-center">
+            <button onClick={() => setCheckoutStep('form')} className="text-text-main hover:opacity-60 transition-opacity mr-6">
+              <ArrowLeft size={24} strokeWidth={1.5} />
+            </button>
+            <div>
+              <h1 className="text-3xl font-display text-text-main">Complete Payment</h1>
+              <p className="text-xs text-text-muted mt-1 tracking-widest uppercase font-semibold">
+                Pay {formatPrice(placedFinalTotal)} via UPI
+              </p>
+            </div>
+          </div>
+
+          {/* UPI Payment Card */}
+          <div className="bg-secondary border border-border rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
+
+            {/* Device-specific payment method */}
+            {isMobile ? (
+              /* ── Mobile: UPI Intent Button ── */
+              <div className="space-y-4 text-center">
+                <div className="flex items-center justify-center space-x-2 text-xs text-text-muted uppercase tracking-widest font-semibold">
+                  <Smartphone size={14} className="text-accent" />
+                  <span>Pay with UPI App</span>
+                </div>
+                <a
+                  href={upiString}
+                  className="btn-primary w-full justify-center flex items-center space-x-2 text-base py-4"
+                >
+                  <span>Open UPI App & Pay {formatPrice(placedFinalTotal)}</span>
+                </a>
+                <p className="text-[11px] text-text-muted font-light">
+                  Opens Google Pay, PhonePe, Paytm, or any installed UPI app.
+                </p>
+              </div>
+            ) : (
+              /* ── Desktop: QR Code ── */
+              <div className="space-y-4 text-center">
+                <div className="flex items-center justify-center space-x-2 text-xs text-text-muted uppercase tracking-widest font-semibold">
+                  <Monitor size={14} className="text-accent" />
+                  <span>Scan QR to Pay</span>
+                </div>
+                <div className="flex justify-center">
+                  <div className="bg-white p-4 rounded-xl inline-block shadow-sm border border-border">
+                    <QRCodeSVG value={upiString} size={200} level="H" />
+                  </div>
+                </div>
+                <p className="text-[11px] text-text-muted font-light">
+                  Open any UPI app on your phone and scan this QR code to pay.
+                </p>
+                <button onClick={handleCopyUpi} className="text-xs text-accent hover:text-text-main transition-colors inline-flex items-center space-x-1">
+                  {copied ? <Check size={12} /> : <Copy size={12} />}
+                  <span>{copied ? 'Copied!' : 'Copy UPI Link'}</span>
+                </button>
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="border-t border-border pt-6">
+              <h3 className="text-sm font-semibold text-text-main mb-1">After paying, enter your UTR below</h3>
+              <p className="text-[11px] text-text-muted font-light mb-4">
+                Your UTR / Transaction ID is a 12-digit number found in your UPI app&apos;s payment confirmation screen.
+              </p>
+              <input
+                type="text"
+                placeholder="Enter 12-digit UTR / Transaction ID"
+                value={utrInput}
+                onChange={(e) => setUtrInput(e.target.value)}
+                maxLength={20}
+                className="w-full border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm mb-4"
+              />
+              <button
+                onClick={handleSubmitUtr}
+                disabled={isSubmittingUtr || utrInput.trim().length < 10}
+                className={`btn-primary w-full justify-center flex items-center space-x-2 ${
+                  utrInput.trim().length < 10 ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {isSubmittingUtr && <Loader2 size={16} className="animate-spin" />}
+                <span>{isSubmittingUtr ? 'Submitting...' : 'Confirm Payment'}</span>
+              </button>
+            </div>
+
+            {errorMessage && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs border border-red-200 shadow-sm">
+                {errorMessage}
+              </div>
+            )}
+
+            <div className="flex items-center justify-center space-x-2 text-xs text-text-muted font-light pt-2">
+              <ShieldCheck size={14} strokeWidth={1.5} className="text-accent" />
+              <span>Payments are processed securely via UPI</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Checkout Form ──
+  return (
+    <div className="w-full min-h-screen bg-primary py-12">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Title */}
         <div className="border-b border-border pb-6 mb-12 flex items-center">
           <Link href="/cart" className="text-text-main hover:opacity-60 transition-opacity mr-6">
             <ArrowLeft size={24} strokeWidth={1.5} />
           </Link>
           <div>
-            <h1 className="text-4xl font-display text-text-main">
-              Checkout
-            </h1>
-            <p className="text-xs text-text-muted mt-2 tracking-widest uppercase font-semibold">
-              Secure your order
-            </p>
+            <h1 className="text-4xl font-display text-text-main">Checkout</h1>
+            <p className="text-xs text-text-muted mt-2 tracking-widest uppercase font-semibold">Secure your order</p>
           </div>
         </div>
 
@@ -284,8 +306,7 @@ export default function CheckoutPage() {
             <Link href="/products" className="btn-primary inline-flex">Go Shopping</Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-            
+          <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             {/* Left Form Column */}
             <div className="lg:col-span-8 space-y-12">
 
@@ -298,34 +319,21 @@ export default function CheckoutPage() {
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {savedAddresses.map((addr) => (
-                      <button
-                        type="button"
-                        key={addr.id}
-                        onClick={() => handleSelectAddress(addr)}
+                      <button type="button" key={addr.id} onClick={() => handleSelectAddress(addr)}
                         className={`text-left border rounded-xl p-4 transition-all duration-200 space-y-2 relative ${
                           selectedAddressId === addr.id
                             ? 'border-[#C9A94E] bg-[#C9A94E08] ring-1 ring-[#C9A94E] shadow-md'
                             : 'border-border bg-secondary hover:border-[#C9A94E60] shadow-sm'
-                        }`}
-                      >
-                        {/* Selection indicator */}
+                        }`}>
                         {selectedAddressId === addr.id && (
-                          <div className="absolute top-3 right-3">
-                            <CheckCircle2 size={18} className="text-[#C9A94E]" />
-                          </div>
+                          <div className="absolute top-3 right-3"><CheckCircle2 size={18} className="text-[#C9A94E]" /></div>
                         )}
-                        
-                        {/* Label & Default badge */}
                         <div className="flex items-center space-x-2">
                           <span className="text-xs font-semibold text-[#9A7B2F] uppercase tracking-wider">{addr.label}</span>
                           {addr.is_default && (
-                            <span className="text-[10px] bg-[#C9A94E15] text-[#9A7B2F] px-1.5 py-0.5 rounded-full border border-[#C9A94E30] font-semibold uppercase">
-                              Default
-                            </span>
+                            <span className="text-[10px] bg-[#C9A94E15] text-[#9A7B2F] px-1.5 py-0.5 rounded-full border border-[#C9A94E30] font-semibold uppercase">Default</span>
                           )}
                         </div>
-
-                        {/* Address details */}
                         <div className="text-sm space-y-0.5">
                           <p className="font-semibold text-text-main">{addr.full_name}</p>
                           <p className="text-text-muted font-light">{addr.line1}</p>
@@ -336,220 +344,108 @@ export default function CheckoutPage() {
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-text-muted mt-3 font-light">
-                    Select a saved address to auto-fill, or type a new address below.
-                  </p>
+                  <p className="text-xs text-text-muted mt-3 font-light">Select a saved address to auto-fill, or type a new address below.</p>
                 </div>
               )}
 
-              {/* Loading state for addresses */}
               {isLoggedIn && addressesLoading && (
                 <div className="flex items-center space-x-2 text-sm text-text-muted py-4">
                   <Loader2 size={14} className="animate-spin text-[#C9A94E]" />
                   <span>Loading your saved addresses...</span>
                 </div>
               )}
-              
+
               {/* Shipping Information */}
               <div>
-                <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-8">
-                  Shipping Information
-                </h3>
-
+                <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-8">Shipping Information</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
-                  {/* Name */}
                   <div className="flex flex-col">
                     <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Full Name *</label>
-                    <input
-                      type="text"
-                      name="fullName"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      required
-                      className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm"
-                    />
+                    <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
                   </div>
-
-                  {/* Phone */}
                   <div className="flex flex-col">
                     <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Contact Phone *</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      required
-                      className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm"
-                    />
+                    <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
                   </div>
-
-                  {/* Email */}
                   <div className="flex flex-col sm:col-span-2">
                     <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Email Address *</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                      className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm"
-                    />
+                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
                   </div>
-
-                  {/* Address 1 */}
                   <div className="flex flex-col sm:col-span-2">
                     <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Street Address *</label>
-                    <input
-                      type="text"
-                      name="addressLine1"
-                      value={formData.addressLine1}
-                      onChange={handleInputChange}
-                      required
-                      className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm"
-                    />
+                    <input type="text" name="addressLine1" value={formData.addressLine1} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
                   </div>
-
-                  {/* Address 2 */}
                   <div className="flex flex-col sm:col-span-2">
                     <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Apartment, Suite, etc. (Optional)</label>
-                    <input
-                      type="text"
-                      name="addressLine2"
-                      value={formData.addressLine2}
-                      onChange={handleInputChange}
-                      className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm"
-                    />
+                    <input type="text" name="addressLine2" value={formData.addressLine2} onChange={handleInputChange} className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
                   </div>
-
-                  {/* City */}
                   <div className="flex flex-col">
                     <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">City *</label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      required
-                      className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm"
-                    />
+                    <input type="text" name="city" value={formData.city} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
                   </div>
-
-                  {/* State */}
                   <div className="flex flex-col">
                     <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">State *</label>
-                    <select
-                      name="state"
-                      value={formData.state}
-                      onChange={handleInputChange}
-                      required
-                      className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors appearance-none shadow-sm"
-                    >
+                    <select name="state" value={formData.state} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors appearance-none shadow-sm">
                       <option value="">Select State</option>
-                      {indianStates.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
+                      {indianStates.map((s) => (<option key={s} value={s}>{s}</option>))}
                     </select>
                   </div>
-
-                  {/* Pincode */}
                   <div className="flex flex-col">
                     <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Pincode *</label>
-                    <input
-                      type="text"
-                      name="pincode"
-                      value={formData.pincode}
-                      onChange={handleInputChange}
-                      required
-                      className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm"
-                    />
+                    <input type="text" name="pincode" value={formData.pincode} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
                   </div>
                 </div>
               </div>
-
             </div>
 
             {/* Right Summary Column */}
             <div className="lg:col-span-4 sticky top-32 space-y-6">
               <div className="bg-secondary/80 p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border backdrop-blur-md">
-              <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-6">
-                Order Review
-              </h3>
-
-              {/* List of items */}
-              <div className="divide-y divide-border max-h-96 overflow-y-auto no-scrollbar mb-8">
-                {items.map((item) => (
-                  <div key={item.product.id} className="py-4 flex items-start justify-between text-sm">
-                    <div className="flex items-start space-x-4">
-                      <div className="relative w-16 h-16 bg-primary rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-border">
-                        <Image
-                          src={item.product.images?.[0] || fallbackProductImage}
-                          alt={item.product.name}
-                          fill
-                          sizes="64px"
-                          className="object-cover"
-                        />
+                <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-6">Order Review</h3>
+                <div className="divide-y divide-border max-h-96 overflow-y-auto no-scrollbar mb-8">
+                  {items.map((item) => (
+                    <div key={item.product.id} className="py-4 flex items-start justify-between text-sm">
+                      <div className="flex items-start space-x-4">
+                        <div className="relative w-16 h-16 bg-primary rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-border">
+                          <Image src={item.product.images?.[0] || fallbackProductImage} alt={item.product.name} fill sizes="64px" className="object-cover" />
+                        </div>
+                        <div className="text-left">
+                          <span className="block font-medium text-text-main mb-1">{item.product.name}</span>
+                          <span className="block text-[10px] text-text-muted uppercase tracking-widest font-semibold">Qty: {item.quantity}</span>
+                        </div>
                       </div>
-                      <div className="text-left">
-                        <span className="block font-medium text-text-main mb-1">{item.product.name}</span>
-                        <span className="block text-[10px] text-text-muted uppercase tracking-widest font-semibold">Qty: {item.quantity}</span>
-                      </div>
+                      <span className="font-medium text-text-main">{formatPrice((item.product.salePrice || item.product.price) * item.quantity)}</span>
                     </div>
-                    <span className="font-medium text-text-main">
-                      {formatPrice((item.product.salePrice || item.product.price) * item.quantity)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Pricing list */}
-              <div className="border-t border-border pt-6 space-y-4 text-sm font-light text-text-muted">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>{formatPrice(totalPrice)}</span>
+                  ))}
                 </div>
-                <div className="flex justify-between">
-                  <span>Shipping</span>
-                  <span>{totalPrice >= 499 ? 'Complimentary' : formatPrice(shippingCharge)}</span>
+                <div className="border-t border-border pt-6 space-y-4 text-sm font-light text-text-muted">
+                  <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(totalPrice)}</span></div>
+                  <div className="flex justify-between"><span>Shipping</span><span>{totalPrice >= 499 ? 'Complimentary' : formatPrice(shippingCharge)}</span></div>
                 </div>
-              </div>
-
-              {/* Total */}
-              <div className="border-t border-border pt-6 mt-6 mb-8 flex justify-between items-center text-base font-semibold text-text-main">
-                <span>Final Total</span>
-                <span>{formatPrice(finalTotal)}</span>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isProcessing}
-                className="btn-primary w-full justify-center flex items-center space-x-2 mb-6"
-              >
-                {isProcessing && <Loader2 size={16} className="animate-spin" />}
-                <span>{isProcessing ? 'Processing...' : 'Proceed to Payment'}</span>
-              </button>
-
+                <div className="border-t border-border pt-6 mt-6 mb-8 flex justify-between items-center text-base font-semibold text-text-main">
+                  <span>Final Total</span><span>{formatPrice(finalTotal)}</span>
+                </div>
+                <button type="submit" disabled={isProcessing} className="btn-primary w-full justify-center flex items-center space-x-2 mb-6">
+                  {isProcessing && <Loader2 size={16} className="animate-spin" />}
+                  <span>{isProcessing ? 'Processing...' : 'Proceed to UPI Payment'}</span>
+                </button>
               </div>
               <div className="space-y-3 text-center px-4">
                 <div className="flex items-center justify-center space-x-2 text-xs text-text-main font-semibold uppercase tracking-widest">
                   <ShieldCheck size={14} strokeWidth={1.5} className="text-accent" />
-                  <span>Razorpay Secure</span>
+                  <span>UPI Secure Payment</span>
                 </div>
                 <p className="text-[11px] text-text-muted font-light leading-relaxed">
-                  You will be redirected to Razorpay to complete your payment securely via UPI, Cards, or Netbanking.
+                  Pay directly via any UPI app — Google Pay, PhonePe, Paytm, or BHIM. Zero transaction fees.
                 </p>
                 {errorMessage && (
-                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs border border-red-200 mt-2 text-left shadow-sm">
-                    {errorMessage}
-                  </div>
+                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs border border-red-200 mt-2 text-left shadow-sm">{errorMessage}</div>
                 )}
               </div>
             </div>
-
           </form>
         )}
-
       </div>
     </div>
-    </>
   );
 }

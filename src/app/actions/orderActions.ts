@@ -6,6 +6,10 @@ import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import { revalidatePath } from 'next/cache';
 
+// ── UPI Config ──
+const MERCHANT_VPA = process.env.MERCHANT_UPI_VPA || 'merchant@upi';
+const BUSINESS_NAME = process.env.MERCHANT_BUSINESS_NAME || 'Beauty Looks Mumbai';
+
 // Initialize Razorpay
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_mock',
@@ -168,6 +172,129 @@ export async function verifyPayment(data: {
     return { success: true };
   } catch (error: any) {
     console.error('Verify Payment Error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ── UPI Payment Utilities ──
+
+export function generateUpiString(orderId: string, amount: number) {
+  const params = new URLSearchParams({
+    pa: MERCHANT_VPA,
+    pn: BUSINESS_NAME,
+    am: amount.toFixed(2),
+    cu: 'INR',
+    tn: `Order ${orderId}`,
+    tr: orderId,
+  });
+  return `upi://pay?${params.toString()}`;
+}
+
+export async function createUpiOrder(data: {
+  items: Array<{ productId: string; quantity: string | number }>;
+  shippingAddress: any;
+  totalAmount: number;
+}) {
+  const supabase = await createClient();
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Create order in DB with pending status
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert({
+        user_id: user?.id || null,
+        status: 'pending',
+        total_amount: data.totalAmount,
+        shipping_address: data.shippingAddress,
+      })
+      .select('id')
+      .single();
+
+    if (orderError || !order) {
+      throw new Error(orderError?.message || 'Failed to create order');
+    }
+
+    // Insert order items with server-side prices
+    const productIds = data.items.map(item => item.productId);
+    const { data: products } = await supabase
+      .from('products')
+      .select('id, price, sale_price')
+      .in('id', productIds);
+
+    if (products && products.length > 0) {
+      const orderItemsToInsert = data.items.map(item => {
+        const product = products.find(p => p.id === item.productId);
+        return {
+          order_id: order.id,
+          product_id: item.productId,
+          quantity: Number(item.quantity),
+          unit_price: product?.sale_price || product?.price || 0,
+        };
+      });
+      await supabase.from('order_items').insert(orderItemsToInsert);
+    }
+
+    const upiString = generateUpiString(order.id, data.totalAmount);
+
+    return { success: true, orderId: order.id, upiString };
+  } catch (error: any) {
+    console.error('Create UPI Order Error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function submitPaymentReference(data: {
+  order_id: string;
+  utr: string;
+}) {
+  const supabase = await createClient();
+
+  try {
+    if (!data.utr || data.utr.trim().length < 10) {
+      return { success: false, error: 'Please enter a valid UTR/Transaction ID (min 10 digits).' };
+    }
+
+    // Update order with UTR and mark as payment_verifying
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        status: 'payment_verifying',
+        upi_utr: data.utr.trim(),
+      })
+      .eq('id', data.order_id);
+
+    if (error) throw new Error(error.message);
+
+    // Optimistically decrement stock
+    const { data: orderItems } = await supabase
+      .from('order_items')
+      .select('product_id, quantity')
+      .eq('order_id', data.order_id);
+
+    if (orderItems && orderItems.length > 0) {
+      for (const item of orderItems) {
+        const { data: product } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.product_id)
+          .single();
+
+        if (product) {
+          const newStock = Math.max(0, product.stock_quantity - item.quantity);
+          await supabase
+            .from('products')
+            .update({ stock_quantity: newStock, updated_at: new Date().toISOString() })
+            .eq('id', item.product_id);
+        }
+      }
+    }
+
+    revalidatePath('/', 'layout');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Submit UTR Error:', error);
     return { success: false, error: error.message };
   }
 }
