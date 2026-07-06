@@ -117,7 +117,8 @@ export async function createRazorpayOrder(data: {
       orderId: order.id, 
       razorpayOrderId: rpOrder.id, 
       amount: amountInPaise,
-      discountApplied: parsed.data.paymentMethod === 'upi'
+      discountApplied: parsed.data.paymentMethod === 'upi',
+      keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy'
     };
   } catch (error: any) {
     console.error('Create Order Error:', error);

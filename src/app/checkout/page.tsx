@@ -127,8 +127,8 @@ export default function CheckoutPage() {
       setOrderId(res.orderId!);
       setPlacedFinalTotal(finalTotal);
 
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_dummy', 
+      const options: any = {
+        key: res.keyId || 'rzp_test_dummy', 
         amount: res.amount,
         currency: 'INR',
         name: 'Beauty Looks Mumbai',
@@ -141,22 +141,6 @@ export default function CheckoutPage() {
         },
         theme: {
           color: '#C9A94E',
-        },
-        config: {
-          display: {
-            blocks: paymentMethod === 'upi' ? {
-              upi: {
-                name: 'UPI Options',
-                instruments: [
-                  { method: 'upi' }
-                ]
-              }
-            } : undefined,
-            sequence: paymentMethod === 'upi' ? ['block.upi'] : ['block.default'],
-            preferences: {
-              show_default_blocks: paymentMethod !== 'upi'
-            }
-          }
         },
         handler: async function (response: any) {
           setIsProcessing(true);
@@ -185,6 +169,25 @@ export default function CheckoutPage() {
           }
         }
       };
+
+      if (paymentMethod === 'upi') {
+        options.config = {
+          display: {
+            blocks: {
+              upi: {
+                name: 'UPI Options',
+                instruments: [
+                  { method: 'upi' }
+                ]
+              }
+            },
+            sequence: ['block.upi'],
+            preferences: {
+              show_default_blocks: false
+            }
+          }
+        };
+      }
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response: any) {
