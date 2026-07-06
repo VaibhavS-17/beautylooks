@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, CheckCircle2, ShieldCheck, Loader2, MapPin, Smartphone, Monitor, Copy, Check } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ShieldCheck, Loader2, MapPin, Smartphone, Monitor, Copy, Check, MessageCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
@@ -173,7 +173,16 @@ export default function CheckoutPage() {
             </div>
           </div>
           <div className="pt-8 flex flex-col space-y-4 justify-center items-center">
-            <Link href="/products" className="btn-primary w-full sm:w-64 justify-center">Continue Shopping</Link>
+            <a 
+              href={`https://wa.me/919876543210?text=${encodeURIComponent(`Hi, I would like to track my order: ${orderId}`)}`}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="btn-primary w-full sm:w-64 justify-center !bg-[#25D366] !text-white hover:opacity-90 flex items-center space-x-2 border-none shadow-[0_8px_20px_rgba(37,211,102,0.3)]"
+            >
+              <MessageCircle size={18} />
+              <span>Track via WhatsApp</span>
+            </a>
+            <Link href="/products" className="btn-primary w-full sm:w-64 justify-center bg-white text-text-main hover:bg-secondary">Continue Shopping</Link>
             <Link href="/" className="text-xs font-semibold uppercase tracking-widest text-text-muted hover:text-text-main transition-colors py-2">Return Home</Link>
           </div>
         </div>

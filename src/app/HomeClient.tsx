@@ -42,33 +42,65 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
   return (
     <div className="w-full bg-primary overflow-hidden">
       {/* ================= HERO SECTION ================= */}
-      <section className="relative w-full h-[85vh] flex items-center justify-center bg-secondary">
+      <section className="relative w-full h-[90vh] flex items-center justify-center bg-[#111]">
         <div className="absolute inset-0 z-0">
           <Image
             src={heroImageUrl}
             alt={siteSettings.hero_title}
             fill
             sizes="100vw"
-            className="object-cover"
+            className="object-cover opacity-80"
             priority
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
         </div>
 
-        {/* Content Box Overlay */}
-        <div className="relative z-10 card-container px-8 py-16 md:px-16 md:py-20 text-center max-w-2xl mx-4 animate-slide-up bg-white/95 backdrop-blur-sm">
-          <span className="subtitle block mb-6">
+        <div className="relative z-10 px-6 py-16 md:px-12 text-center max-w-4xl mx-4 animate-slide-up">
+          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-white/90 mb-6 block drop-shadow-sm">
             {siteSettings.hero_subtitle}
           </span>
-          <h1 className="text-4xl md:text-6xl font-display text-text-main leading-tight mb-6">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-display text-white leading-[1.1] mb-8 drop-shadow-md">
             {siteSettings.hero_title}
           </h1>
-          <p className="text-sm md:text-base text-text-muted mb-8 font-light">
+          <p className="text-sm md:text-base text-white/80 mb-10 font-light max-w-xl mx-auto">
             {siteSettings.hero_description}
           </p>
-          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <Link href={siteSettings.hero_button_link} className="btn-primary">
+          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+            <Link href={siteSettings.hero_button_link} className="inline-flex items-center justify-center px-10 py-4 bg-white text-black text-xs font-bold uppercase tracking-[0.15em] transition-transform duration-700 hover:scale-105">
               {siteSettings.hero_button_text}
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= SHOP BY CONCERN ================= */}
+      <section className="py-12 md:py-16 bg-white overflow-hidden">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="font-display text-2xl text-text-main mb-3">Shop by Concern</h2>
+            <div className="w-8 h-px bg-accent mx-auto" />
+          </div>
+          
+          {/* Horizontal Scrolling Menu for Mobile */}
+          <div className="flex overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 gap-4 sm:gap-6 hide-scrollbar">
+            {[
+              { title: "Brightening & Glow", q: "glow" },
+              { title: "Tanning & Sun", q: "tan" },
+              { title: "Deep Hydration", q: "hydra" },
+              { title: "Frizz & Smoothing", q: "keratin" }
+            ].map((concern, idx) => (
+              <Link 
+                key={idx} 
+                href={`/products?search=${concern.q}`}
+                className="min-w-[160px] sm:min-w-0 flex flex-col items-center justify-center p-8 transition-opacity duration-500 hover:opacity-60"
+              >
+                <div className="w-16 h-16 rounded-full border border-text-main flex items-center justify-center mb-6">
+                  <span className="text-text-main text-lg font-serif italic">0{idx + 1}</span>
+                </div>
+                <h3 className="text-xs font-bold text-text-main text-center uppercase tracking-[0.1em]">{concern.title}</h3>
+                <span className="text-[10px] text-text-muted mt-2 tracking-[0.2em] uppercase">Explore</span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -87,7 +119,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
               key={category.id}
               className="group block"
             >
-              <div className="relative h-[300px] md:h-[400px] w-full bg-secondary mb-4 rounded-2xl overflow-hidden shadow-sm">
+              <div className="relative h-[300px] md:h-[400px] w-full bg-[#FAFAF9] mb-6 overflow-hidden product-image-container">
                 {category.imageUrl && !category.imageUrl.includes('facial-kits.png') ? (
                   <Image
                     src={category.imageUrl}
@@ -140,9 +172,9 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
               const currentPrice = product.salePrice || product.price;
 
               return (
-                <div key={product.id} className="product-card group cursor-pointer transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] rounded-2xl bg-white p-3">
+                <div key={product.id} className="product-card group cursor-pointer transition-all duration-500 bg-transparent">
                   <Link href={`/products/${product.slug}`} className="block">
-                    <div className="relative h-[280px] sm:h-[350px] rounded-xl overflow-hidden bg-primary/20">
+                    <div className="relative h-[320px] sm:h-[400px] overflow-hidden bg-[#FAFAF9] product-image-container">
                       <Image
                         src={product.images?.[0] || fallbackProductImage}
                         alt={product.name}
@@ -193,9 +225,9 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                         openCart();
                       }}
                       disabled={product.stockQuantity === 0}
-                      className={`w-full mt-4 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all rounded-xl ${
+                      className={`w-full mt-4 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all ${
                         product.stockQuantity > 0
-                          ? 'bg-brand-dark text-primary hover:bg-accent hover:text-brand-dark'
+                          ? 'bg-black text-white hover:bg-black/90'
                           : 'bg-border text-text-muted cursor-not-allowed'
                       }`}
                     >

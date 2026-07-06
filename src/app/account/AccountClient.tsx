@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   User, ShoppingBag, MapPin, LogOut, Package, ShieldCheck, 
   Crown, Mail, Phone as PhoneIcon, Calendar, X, Plus, Trash2, MapPinned, Loader2,
-  FileText, Printer, CheckCircle2, Circle, Truck
+  FileText, Printer, CheckCircle2, Circle, Truck, MessageCircle
 } from 'lucide-react';
 import { formatPrice } from '@/lib/data';
 import { signOut } from '@/app/actions/auth';
@@ -642,13 +642,24 @@ export default function AccountClient({ user, initialAddresses, initialOrders }:
                             <span className="text-[#706A60]">Total paid amount</span>
                             <span className="text-sm font-bold text-[#9A7B2F]">{formatPrice(order.total)}</span>
                           </div>
-                          <button
-                            onClick={() => setInvoiceOrder(order)}
-                            className="flex items-center space-x-1.5 text-xs font-semibold text-[#9A7B2F] hover:text-[#C9A94E] px-3 py-1.5 rounded-lg border border-[#C9A94E30] hover:bg-[#C9A94E08] transition-colors"
-                          >
-                            <FileText size={13} />
-                            <span>View Invoice</span>
-                          </button>
+                          <div className="flex flex-col sm:flex-row items-center gap-2">
+                            <a 
+                              href={`https://wa.me/919876543210?text=${encodeURIComponent(`Hi, I would like to track my order: ${order.id}`)}`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center space-x-1.5 text-xs font-semibold text-[#25D366] hover:text-[#1da851] px-3 py-1.5 rounded-lg border border-[#25D366]/30 hover:bg-[#25D366]/10 transition-colors w-full sm:w-auto justify-center"
+                            >
+                              <MessageCircle size={13} />
+                              <span>Track via WhatsApp</span>
+                            </a>
+                            <button
+                              onClick={() => setInvoiceOrder(order)}
+                              className="flex items-center space-x-1.5 text-xs font-semibold text-[#9A7B2F] hover:text-[#C9A94E] px-3 py-1.5 rounded-lg border border-[#C9A94E30] hover:bg-[#C9A94E08] transition-colors w-full sm:w-auto justify-center"
+                            >
+                              <FileText size={13} />
+                              <span>View Invoice</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}

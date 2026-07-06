@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, Minus, Plus, ChevronLeft, ChevronRight, Truck, Shield, RotateCcw, ArrowRight, X, Star, Loader2, Share2, Check } from 'lucide-react';
+import { Heart, Minus, Plus, ChevronLeft, ChevronRight, Truck, Shield, RotateCcw, ArrowRight, X, Star, Loader2, Share2, Check, Leaf, Ban, Rabbit, Sparkles } from 'lucide-react';
 import { formatPrice, getDiscountPercent } from '@/lib/data';
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { createReview } from '@/app/actions/reviewActions';
@@ -285,7 +285,7 @@ export default function ProductDetailClient({
           {/* Left: Product Images */}
           <div className="space-y-4">
             <div
-              className="relative aspect-square w-full bg-primary/20 rounded-2xl overflow-hidden group cursor-pointer"
+              className="relative aspect-square w-full bg-[#FAFAF9] overflow-hidden group cursor-pointer"
               onClick={() => setLightboxOpen(true)}
             >
               <Image
@@ -342,7 +342,7 @@ export default function ProductDetailClient({
                   <div
                     key={idx}
                     onClick={() => setSelectedImageIndex(idx)}
-                    className={`relative aspect-square w-full bg-primary/20 rounded-xl overflow-hidden border cursor-pointer hover:opacity-80 transition-all duration-200 ${idx === selectedImageIndex ? 'ring-2 ring-accent border-accent' : 'border-border/50'}`}
+                    className={`relative aspect-square w-full bg-[#FAFAF9] overflow-hidden cursor-pointer hover:opacity-80 transition-all duration-200 ${idx === selectedImageIndex ? 'border-b-2 border-text-main' : 'border-b-2 border-transparent'}`}
                   >
                     <Image src={img} alt={`${product.name} view ${idx + 1}`} fill sizes="(max-width: 640px) 25vw, 120px" className="object-cover" />
                   </div>
@@ -395,9 +395,11 @@ export default function ProductDetailClient({
             
             <div className="w-12 h-px bg-accent mb-6" />
 
-            <p className="text-sm text-text-muted font-light leading-relaxed mb-8">
+            <p className="text-sm text-text-muted font-light leading-relaxed mb-6">
               {product.shortDescription}
             </p>
+
+
 
             {/* Badges/Info */}
             <div className="flex flex-wrap gap-3 mb-10">
@@ -413,9 +415,9 @@ export default function ProductDetailClient({
 
             {/* Actions */}
             {/* Actions */}
-            <div className="glass-gold p-4 sm:p-6 rounded-2xl mb-10 border border-accent/20 flex flex-col sm:flex-row gap-4 items-center">
+            <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row gap-4 items-center border-t border-border/50">
               <div className="flex gap-4 items-center w-full sm:w-auto">
-                <div className="flex-1 sm:w-36 flex items-center bg-white/80 backdrop-blur shadow-sm rounded-xl h-14 overflow-hidden border border-border/50 shrink-0">
+                <div className="flex-1 sm:w-36 flex items-center bg-white h-14 overflow-hidden border border-border shrink-0">
                   <button 
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     className="w-12 sm:px-5 h-full flex items-center justify-center hover:bg-black/5 transition-colors text-text-main"
@@ -438,7 +440,7 @@ export default function ProductDetailClient({
 
                 <button 
                   onClick={handleShare}
-                  className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
+                  className="sm:hidden h-14 w-14 shrink-0 flex items-center justify-center border border-border bg-white hover:bg-black/5 transition-colors"
                   aria-label="Share product"
                 >
                   {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
@@ -481,21 +483,7 @@ export default function ProductDetailClient({
               </button>
             </div>
 
-            {/* Service Pledges */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-8 border-t border-border">
-              <div className="flex items-center space-x-3">
-                <Truck size={18} className="text-accent" strokeWidth={1.5} />
-                <span className="text-xs text-text-muted">Complimentary Shipping</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Shield size={18} className="text-accent" strokeWidth={1.5} />
-                <span className="text-xs text-text-muted">100% Authentic</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <RotateCcw size={18} className="text-accent" strokeWidth={1.5} />
-                <span className="text-xs text-text-muted">Easy Returns</span>
-              </div>
-            </div>
+
           </div>
         </div>
 
@@ -522,11 +510,47 @@ export default function ProductDetailClient({
             {activeTab === 'description' && (
               <div className="prose prose-sm prose-neutral text-text-muted font-light leading-relaxed">
                 <p>{product.description}</p>
-                <ul className="mt-6 space-y-2 list-disc pl-4 text-xs uppercase tracking-widest font-semibold text-text-main">
+                <ul className="mt-6 mb-12 space-y-2 list-disc pl-4 text-xs uppercase tracking-widest font-semibold text-text-main">
                   <li>Dermatologically Tested</li>
                   <li>Suitable for {product.skinType} skin</li>
                   <li>Premium formulation</li>
                 </ul>
+
+                {/* Our Promise & Key Actives */}
+                <div className="mt-8 border-t border-border/50 pt-8 not-prose">
+                  <div className="flex flex-col gap-8">
+                    <div>
+                      <h3 className="text-[10px] font-bold text-text-muted mb-4 uppercase tracking-widest">Premium Actives</h3>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase">Hyaluronic Acid</span>
+                        <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase">Vitamin C</span>
+                        <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase">24K Gold Extracts</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-[10px] font-bold text-text-muted mb-4 uppercase tracking-widest">Our Promise</h3>
+                      <div className="flex flex-wrap gap-x-6 gap-y-4">
+                        <div className="flex items-center gap-2">
+                          <Leaf size={14} className="text-text-muted" strokeWidth={1.5} />
+                          <span className="text-[10px] font-semibold tracking-widest uppercase text-text-main">100% Vegan</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Ban size={14} className="text-text-muted" strokeWidth={1.5} />
+                          <span className="text-[10px] font-semibold tracking-widest uppercase text-text-main">Paraben-Free</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Rabbit size={14} className="text-text-muted" strokeWidth={1.5} />
+                          <span className="text-[10px] font-semibold tracking-widest uppercase text-text-main">Cruelty-Free</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Sparkles size={14} className="text-text-muted" strokeWidth={1.5} />
+                          <span className="text-[10px] font-semibold tracking-widest uppercase text-text-main">Authentic</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
             
@@ -705,7 +729,7 @@ export default function ProductDetailClient({
         {relatedProducts.length > 0 && (
           <div className="mt-24 pt-16 border-t border-border">
             <div className="flex justify-between items-end mb-12">
-              <h2 className="font-display text-2xl text-text-main">You May Also Like</h2>
+              <h2 className="font-display text-2xl text-text-main">Complete Your Ritual</h2>
               <Link href={`/products?category=${product.categoryId}`} className="hidden sm:inline-flex items-center space-x-2 text-xs font-semibold uppercase tracking-widest text-text-main hover:text-accent transition-colors">
                 <span>View More</span>
                 <ArrowRight size={14} />
@@ -715,7 +739,7 @@ export default function ProductDetailClient({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {relatedProducts.map((relProduct) => (
                 <Link href={`/products/${relProduct.slug}`} key={relProduct.id} className="group block">
-                  <div className="relative h-[250px] sm:h-[300px] w-full bg-primary/20 rounded-2xl border border-border/50 mb-4 overflow-hidden transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)]">
+                  <div className="relative h-[300px] sm:h-[350px] w-full bg-[#FAFAF9] mb-4 overflow-hidden product-image-container">
                     <Image
                       src={relProduct.images?.[0] || fallbackProductImage}
                       alt={relProduct.name}

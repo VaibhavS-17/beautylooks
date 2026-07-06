@@ -574,9 +574,9 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                     const currentPrice = product.salePrice || product.price;
 
                     return (
-                      <div key={product.id} className="product-card group cursor-pointer flex flex-col h-full glass transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] rounded-2xl p-3 border border-border/50">
-                        <Link href={`/products/${product.slug}`} className="block overflow-hidden rounded-t-2xl">
-                          <div className="product-image-container h-[250px] sm:h-[350px] relative overflow-hidden rounded-xl bg-primary/20">
+                      <div key={product.id} className="product-card group cursor-pointer flex flex-col h-full transition-all duration-500 bg-transparent">
+                        <Link href={`/products/${product.slug}`} className="block overflow-hidden">
+                          <div className="product-image-container h-[300px] sm:h-[400px] relative overflow-hidden bg-[#FAFAF9]">
                             <Image
                               src={product.images?.[0] || fallbackProductImage}
                               alt={product.name}
@@ -599,7 +599,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
                               <button 
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickViewProduct(product); }}
-                                className="bg-white text-text-main text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-full hover:bg-accent hover:text-white transition-colors"
+                                className="bg-white text-text-main text-xs font-bold uppercase tracking-widest px-8 py-4 hover:bg-black hover:text-white transition-colors"
                               >
                                 Quick View
                               </button>
@@ -644,9 +644,9 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                               openCart();
                             }}
                             disabled={product.stockQuantity === 0}
-                            className={`w-full mt-5 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all rounded-xl ${
+                            className={`w-full mt-5 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all ${
                               product.stockQuantity > 0
-                                ? 'bg-brand-dark text-primary hover:bg-accent hover:text-brand-dark'
+                                ? 'bg-black text-white hover:bg-black/90'
                                 : 'bg-border text-text-muted cursor-not-allowed'
                             }`}
                           >
