@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, Minus, Plus, ChevronLeft, ChevronRight, Truck, Shield, RotateCcw, ArrowRight, X, Star, Loader2 } from 'lucide-react';
+import { Heart, Minus, Plus, ChevronLeft, ChevronRight, Truck, Shield, RotateCcw, ArrowRight, X, Star, Loader2, Share2, Check } from 'lucide-react';
 import { formatPrice, getDiscountPercent } from '@/lib/data';
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { createReview } from '@/app/actions/reviewActions';
@@ -165,6 +165,27 @@ export default function ProductDetailClient({
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reviewError, setReviewError] = useState('');
+  
+  const [isShared, setIsShared] = useState(false);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: `Check out ${product.name} at Beauty Looks Mumbai!`,
+          url: url,
+        });
+      } catch (err) {
+        console.log('Error sharing', err);
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setIsShared(true);
+      setTimeout(() => setIsShared(false), 2000);
+    }
+  };
 
   const reviewsSectionRef = useRef<HTMLDivElement>(null);
   
@@ -416,6 +437,13 @@ export default function ProductDetailClient({
                 </div>
 
                 <button 
+                  onClick={handleShare}
+                  className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
+                  aria-label="Share product"
+                >
+                  {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
+                </button>
+                <button 
                   onClick={() => toggleWishlist(product.id)}
                   className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
                 >
@@ -438,6 +466,13 @@ export default function ProductDetailClient({
                 {product.stockQuantity > 0 ? 'Add to Bag' : 'Out of Stock'}
               </button>
 
+              <button 
+                onClick={handleShare}
+                className="hidden sm:flex h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
+                aria-label="Share product"
+              >
+                {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
+              </button>
               <button 
                 onClick={() => toggleWishlist(product.id)}
                 className="hidden sm:flex h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
