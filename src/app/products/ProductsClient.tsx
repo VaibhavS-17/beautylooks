@@ -42,10 +42,20 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
   }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedSkinTypes, setSelectedSkinTypes] = useState<string[]>([]);
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('newest');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState<any | null>(null);
+
+  // Debounce search query by 300ms
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Sync state when URL params change from navbar clicks
   useEffect(() => {
@@ -72,18 +82,47 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
     );
   };
 
+  const toggleSkinType = (type: string) => {
+    setSelectedSkinTypes(prev =>
+      prev.includes(type)
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
+  const togglePriceRange = (range: string) => {
+    setSelectedPriceRanges(prev =>
+      prev.includes(range)
+        ? prev.filter(r => r !== range)
+        : [...prev, range]
+    );
+  };
+
   const clearFilters = () => {
     setSelectedCategories([]);
     setSelectedBrands([]);
+    setSelectedSkinTypes([]);
+    setSelectedPriceRanges([]);
     setSearchQuery('');
   };
 
   // Filter and sort products
+  // Price range helper
+  const matchesPriceRange = (effectivePrice: number, range: string): boolean => {
+    switch (range) {
+      case 'under-499': return effectivePrice < 499;
+      case '499-999': return effectivePrice >= 499 && effectivePrice <= 999;
+      case '1000-1999': return effectivePrice >= 1000 && effectivePrice <= 1999;
+      case 'over-2000': return effectivePrice > 2000;
+      default: return true;
+    }
+  };
+
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+    if (debouncedSearchQuery) {
+      const q = debouncedSearchQuery.toLowerCase();
       result = result.filter(
         p => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)
       );
@@ -101,6 +140,19 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
       result = result.filter(p => selectedBrands.includes(p.brand));
     }
 
+    if (selectedSkinTypes.length > 0) {
+      result = result.filter(p =>
+        p.skinType === 'all' || selectedSkinTypes.includes(p.skinType)
+      );
+    }
+
+    if (selectedPriceRanges.length > 0) {
+      result = result.filter(p => {
+        const effectivePrice = p.salePrice || p.price;
+        return selectedPriceRanges.some(range => matchesPriceRange(effectivePrice, range));
+      });
+    }
+
     switch (sortBy) {
       case 'price-low':
         result.sort((a, b) => (a.salePrice || a.price) - (b.salePrice || b.price));
@@ -115,7 +167,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
     }
 
     return result;
-  }, [products, searchQuery, selectedCategories, selectedBrands, allCategories, sortBy]);
+  }, [products, debouncedSearchQuery, selectedCategories, selectedBrands, selectedSkinTypes, selectedPriceRanges, allCategories, sortBy]);
 
   // Group products by Category and sort each category's products by Brand & Name
   const groupedProducts = useMemo(() => {
@@ -302,8 +354,26 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
         </div>
 
         {/* Sidebar (Filters) */}
-        <aside className={`lg:w-1/4 ${mobileFiltersOpen ? 'block' : 'hidden lg:block'}`}>
-          <div className="sticky top-28 space-y-10">
+        <aside 
+          className={`fixed inset-y-0 left-0 z-50 w-full sm:w-80 bg-primary shadow-2xl transform transition-transform duration-500 ease-in-out lg:relative lg:translate-x-0 lg:z-auto lg:w-1/4 lg:bg-transparent lg:shadow-none lg:block ${
+            mobileFiltersOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 hidden lg:block'
+          }`}
+        >
+          {/* Mobile Overlay */}
+          {mobileFiltersOpen && (
+            <div 
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm -z-10 lg:hidden"
+              onClick={() => setMobileFiltersOpen(false)}
+            />
+          )}
+
+          <div className="h-full overflow-y-auto p-6 lg:p-0 lg:sticky lg:top-28 space-y-10 lg:h-auto lg:overflow-visible">
+            <div className="flex justify-between items-center lg:hidden mb-6">
+              <h2 className="font-display text-2xl font-semibold">Filters</h2>
+              <button onClick={() => setMobileFiltersOpen(false)} className="p-2 bg-secondary rounded-full">
+                <X size={20} />
+              </button>
+            </div>
 
             {/* Categories */}
             <div>
@@ -367,6 +437,78 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
               </div>
             </div>
 
+            {/* Skin Type */}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-widest mb-4">Skin Type</h3>
+              <div className="space-y-3">
+                {[
+                  { label: 'Oily', value: 'oily' },
+                  { label: 'Dry', value: 'dry' },
+                  { label: 'Combination', value: 'combination' },
+                  { label: 'Sensitive', value: 'sensitive' },
+                ].map(st => (
+                  <label key={st.value} className="flex items-center space-x-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={selectedSkinTypes.includes(st.value)}
+                      onChange={() => toggleSkinType(st.value)}
+                      className="sr-only"
+                    />
+                    <div className={`w-4 h-4 border rounded-sm flex items-center justify-center transition-colors ${
+                      selectedSkinTypes.includes(st.value) 
+                        ? 'bg-text-main border-text-main' 
+                        : 'border-border group-hover:border-text-main'
+                    }`}>
+                      {selectedSkinTypes.includes(st.value) && (
+                        <svg className="w-3 h-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className={`text-sm ${selectedSkinTypes.includes(st.value) ? 'text-text-main font-medium' : 'text-text-muted group-hover:text-text-main'}`}>
+                      {st.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Price Range */}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-widest mb-4">Price Range</h3>
+              <div className="space-y-3">
+                {[
+                  { label: 'Under ₹499', value: 'under-499' },
+                  { label: '₹499 - ₹999', value: '499-999' },
+                  { label: '₹1,000 - ₹1,999', value: '1000-1999' },
+                  { label: 'Over ₹2,000', value: 'over-2000' },
+                ].map(pr => (
+                  <label key={pr.value} className="flex items-center space-x-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={selectedPriceRanges.includes(pr.value)}
+                      onChange={() => togglePriceRange(pr.value)}
+                      className="sr-only"
+                    />
+                    <div className={`w-4 h-4 border rounded-sm flex items-center justify-center transition-colors ${
+                      selectedPriceRanges.includes(pr.value) 
+                        ? 'bg-text-main border-text-main' 
+                        : 'border-border group-hover:border-text-main'
+                    }`}>
+                      {selectedPriceRanges.includes(pr.value) && (
+                        <svg className="w-3 h-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className={`text-sm ${selectedPriceRanges.includes(pr.value) ? 'text-text-main font-medium' : 'text-text-muted group-hover:text-text-main'}`}>
+                      {pr.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
             {/* Sort */}
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-widest mb-4 text-text-main">Sort By</h3>
@@ -384,7 +526,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
               </div>
             </div>
 
-            {(selectedCategories.length > 0 || selectedBrands.length > 0 || searchQuery) && (
+            {(selectedCategories.length > 0 || selectedBrands.length > 0 || selectedSkinTypes.length > 0 || selectedPriceRanges.length > 0 || searchQuery) && (
               <button 
                 onClick={clearFilters}
                 className="text-xs uppercase tracking-widest text-text-muted hover:text-text-main transition-colors border-b border-transparent hover:border-text-main"
@@ -427,12 +569,12 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
 
                 {/* Grid of Products inside this Category, sorted by Brand & Name */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-                  {group.products.map((product) => {
+                  {group.products.map((product, index) => {
                     const isOnSale = product.salePrice !== null;
                     const currentPrice = product.salePrice || product.price;
 
                     return (
-                      <div key={product.id} className="product-card group cursor-pointer flex flex-col h-full bg-white transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] rounded-2xl p-3 border border-border/50">
+                      <div key={product.id} className="product-card group cursor-pointer flex flex-col h-full glass transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] rounded-2xl p-3 border border-border/50">
                         <Link href={`/products/${product.slug}`} className="block overflow-hidden rounded-t-2xl">
                           <div className="product-image-container h-[250px] sm:h-[350px] relative overflow-hidden rounded-xl bg-primary/20">
                             <Image
@@ -441,6 +583,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                               fill
                               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                               className="object-cover product-image transition-transform duration-700 group-hover:scale-105"
+                              priority={index < 4}
                             />
                             <div className="absolute top-4 left-4 flex flex-col space-y-2 z-10">
                               {product.badge === 'bestseller' && (
@@ -452,6 +595,14 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                               {product.badge === 'new' && (
                                 <span className="badge-gold">NEW</span>
                               )}
+                            </div>
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                              <button 
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickViewProduct(product); }}
+                                className="bg-white text-text-main text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-full hover:bg-accent hover:text-white transition-colors"
+                              >
+                                Quick View
+                              </button>
                             </div>
                           </div>
                         </Link>
@@ -492,9 +643,14 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                               addItem(product, 1);
                               openCart();
                             }}
-                            className="w-full mt-5 bg-brand-dark text-primary px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-accent hover:text-brand-dark transition-all rounded-xl"
+                            disabled={product.stockQuantity === 0}
+                            className={`w-full mt-5 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all rounded-xl ${
+                              product.stockQuantity > 0
+                                ? 'bg-brand-dark text-primary hover:bg-accent hover:text-brand-dark'
+                                : 'bg-border text-text-muted cursor-not-allowed'
+                            }`}
                           >
-                            Add to Bag
+                            {product.stockQuantity > 0 ? 'Add to Bag' : 'Out of Stock'}
                           </button>
                         </div>
                       </div>
@@ -506,6 +662,74 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
           )}
         </main>
       </div>
+
+      {/* Quick View Modal */}
+      {quickViewProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setQuickViewProduct(null)} />
+          <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+            <button 
+              onClick={() => setQuickViewProduct(null)}
+              className="absolute top-4 right-4 z-10 p-2 bg-white/50 hover:bg-white rounded-full transition-colors"
+            >
+              <X size={20} className="text-text-main" />
+            </button>
+            <div className="w-full md:w-1/2 relative bg-secondary min-h-[300px] md:min-h-full">
+              <Image 
+                src={quickViewProduct.images?.[0] || fallbackProductImage} 
+                alt={quickViewProduct.name} 
+                fill 
+                className="object-cover"
+              />
+            </div>
+            <div className="w-full md:w-1/2 p-6 md:p-10 overflow-y-auto">
+              <span className="text-[10px] font-bold text-accent tracking-widest uppercase block mb-2">
+                {quickViewProduct.brand}
+              </span>
+              <h2 className="font-display text-2xl md:text-3xl text-text-main font-semibold mb-4">
+                {quickViewProduct.name}
+              </h2>
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-xl font-semibold text-text-main">
+                  {formatPrice(quickViewProduct.salePrice || quickViewProduct.price)}
+                </span>
+                {quickViewProduct.salePrice && (
+                  <span className="text-sm text-text-muted line-through">
+                    {formatPrice(quickViewProduct.price)}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-text-muted leading-relaxed mb-8 line-clamp-4">
+                {quickViewProduct.description}
+              </p>
+              
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    addItem(quickViewProduct, 1);
+                    openCart();
+                    setQuickViewProduct(null);
+                  }}
+                  disabled={quickViewProduct.stockQuantity === 0}
+                  className={`w-full py-4 text-xs font-semibold uppercase tracking-widest rounded-xl transition-all ${
+                    quickViewProduct.stockQuantity > 0
+                      ? 'bg-brand-dark text-primary hover:bg-accent hover:text-brand-dark'
+                      : 'bg-border text-text-muted cursor-not-allowed'
+                  }`}
+                >
+                  {quickViewProduct.stockQuantity > 0 ? 'Add to Bag' : 'Out of Stock'}
+                </button>
+                <Link 
+                  href={`/products/${quickViewProduct.slug}`}
+                  className="w-full text-center py-4 text-xs font-semibold uppercase tracking-widest text-text-main hover:text-accent transition-colors"
+                >
+                  View Full Details
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

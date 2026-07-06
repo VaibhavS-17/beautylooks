@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { toast } from 'react-hot-toast';
 import { Product, CartItem } from './types';
 
 interface CartState {
@@ -32,15 +33,39 @@ export const useCartStore = create<CartState>()(
           );
 
           if (existingItem) {
+            const newQuantity = existingItem.quantity + quantity;
+            if (newQuantity > product.stockQuantity) {
+              if (product.stockQuantity === 0) {
+                toast.error("This product is out of stock");
+                return state;
+              }
+              toast.error(`Only ${product.stockQuantity} items in stock`);
+              return {
+                items: state.items.map((item) =>
+                  item.product.id === product.id
+                    ? { ...item, quantity: product.stockQuantity }
+                    : item
+                ),
+              };
+            }
             return {
               items: state.items.map((item) =>
                 item.product.id === product.id
-                  ? { ...item, quantity: item.quantity + quantity }
+                  ? { ...item, quantity: newQuantity }
                   : item
               ),
             };
           }
 
+          if (product.stockQuantity === 0) {
+            toast.error("This product is currently out of stock");
+            return state;
+          }
+
+          if (quantity > product.stockQuantity) {
+            toast.error(`Only ${product.stockQuantity} items in stock`);
+            return { items: [...state.items, { product, quantity: product.stockQuantity }] };
+          }
           return { items: [...state.items, { product, quantity }] };
         });
       },
@@ -57,11 +82,23 @@ export const useCartStore = create<CartState>()(
           return;
         }
 
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.product.id === productId ? { ...item, quantity } : item
-          ),
-        }));
+        set((state) => {
+          const existingItem = state.items.find(i => i.product.id === productId);
+          if (existingItem && quantity > existingItem.product.stockQuantity) {
+            toast.error(`Only ${existingItem.product.stockQuantity} items in stock`);
+            return {
+              items: state.items.map((item) =>
+                item.product.id === productId ? { ...item, quantity: existingItem.product.stockQuantity } : item
+              ),
+            };
+          }
+
+          return {
+            items: state.items.map((item) =>
+              item.product.id === productId ? { ...item, quantity } : item
+            ),
+          };
+        });
       },
 
       clearCart: () => set({ items: [] }),

@@ -19,7 +19,9 @@ export default async function ProductsPage() {
       images,
       is_featured,
       is_active,
+      stock_quantity,
       category_id,
+      skin_type,
       brands (name),
       categories (name)
     `)
@@ -37,9 +39,11 @@ export default async function ProductsPage() {
     images: p.images || [],
     isFeatured: p.is_featured,
     isActive: p.is_active,
+    stockQuantity: p.stock_quantity,
     brand: (p as any).brands?.name || 'Unknown',
     category: (p as any).categories?.name || 'Unknown',
     categoryId: p.category_id,
+    skinType: p.skin_type || 'all',
     badge: p.sale_price ? 'sale' : p.is_featured ? 'bestseller' : 'new'
   }));
 

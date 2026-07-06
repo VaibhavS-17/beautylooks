@@ -34,6 +34,22 @@ export default function CartDrawer() {
             </button>
           </div>
 
+          {/* Free Shipping Progress */}
+          {items.length > 0 && (
+            <div className="px-6 py-4 bg-secondary/30 border-b border-border">
+              <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-widest text-text-main mb-2">
+                <span>Free Shipping</span>
+                <span>{getTotalPrice() >= 499 ? 'Unlocked' : `${formatPrice(499 - getTotalPrice())} away`}</span>
+              </div>
+              <div className="w-full h-1.5 bg-border/50 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-accent transition-all duration-500 ease-out"
+                  style={{ width: `${Math.min(100, (getTotalPrice() / 499) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Cart items list */}
           <div className="flex-1 overflow-y-auto py-6 px-6 no-scrollbar">
             {items.length === 0 ? (
@@ -106,7 +122,12 @@ export default function CartDrawer() {
                             <span className="px-3 text-xs font-medium text-text-main">{item.quantity}</span>
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                              className="px-2 text-text-main hover:bg-secondary transition-colors h-full flex items-center"
+                              disabled={item.quantity >= item.product.stockQuantity}
+                              className={`px-2 h-full flex items-center transition-colors ${
+                                item.quantity >= item.product.stockQuantity
+                                  ? 'text-border cursor-not-allowed'
+                                  : 'text-text-main hover:bg-secondary'
+                              }`}
                             >
                               <Plus size={12} />
                             </button>
@@ -124,6 +145,26 @@ export default function CartDrawer() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Perfect Pairings Upsell Block */}
+            {items.length > 0 && (
+              <div className="mt-8 bg-secondary/30 p-4 rounded-xl border border-border">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-3">Perfect Pairings</div>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-white rounded-lg border border-border flex items-center justify-center shrink-0">
+                    <span className="text-xl">✨</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h5 className="text-xs font-semibold text-text-main truncate">Add a Premium Gift Box</h5>
+                    <p className="text-[10px] text-text-muted truncate mt-0.5">Luxurious unboxing experience</p>
+                    <span className="text-xs font-semibold text-accent block mt-1">₹299</span>
+                  </div>
+                  <button className="px-3 py-1.5 bg-white border border-accent text-accent rounded-lg text-[10px] font-bold uppercase hover:bg-accent hover:text-white transition-colors">
+                    Add
+                  </button>
+                </div>
               </div>
             )}
           </div>

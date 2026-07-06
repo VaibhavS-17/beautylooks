@@ -13,11 +13,23 @@ export default async function AccountPage() {
   }
 
   // Fetch profile from the profiles table
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single();
+
+  // If the user signed in via Google OAuth, they might not have a profile row yet.
+  if (!profile) {
+    const newProfile = {
+      id: user.id,
+      full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+      phone: user.user_metadata?.phone || null,
+      avatar_url: user.user_metadata?.avatar_url || null,
+    };
+    await supabase.from('profiles').upsert(newProfile);
+    profile = newProfile as any;
+  }
 
   // Fetch addresses
   const { data: addresses } = await supabase
@@ -34,12 +46,15 @@ export default async function AccountPage() {
       status,
       total_amount,
       created_at,
+      shipping_address,
+      razorpay_payment_id,
       order_items (
         id,
         quantity,
         unit_price,
         products (
-          name
+          name,
+          images
         )
       )
     `)
@@ -51,7 +66,7 @@ export default async function AccountPage() {
     email: user.email || '',
     phone: profile?.phone || user.user_metadata?.phone || '',
     role: profile?.role || 'customer',
-    createdAt: user.created_at || '',
+    createdAt: user.created_at ? new Date(user.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : 'Recently joined',
   };
 
   const mappedAddresses = (addresses || []).map(addr => ({
@@ -72,10 +87,13 @@ export default async function AccountPage() {
     date: new Date(ord.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
     total: Number(ord.total_amount),
     status: ord.status,
+    shippingAddress: ord.shipping_address as Record<string, string> | null,
+    razorpayPaymentId: (ord as any).razorpay_payment_id as string | null,
     items: (ord.order_items || []).map((item: any) => ({
       name: item.products?.name || 'Unknown Product',
       qty: item.quantity,
-      price: Number(item.unit_price)
+      price: Number(item.unit_price),
+      image: item.products?.images?.[0] || null,
     }))
   }));
 

@@ -24,6 +24,10 @@ interface AdminOrder {
   amount: number;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   date: string;
+  shippingAddress?: any;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  items?: Array<{ name: string; quantity: number; unitPrice: number; image?: string }>;
 }
 
 interface CategoryItem {

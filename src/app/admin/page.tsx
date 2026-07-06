@@ -50,13 +50,24 @@ export default async function AdminDashboardPage() {
       total_amount,
       status,
       created_at,
+      shipping_address,
+      razorpay_order_id,
+      razorpay_payment_id,
       profiles (
         full_name,
         phone
+      ),
+      order_items (
+        id,
+        quantity,
+        unit_price,
+        products (
+          name,
+          images
+        )
       )
     `)
-    .order('created_at', { ascending: false })
-    .limit(10);
+    .order('created_at', { ascending: false });
 
   const mappedOrders = (recentOrdersData || []).map((ord: any) => ({
     id: ord.id,
@@ -64,7 +75,16 @@ export default async function AdminDashboardPage() {
     customerEmail: ord.profiles?.phone ? `+91 ${ord.profiles.phone}` : 'Registered Customer',
     amount: Number(ord.total_amount),
     status: ord.status,
-    date: new Date(ord.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })
+    date: new Date(ord.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
+    shippingAddress: ord.shipping_address || null,
+    razorpayOrderId: ord.razorpay_order_id || '',
+    razorpayPaymentId: ord.razorpay_payment_id || '',
+    items: (ord.order_items || []).map((item: any) => ({
+      name: item.products?.name || 'Unknown Product',
+      quantity: item.quantity,
+      unitPrice: Number(item.unit_price),
+      image: item.products?.images?.[0] || undefined
+    }))
   }));
 
   // Fetch categories & brands for dropdowns

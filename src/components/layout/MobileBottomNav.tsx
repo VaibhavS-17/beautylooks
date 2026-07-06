@@ -13,8 +13,11 @@ export default function MobileBottomNav() {
   const openCart = useCartStore((state) => state.openCart);
   const wishlistCount = useWishlistStore((state) => state.items.length);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
+    setMounted(true);
+
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       setIsLoggedIn(!!user);
@@ -77,7 +80,7 @@ export default function MobileBottomNav() {
         >
           <div className="bg-brand-dark text-primary h-14 w-14 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(202,138,4,0.3)] border-4 border-white">
             <ShoppingBag size={22} strokeWidth={1.5} />
-            {cartItemsCount > 0 && (
+            {mounted && cartItemsCount > 0 && (
               <span className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-white">
                 {cartItemsCount}
               </span>
@@ -96,7 +99,7 @@ export default function MobileBottomNav() {
               } transition-colors`}
             >
               <item.icon size={20} strokeWidth={isActive ? 2 : 1.5} />
-              {(item.badge || 0) > 0 && (
+              {mounted && (item.badge || 0) > 0 && (
                 <span className="absolute top-1 right-2 bg-accent text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
                   {item.badge}
                 </span>

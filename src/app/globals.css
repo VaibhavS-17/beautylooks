@@ -239,19 +239,52 @@
   animation: shimmer 2s linear infinite;
 }
 
-/* Glassmorphism */
+/* Glassmorphism - Premium frosted glass */
 .glass {
-  background: rgba(250, 250, 249, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  background: rgba(250, 250, 249, 0.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.04);
 }
 
 .glass-dark {
-  background: rgba(28, 25, 23, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+  background: rgba(28, 25, 23, 0.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+}
+
+.glass-gold {
+  background: linear-gradient(135deg, rgba(202, 138, 4, 0.15) 0%, rgba(202, 138, 4, 0.05) 100%);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(202, 138, 4, 0.3);
+  box-shadow: 0 4px 20px -4px rgba(202, 138, 4, 0.2);
+}
+
+.premium-gradient {
+  background: linear-gradient(135deg, rgba(250, 250, 249, 0.8) 0%, rgba(245, 245, 244, 0.9) 100%);
+}
+
+/* Touch-optimized active states for mobile */
+@media (hover: none) {
+  .btn-primary:active, .btn-secondary:active, .btn-tertiary:active {
+    transform: scale(0.96);
+  }
+  .product-card:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Scroll-triggered reveal utility class */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
 }

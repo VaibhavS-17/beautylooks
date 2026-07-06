@@ -26,6 +26,14 @@ export async function createAddress(formData: FormData) {
   }
 
   try {
+    // Ensure profile exists to prevent foreign key constraint violations
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+      phone: user.user_metadata?.phone || null,
+      avatar_url: user.user_metadata?.avatar_url || null,
+    }, { onConflict: 'id' });
+
     // If setting as default, unset other defaults first
     if (isDefault) {
       await supabase
@@ -34,7 +42,7 @@ export async function createAddress(formData: FormData) {
         .eq('user_id', user.id);
     }
 
-    const { error } = await supabase
+    const { data: newAddress, error } = await supabase
       .from('addresses')
       .insert({
         user_id: user.id,
@@ -47,14 +55,16 @@ export async function createAddress(formData: FormData) {
         state,
         pincode,
         is_default: isDefault,
-      });
+      })
+      .select()
+      .single();
 
     if (error) {
       return { error: error.message };
     }
 
     revalidatePath('/account');
-    return { success: true };
+    return { success: true, data: newAddress };
   } catch (err: any) {
     return { error: err.message || 'An unexpected error occurred.' };
   }

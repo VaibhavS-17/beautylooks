@@ -1,13 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Script from 'next/script';
-import { ArrowLeft, CheckCircle2, ShieldCheck, CreditCard, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ShieldCheck, CreditCard, Loader2, MapPin } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
 import { createOrder, verifyPayment } from '@/app/actions/orderActions';
+import { createClient } from '@/lib/supabase/client';
+
+interface SavedAddress {
+  id: string;
+  label: string;
+  full_name: string;
+  phone: string;
+  line1: string;
+  line2: string | null;
+  city: string;
+  state: string;
+  pincode: string;
+  is_default: boolean;
+}
 
 export default function CheckoutPage() {
   const { items, getTotalPrice, clearCart, getTotalItems } = useCartStore();
@@ -27,8 +41,15 @@ export default function CheckoutPage() {
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState('');
+  const [placedFinalTotal, setPlacedFinalTotal] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Saved Addresses State
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [addressesLoading, setAddressesLoading] = useState(true);
 
   const totalPrice = getTotalPrice();
   const shippingCharge = totalPrice >= 499 ? 0 : 49;
@@ -40,9 +61,66 @@ export default function CheckoutPage() {
     'Telangana', 'Uttar Pradesh', 'Rajasthan', 'West Bengal', 'Other'
   ];
 
+  // Fetch saved addresses on mount
+  useEffect(() => {
+    async function loadSavedAddresses() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          setIsLoggedIn(false);
+          setAddressesLoading(false);
+          return;
+        }
+
+        setIsLoggedIn(true);
+
+        // Pre-fill email from user profile
+        if (user.email) {
+          setFormData(prev => ({ ...prev, email: user.email! }));
+        }
+
+        const { data: addresses } = await supabase
+          .from('addresses')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('is_default', { ascending: false });
+
+        if (addresses && addresses.length > 0) {
+          setSavedAddresses(addresses);
+        }
+      } catch (err) {
+        console.error('Failed to load saved addresses:', err);
+      } finally {
+        setAddressesLoading(false);
+      }
+    }
+
+    loadSavedAddresses();
+  }, []);
+
+  const handleSelectAddress = (address: SavedAddress) => {
+    setSelectedAddressId(address.id);
+    setFormData(prev => ({
+      ...prev,
+      fullName: address.full_name,
+      phone: address.phone,
+      addressLine1: address.line1,
+      addressLine2: address.line2 || '',
+      city: address.city,
+      state: address.state,
+      pincode: address.pincode,
+    }));
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear selected address highlight when user manually edits the form
+    if (selectedAddressId && name !== 'email') {
+      setSelectedAddressId(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,6 +166,7 @@ export default function CheckoutPage() {
 
             if (verifyRes.success) {
               setOrderId(res.orderId);
+              setPlacedFinalTotal(finalTotal);
               setOrderPlaced(true);
               clearCart();
             } else {
@@ -160,7 +239,7 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between font-semibold border-t border-border pt-4 mt-2">
               <span>Total Paid</span>
-              <span className="text-text-main">{formatPrice(finalTotal)}</span>
+              <span className="text-text-main">{formatPrice(placedFinalTotal)}</span>
             </div>
           </div>
 
@@ -209,6 +288,67 @@ export default function CheckoutPage() {
             
             {/* Left Form Column */}
             <div className="lg:col-span-8 space-y-12">
+
+              {/* Saved Addresses Section */}
+              {isLoggedIn && !addressesLoading && savedAddresses.length > 0 && (
+                <div>
+                  <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-6 flex items-center space-x-3">
+                    <MapPin size={20} strokeWidth={1.5} className="text-[#C9A94E]" />
+                    <span>Saved Addresses</span>
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {savedAddresses.map((addr) => (
+                      <button
+                        type="button"
+                        key={addr.id}
+                        onClick={() => handleSelectAddress(addr)}
+                        className={`text-left border rounded-xl p-4 transition-all duration-200 space-y-2 relative ${
+                          selectedAddressId === addr.id
+                            ? 'border-[#C9A94E] bg-[#C9A94E08] ring-1 ring-[#C9A94E] shadow-md'
+                            : 'border-border bg-secondary hover:border-[#C9A94E60] shadow-sm'
+                        }`}
+                      >
+                        {/* Selection indicator */}
+                        {selectedAddressId === addr.id && (
+                          <div className="absolute top-3 right-3">
+                            <CheckCircle2 size={18} className="text-[#C9A94E]" />
+                          </div>
+                        )}
+                        
+                        {/* Label & Default badge */}
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-semibold text-[#9A7B2F] uppercase tracking-wider">{addr.label}</span>
+                          {addr.is_default && (
+                            <span className="text-[10px] bg-[#C9A94E15] text-[#9A7B2F] px-1.5 py-0.5 rounded-full border border-[#C9A94E30] font-semibold uppercase">
+                              Default
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Address details */}
+                        <div className="text-sm space-y-0.5">
+                          <p className="font-semibold text-text-main">{addr.full_name}</p>
+                          <p className="text-text-muted font-light">{addr.line1}</p>
+                          {addr.line2 && <p className="text-text-muted font-light">{addr.line2}</p>}
+                          <p className="text-text-muted font-light">{addr.city}, {addr.state} - {addr.pincode}</p>
+                          <p className="text-text-muted font-light text-xs pt-1">📞 +91 {addr.phone}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-text-muted mt-3 font-light">
+                    Select a saved address to auto-fill, or type a new address below.
+                  </p>
+                </div>
+              )}
+
+              {/* Loading state for addresses */}
+              {isLoggedIn && addressesLoading && (
+                <div className="flex items-center space-x-2 text-sm text-text-muted py-4">
+                  <Loader2 size={14} className="animate-spin text-[#C9A94E]" />
+                  <span>Loading your saved addresses...</span>
+                </div>
+              )}
               
               {/* Shipping Information */}
               <div>
@@ -326,31 +466,11 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Payment Section */}
-              <div>
-                <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-8 flex items-center space-x-3">
-                  <CreditCard size={20} strokeWidth={1.5} />
-                  <span>Payment Details</span>
-                </h3>
-                <div className="bg-secondary rounded-2xl p-8 space-y-4 shadow-sm border border-border">
-                  <p className="text-sm text-text-muted font-light leading-relaxed">
-                    You will be redirected to the secure Razorpay checkout modal to complete your payment via UPI, Credit/Debit Cards, or Netbanking.
-                  </p>
-                  <div className="flex items-center space-x-3 text-xs text-text-main font-semibold uppercase tracking-widest pt-4 border-t border-border">
-                    <ShieldCheck size={16} strokeWidth={1.5} className="text-accent" />
-                    <span>Razorpay Secure Encrypted Payment</span>
-                  </div>
-                  {errorMessage && (
-                    <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm border border-red-200 mt-4">
-                      {errorMessage}
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
 
             {/* Right Summary Column */}
-            <div className="lg:col-span-4 bg-secondary p-8 sticky top-32 rounded-2xl shadow-sm border border-border">
+            <div className="lg:col-span-4 sticky top-32 space-y-6">
+              <div className="bg-secondary/80 p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border backdrop-blur-md">
               <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-6">
                 Order Review
               </h3>
@@ -402,11 +522,27 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={isProcessing}
-                className="btn-primary w-full justify-center flex items-center space-x-2"
+                className="btn-primary w-full justify-center flex items-center space-x-2 mb-6"
               >
                 {isProcessing && <Loader2 size={16} className="animate-spin" />}
                 <span>{isProcessing ? 'Processing...' : 'Proceed to Payment'}</span>
               </button>
+
+              </div>
+              <div className="space-y-3 text-center px-4">
+                <div className="flex items-center justify-center space-x-2 text-xs text-text-main font-semibold uppercase tracking-widest">
+                  <ShieldCheck size={14} strokeWidth={1.5} className="text-accent" />
+                  <span>Razorpay Secure</span>
+                </div>
+                <p className="text-[11px] text-text-muted font-light leading-relaxed">
+                  You will be redirected to Razorpay to complete your payment securely via UPI, Cards, or Netbanking.
+                </p>
+                {errorMessage && (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs border border-red-200 mt-2 text-left shadow-sm">
+                    {errorMessage}
+                  </div>
+                )}
+              </div>
             </div>
 
           </form>

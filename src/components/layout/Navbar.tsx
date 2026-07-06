@@ -20,8 +20,10 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
   const openCart = useCartStore((state) => state.openCart);
   const wishlistCount = useWishlistStore((state) => state.items.length);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const supabase = createClient();
 
     // Check initial session
@@ -181,7 +183,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
               {/* Wishlist (Desktop only) */}
               <Link href="/wishlist" className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block">
                 <Heart size={19} strokeWidth={1.5} />
-                {wishlistCount > 0 && (
+                {mounted && wishlistCount > 0 && (
                   <span className="absolute -top-1.5 -right-2 bg-[var(--color-accent)] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
                     {wishlistCount}
                   </span>
@@ -195,7 +197,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
                 aria-label="Cart"
               >
                 <ShoppingBag size={19} strokeWidth={1.5} />
-                {cartItemsCount > 0 && (
+                {mounted && cartItemsCount > 0 && (
                   <span className="absolute -top-1.5 -right-2 bg-[var(--color-text-main)] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
                     {cartItemsCount}
                   </span>
@@ -233,19 +235,48 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
           </div>
         </div>
 
-        {/* Search Bar — slides down */}
-        <div className={`overflow-hidden transition-all duration-300 ${isSearchOpen ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
-          <div className="border-t border-[var(--color-border)] bg-white px-4 sm:px-8 py-3">
-            <div className="max-w-lg mx-auto relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+        {/* Full-Screen Search Overlay */}
+        <div 
+          className={`fixed inset-0 z-[100] flex items-start justify-center pt-20 sm:pt-32 transition-all duration-500 ease-in-out ${
+            isSearchOpen 
+              ? 'opacity-100 pointer-events-auto bg-white/80 backdrop-blur-xl' 
+              : 'opacity-0 pointer-events-none bg-white/0 backdrop-blur-none'
+          }`}
+        >
+          <div className="absolute inset-0" onClick={() => setIsSearchOpen(false)} />
+          <div 
+            className={`w-full max-w-3xl mx-4 relative bg-white rounded-2xl shadow-2xl border border-[var(--color-border)] overflow-hidden transition-all duration-500 delay-100 ${
+              isSearchOpen ? 'transform translate-y-0 scale-100' : 'transform -translate-y-8 scale-95'
+            }`}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center p-4 sm:p-6 border-b border-[var(--color-border)]">
+              <Search size={24} className="text-[var(--color-text-muted)] shrink-0" />
               <input
                 type="text"
                 value={searchVal}
                 onChange={e => setSearchVal(e.target.value)}
-                placeholder="Search for products, brands..."
-                className="w-full pl-9 pr-4 py-2.5 text-sm border border-[var(--color-border)] rounded-xl focus:outline-none focus:border-[var(--color-accent)] bg-[var(--color-primary)] text-[var(--color-text-main)] placeholder:text-[var(--color-text-muted)]/50"
+                placeholder="Search for premium cosmetics, brands..."
+                className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-lg sm:text-2xl px-4 text-[var(--color-text-main)] placeholder:text-[var(--color-text-muted)]/40 font-light"
                 autoFocus={isSearchOpen}
               />
+              <button 
+                onClick={() => setIsSearchOpen(false)}
+                className="p-2 bg-[var(--color-secondary)] hover:bg-[var(--color-border)] rounded-full transition-colors shrink-0"
+              >
+                <X size={20} className="text-[var(--color-text-main)]" />
+              </button>
+            </div>
+            {/* Quick Suggestions / Recent Searches placeholder */}
+            <div className="p-6 sm:p-8 bg-[var(--color-primary)]">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-4">Trending Searches</div>
+              <div className="flex flex-wrap gap-2">
+                {['Vitamin C Serum', 'Hydrating Primer', 'Matte Lipstick', 'Sunscreen SPF 50'].map(term => (
+                  <button key={term} className="px-4 py-2 bg-white border border-[var(--color-border)] rounded-full text-xs font-medium text-[var(--color-text-main)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors">
+                    {term}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -254,7 +285,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
 
       {/* Mobile Menu Drawer */}
       <div
-        className={`fixed inset-0 z-50 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-500 ease-in-out md:hidden`}
+        className={`fixed inset-0 z-50 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-700 cubic-bezier(0.16, 1, 0.3, 1) md:hidden`}
       >
         <div
           className={`absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-500 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0'}`}

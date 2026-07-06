@@ -19,6 +19,7 @@ export default async function Homepage() {
       images,
       is_featured,
       is_active,
+      stock_quantity,
       brands (name)
     `)
     .eq('is_active', true)
@@ -37,6 +38,7 @@ export default async function Homepage() {
     images: p.images || [],
     isFeatured: p.is_featured,
     isActive: p.is_active,
+    stockQuantity: p.stock_quantity,
     brand: p.brands?.name || 'Unknown',
     badge: p.sale_price ? 'sale' : 'bestseller'
   }));

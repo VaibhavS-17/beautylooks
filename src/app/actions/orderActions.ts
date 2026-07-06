@@ -1,8 +1,10 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createAdminClient } from '@supabase/supabase-js';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import { revalidatePath } from 'next/cache';
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -16,6 +18,10 @@ export async function createOrder(data: {
   totalAmount: number;
 }) {
   const supabase = await createClient();
+  const supabaseAdmin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   try {
     // 1. Get current user if logged in
@@ -59,7 +65,7 @@ export async function createOrder(data: {
     }
 
     // 5. Insert Order Items
-    // Wait, we need to map over items and get unit prices, but to keep it simple we can just fetch all products in one go.
+    // We need to use supabaseAdmin to fetch product prices (or supabase if public)
     const productIds = data.items.map(item => item.productId);
     const { data: products } = await supabase
       .from('products')
@@ -133,6 +139,32 @@ export async function verifyPayment(data: {
 
     if (error) throw new Error(error.message);
 
+    // Decrement stock for each product in the order
+    const { data: orderItems } = await supabase
+      .from('order_items')
+      .select('product_id, quantity')
+      .eq('order_id', data.order_id);
+
+    if (orderItems && orderItems.length > 0) {
+      for (const item of orderItems) {
+        // Fetch current stock to avoid going negative
+        const { data: product } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.product_id)
+          .single();
+
+        if (product) {
+          const newStock = Math.max(0, product.stock_quantity - item.quantity);
+          await supabase
+            .from('products')
+            .update({ stock_quantity: newStock, updated_at: new Date().toISOString() })
+            .eq('id', item.product_id);
+        }
+      }
+    }
+
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (error: any) {
     console.error('Verify Payment Error:', error);

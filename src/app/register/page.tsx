@@ -7,11 +7,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff, Mail, Lock, User, Phone, UserPlus, Loader2 } from 'lucide-react';
 import { signUp } from '@/app/actions/auth';
+import { createClient } from '@/lib/supabase/client';
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleRegister = async (formData: FormData) => {
     const password = formData.get('password') as string;
@@ -34,139 +36,208 @@ export default function RegisterPage() {
       setError(result.error);
       setLoading(false);
     }
-    // If no error, the server action redirects
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    const supabase = createClient();
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+      setGoogleLoading(false);
+    }
   };
 
   return (
-    <div className="w-full min-h-[90vh] bg-[#FCFBF9] flex items-center justify-center py-16 px-4">
-      <div className="w-full max-w-md glass-card p-8 border border-[#EFECE6] bg-white space-y-8 relative overflow-hidden text-left shadow-lg">
-        {/* Glow */}
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#C9A94E] rounded-full filter blur-[80px] opacity-10" />
-
-        {/* Brand/Logo */}
-        <div className="text-center space-y-2">
+    <div className="w-full min-h-screen flex flex-col md:flex-row bg-[#FCFBF9]">
+      {/* Left Side: Image (Hidden on mobile) */}
+      <div className="hidden md:block md:w-1/2 relative">
+        <Image
+          src="/images/hero-beauty.png"
+          alt="Premium Cosmetics"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-12 text-white">
           <Image
             src="/images/brand/logo.png"
-            alt="Beauty Looks Mumbai"
-            width={60}
-            height={60}
-            className="rounded-full border border-[#C9A94E] mx-auto shadow-sm"
+            alt="Logo"
+            width={80}
+            height={80}
+            className="rounded-full border-2 border-[#C9A94E] mb-6 shadow-xl"
           />
-          <h2 className="font-display font-semibold text-2xl text-[#9A7B2F] tracking-wider">Create Account</h2>
-          <p className="text-xs text-[#706A60]">Join our premium cosmetics &amp; skincare family</p>
+          <h1 className="font-display text-4xl md:text-5xl font-semibold mb-4 tracking-wide text-white">
+            Beauty Looks Mumbai
+          </h1>
+          <p className="text-lg md:text-xl font-light tracking-wide max-w-md text-white/90">
+            Join our exclusive family and elevate your daily skincare routine.
+          </p>
         </div>
+      </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-xs px-4 py-3 rounded-lg">
-            {error}
-          </div>
-        )}
+      {/* Right Side: Form */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-16 relative min-h-screen md:min-h-0">
+        {/* Glow effect for mobile if image is hidden */}
+        <div className="md:hidden absolute top-0 right-0 w-64 h-64 bg-[#C9A94E] rounded-full filter blur-[100px] opacity-10" />
 
-        {/* Form */}
-        <form action={handleRegister} className="space-y-4">
-          {/* Name */}
-          <div className="flex flex-col">
-            <label className="text-xs text-[#5C554D] mb-1 font-medium">Full Name</label>
-            <div className="relative">
-              <input
-                type="text"
-                name="fullName"
-                placeholder="e.g. Priya Sharma"
-                required
-                className="w-full input-dark text-sm pl-10"
+        <div className="w-full max-w-md space-y-6 relative z-10">
+          <div className="text-center md:text-left space-y-2">
+            {/* Mobile Logo */}
+            <div className="md:hidden flex justify-center mb-6">
+              <Image
+                src="/images/brand/logo.png"
+                alt="Logo"
+                width={60}
+                height={60}
+                className="rounded-full border border-[#C9A94E] shadow-sm"
               />
-              <User className="absolute left-3.5 top-3 text-[#8A8177]" size={16} />
             </div>
+            <h2 className="font-display font-semibold text-3xl text-[#9A7B2F] tracking-wider">Create Account</h2>
+            <p className="text-sm text-[#706A60]">Join our premium cosmetics &amp; skincare family</p>
           </div>
 
-          {/* Email */}
-          <div className="flex flex-col">
-            <label className="text-xs text-[#5C554D] mb-1 font-medium">Email Address</label>
-            <div className="relative">
-              <input
-                type="email"
-                name="email"
-                placeholder="e.g. priya@example.com"
-                required
-                className="w-full input-dark text-sm pl-10"
-              />
-              <Mail className="absolute left-3.5 top-3 text-[#8A8177]" size={16} />
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-xs px-4 py-3 rounded-lg animate-in fade-in">
+              {error}
             </div>
-          </div>
+          )}
 
-          {/* Phone */}
-          <div className="flex flex-col">
-            <label className="text-xs text-[#5C554D] mb-1 font-medium">Phone Number</label>
-            <div className="relative">
-              <input
-                type="tel"
-                name="phone"
-                placeholder="e.g. 9876543210"
-                required
-                className="w-full input-dark text-sm pl-10"
-              />
-              <Phone className="absolute left-3.5 top-3 text-[#8A8177]" size={16} />
+          <form action={handleRegister} className="space-y-4">
+            {/* Name */}
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-xs text-[#5C554D] font-semibold tracking-wide uppercase">Full Name</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  name="fullName"
+                  placeholder="e.g. Priya Sharma"
+                  required
+                  className="w-full input-dark text-sm pl-11 py-3 bg-white border-[#EFECE6] focus:border-[#C9A94E] focus:ring-[#C9A94E] rounded-lg transition-all"
+                />
+                <User className="absolute left-4 top-3.5 text-[#8A8177]" size={18} />
+              </div>
             </div>
-          </div>
 
-          {/* Password */}
-          <div className="flex flex-col">
-            <label className="text-xs text-[#5C554D] mb-1 font-medium">Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                placeholder="••••••••"
-                required
-                minLength={6}
-                className="w-full input-dark text-sm pl-10 pr-10"
-              />
-              <Lock className="absolute left-3.5 top-3 text-[#8A8177]" size={16} />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-3.5 text-[#8A8177] hover:text-[#9A7B2F]"
-              >
-                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
+            {/* Email */}
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-xs text-[#5C554D] font-semibold tracking-wide uppercase">Email Address</label>
+              <div className="relative">
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="e.g. priya@example.com"
+                  required
+                  className="w-full input-dark text-sm pl-11 py-3 bg-white border-[#EFECE6] focus:border-[#C9A94E] focus:ring-[#C9A94E] rounded-lg transition-all"
+                />
+                <Mail className="absolute left-4 top-3.5 text-[#8A8177]" size={18} />
+              </div>
             </div>
-          </div>
 
-          {/* Confirm Password */}
-          <div className="flex flex-col">
-            <label className="text-xs text-[#5C554D] mb-1 font-medium">Confirm Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="confirmPassword"
-                placeholder="••••••••"
-                required
-                minLength={6}
-                className="w-full input-dark text-sm pl-10"
-              />
-              <Lock className="absolute left-3.5 top-3 text-[#8A8177]" size={16} />
+            {/* Phone */}
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-xs text-[#5C554D] font-semibold tracking-wide uppercase">Phone Number</label>
+              <div className="relative">
+                <input
+                  type="tel"
+                  name="phone"
+                  placeholder="e.g. 9876543210"
+                  required
+                  className="w-full input-dark text-sm pl-11 py-3 bg-white border-[#EFECE6] focus:border-[#C9A94E] focus:ring-[#C9A94E] rounded-lg transition-all"
+                />
+                <Phone className="absolute left-4 top-3.5 text-[#8A8177]" size={18} />
+              </div>
             </div>
+
+            {/* Password */}
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-xs text-[#5C554D] font-semibold tracking-wide uppercase">Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  className="w-full input-dark text-sm pl-11 pr-12 py-3 bg-white border-[#EFECE6] focus:border-[#C9A94E] focus:ring-[#C9A94E] rounded-lg transition-all"
+                />
+                <Lock className="absolute left-4 top-3.5 text-[#8A8177]" size={18} />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-3.5 text-[#8A8177] hover:text-[#9A7B2F] transition-colors"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-xs text-[#5C554D] font-semibold tracking-wide uppercase">Confirm Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  className="w-full input-dark text-sm pl-11 py-3 bg-white border-[#EFECE6] focus:border-[#C9A94E] focus:ring-[#C9A94E] rounded-lg transition-all"
+                />
+                <Lock className="absolute left-4 top-3.5 text-[#8A8177]" size={18} />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-gold w-full flex items-center justify-center space-x-2 py-4 text-sm font-semibold mt-6 shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed transition-all rounded-lg"
+            >
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <UserPlus size={18} />}
+              <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
+            </button>
+          </form>
+
+          <div className="relative flex py-2 items-center">
+            <div className="flex-grow border-t border-[#EFECE6]"></div>
+            <span className="flex-shrink mx-4 text-[10px] text-[#8A8177] uppercase tracking-widest font-semibold">or</span>
+            <div className="flex-grow border-t border-[#EFECE6]"></div>
           </div>
 
           <button
-            type="submit"
-            disabled={loading}
-            className="btn-gold w-full flex items-center justify-center space-x-2 py-3.5 text-sm mt-6 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            onClick={handleGoogleLogin}
+            disabled={googleLoading}
+            className="btn-outline-gold w-full text-sm font-semibold py-3.5 flex items-center justify-center space-x-3 bg-white hover:bg-[#FBF9F6] disabled:opacity-60 disabled:cursor-not-allowed transition-all rounded-lg"
           >
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
-            <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
+            {googleLoading ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+              </svg>
+            )}
+            <span>{googleLoading ? 'Redirecting...' : 'Continue with Google'}</span>
           </button>
-        </form>
 
-        {/* Footer link */}
-        <p className="text-xs text-center text-[#706A60] pt-2">
-          Already have an account?{' '}
-          <Link href="/login" className="text-[#9A7B2F] hover:underline font-semibold">
-            Sign In
-          </Link>
-        </p>
-
+          <p className="text-sm text-center text-[#706A60] pt-2">
+            Already have an account?{' '}
+            <Link href="/login" className="text-[#9A7B2F] hover:text-[#C9A94E] font-semibold transition-colors">
+              Sign In
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

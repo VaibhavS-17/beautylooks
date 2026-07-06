@@ -192,9 +192,14 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                         addItem(product, 1);
                         openCart();
                       }}
-                      className="w-full mt-4 bg-brand-dark text-primary px-4 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-accent hover:text-brand-dark transition-all rounded-xl"
+                      disabled={product.stockQuantity === 0}
+                      className={`w-full mt-4 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all rounded-xl ${
+                        product.stockQuantity > 0
+                          ? 'bg-brand-dark text-primary hover:bg-accent hover:text-brand-dark'
+                          : 'bg-border text-text-muted cursor-not-allowed'
+                      }`}
                     >
-                      Add to Bag
+                      {product.stockQuantity > 0 ? 'Add to Bag' : 'Out of Stock'}
                     </button>
                   </div>
                 </div>
