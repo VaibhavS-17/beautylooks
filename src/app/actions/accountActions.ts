@@ -2,27 +2,45 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
+
+const addressSchema = z.object({
+  label: z.string().max(50).default('Home'),
+  fullName: z.string().min(1, 'Full name is required.').max(100),
+  phone: z.string().min(10, 'Valid phone number is required.').max(15),
+  line1: z.string().min(1, 'Address line 1 is required.').max(200),
+  line2: z.string().max(200).nullable().optional(),
+  city: z.string().min(1, 'City is required.').max(100),
+  state: z.string().min(1, 'State is required.').max(100),
+  pincode: z.string().min(6, 'Valid pincode is required.').max(10),
+  isDefault: z.boolean().default(false),
+});
+
+const uuidSchema = z.string().uuid('Invalid ID format.');
 
 export async function createAddress(formData: FormData) {
   const supabase = await createClient();
-  
+
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return { error: 'Not authenticated' };
   }
 
-  const label = formData.get('label') as string || 'Home';
-  const fullName = formData.get('fullName') as string;
-  const phone = formData.get('phone') as string;
-  const line1 = formData.get('line1') as string;
-  const line2 = formData.get('line2') as string || null;
-  const city = formData.get('city') as string;
-  const state = formData.get('state') as string;
-  const pincode = formData.get('pincode') as string;
-  const isDefault = formData.get('isDefault') === 'true';
+  const raw = {
+    label: (formData.get('label') as string) || 'Home',
+    fullName: formData.get('fullName') as string,
+    phone: formData.get('phone') as string,
+    line1: formData.get('line1') as string,
+    line2: (formData.get('line2') as string) || null,
+    city: formData.get('city') as string,
+    state: formData.get('state') as string,
+    pincode: formData.get('pincode') as string,
+    isDefault: formData.get('isDefault') === 'true',
+  };
 
-  if (!fullName || !phone || !line1 || !city || !state || !pincode) {
-    return { error: 'Missing required address fields.' };
+  const parsed = addressSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || 'Invalid address data.' };
   }
 
   try {
@@ -35,7 +53,7 @@ export async function createAddress(formData: FormData) {
     }, { onConflict: 'id' });
 
     // If setting as default, unset other defaults first
-    if (isDefault) {
+    if (parsed.data.isDefault) {
       await supabase
         .from('addresses')
         .update({ is_default: false })
@@ -46,33 +64,40 @@ export async function createAddress(formData: FormData) {
       .from('addresses')
       .insert({
         user_id: user.id,
-        label,
-        full_name: fullName,
-        phone,
-        line1,
-        line2,
-        city,
-        state,
-        pincode,
-        is_default: isDefault,
+        label: parsed.data.label,
+        full_name: parsed.data.fullName,
+        phone: parsed.data.phone,
+        line1: parsed.data.line1,
+        line2: parsed.data.line2,
+        city: parsed.data.city,
+        state: parsed.data.state,
+        pincode: parsed.data.pincode,
+        is_default: parsed.data.isDefault,
       })
       .select()
       .single();
 
     if (error) {
-      return { error: error.message };
+      console.error('Create address error:', error);
+      return { error: 'Failed to create address. Please try again.' };
     }
 
     revalidatePath('/account');
     return { success: true, data: newAddress };
   } catch (err: any) {
-    return { error: err.message || 'An unexpected error occurred.' };
+    console.error('Create address exception:', err);
+    return { error: 'An unexpected error occurred. Please try again.' };
   }
 }
 
 export async function deleteAddress(addressId: string) {
+  const parsed = uuidSchema.safeParse(addressId);
+  if (!parsed.success) {
+    return { error: 'Invalid address ID.' };
+  }
+
   const supabase = await createClient();
-  
+
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return { error: 'Not authenticated' };
@@ -82,16 +107,18 @@ export async function deleteAddress(addressId: string) {
     const { error } = await supabase
       .from('addresses')
       .delete()
-      .eq('id', addressId)
+      .eq('id', parsed.data)
       .eq('user_id', user.id);
 
     if (error) {
-      return { error: error.message };
+      console.error('Delete address error:', error);
+      return { error: 'Failed to delete address. Please try again.' };
     }
 
     revalidatePath('/account');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'An unexpected error occurred.' };
+    console.error('Delete address exception:', err);
+    return { error: 'An unexpected error occurred. Please try again.' };
   }
 }

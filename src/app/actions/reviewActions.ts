@@ -2,6 +2,15 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
+
+const reviewSchema = z.object({
+  productId: z.string().uuid('Invalid product ID.'),
+  rating: z.number().int().min(1, 'Rating must be between 1 and 5.').max(5, 'Rating must be between 1 and 5.'),
+  comment: z.string().min(3, 'Please write a review comment (minimum 3 characters).').max(2000),
+});
+
+const uuidSchema = z.string().uuid('Invalid ID format.');
 
 /**
  * Create a product review.
@@ -13,20 +22,16 @@ export async function createReview(data: {
   rating: number;
   comment: string;
 }) {
+  const parsed = reviewSchema.safeParse(data);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || 'Invalid review data.' };
+  }
+
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return { error: 'You must be logged in to leave a review.' };
-  }
-
-  // Validate rating
-  if (data.rating < 1 || data.rating > 5) {
-    return { error: 'Rating must be between 1 and 5.' };
-  }
-
-  if (!data.comment || data.comment.trim().length < 3) {
-    return { error: 'Please write a review comment (minimum 3 characters).' };
   }
 
   try {
@@ -35,7 +40,7 @@ export async function createReview(data: {
       .from('reviews')
       .select('id')
       .eq('user_id', user.id)
-      .eq('product_id', data.productId)
+      .eq('product_id', parsed.data.productId)
       .single();
 
     if (existingReview) {
@@ -52,7 +57,7 @@ export async function createReview(data: {
           status
         )
       `)
-      .eq('product_id', data.productId)
+      .eq('product_id', parsed.data.productId)
       .eq('orders.user_id', user.id)
       .in('orders.status', ['confirmed', 'shipped', 'delivered']);
 
@@ -65,22 +70,24 @@ export async function createReview(data: {
       .from('reviews')
       .insert({
         user_id: user.id,
-        product_id: data.productId,
-        rating: data.rating,
-        comment: data.comment.trim(),
+        product_id: parsed.data.productId,
+        rating: parsed.data.rating,
+        comment: parsed.data.comment.trim(),
       });
 
     if (error) {
       if (error.code === '23505') {
         return { error: 'You have already reviewed this product.' };
       }
-      return { error: error.message };
+      console.error('Create review error:', error);
+      return { error: 'Failed to submit review. Please try again.' };
     }
 
     revalidatePath(`/products`);
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'An unexpected error occurred.' };
+    console.error('Create review exception:', err);
+    return { error: 'An unexpected error occurred. Please try again.' };
   }
 }
 
@@ -88,6 +95,11 @@ export async function createReview(data: {
  * Delete the current user's review for a given product.
  */
 export async function deleteReview(reviewId: string) {
+  const parsed = uuidSchema.safeParse(reviewId);
+  if (!parsed.success) {
+    return { error: 'Invalid review ID.' };
+  }
+
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -99,14 +111,18 @@ export async function deleteReview(reviewId: string) {
     const { error } = await supabase
       .from('reviews')
       .delete()
-      .eq('id', reviewId)
+      .eq('id', parsed.data)
       .eq('user_id', user.id);
 
-    if (error) return { error: error.message };
+    if (error) {
+      console.error('Delete review error:', error);
+      return { error: 'Failed to delete review. Please try again.' };
+    }
 
     revalidatePath(`/products`);
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'Failed to delete review.' };
+    console.error('Delete review exception:', err);
+    return { error: 'An unexpected error occurred. Please try again.' };
   }
 }

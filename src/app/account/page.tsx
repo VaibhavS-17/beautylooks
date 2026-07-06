@@ -47,7 +47,6 @@ export default async function AccountPage() {
       total_amount,
       created_at,
       shipping_address,
-      razorpay_payment_id,
       order_items (
         id,
         quantity,
@@ -88,7 +87,6 @@ export default async function AccountPage() {
     total: Number(ord.total_amount),
     status: ord.status,
     shippingAddress: ord.shipping_address as Record<string, string> | null,
-    razorpayPaymentId: (ord as any).razorpay_payment_id as string | null,
     items: (ord.order_items || []).map((item: any) => ({
       name: item.products?.name || 'Unknown Product',
       qty: item.quantity,

@@ -32,7 +32,6 @@ interface OrderItem {
   total: number;
   status: string;
   shippingAddress?: Record<string, string> | null;
-  razorpayPaymentId?: string | null;
   items: { name: string; qty: number; price: number; image?: string | null }[];
 }
 
@@ -267,14 +266,6 @@ function InvoiceModal({ order, onClose }: { order: OrderItem; onClose: () => voi
                 <span>{formatPrice(total)}</span>
               </div>
             </div>
-
-            {/* Payment Info */}
-            {order.razorpayPaymentId && (
-              <div className="bg-[#FCFBF9] border border-[#EFECE6] rounded-xl p-4 text-sm">
-                <h4 className="text-xs font-semibold text-[#9A7B2F] uppercase tracking-wider mb-1">Payment Reference</h4>
-                <p className="font-mono text-[#5C554D]">{order.razorpayPaymentId}</p>
-              </div>
-            )}
 
             {/* Footer */}
             <div className="text-center border-t border-[#EFECE6] pt-4">

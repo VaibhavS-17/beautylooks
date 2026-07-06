@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 
 // Helper to verify admin role
 async function verifyAdmin(supabase: any) {
@@ -21,75 +22,91 @@ async function verifyAdmin(supabase: any) {
   return { verified: true, userId: user.id };
 }
 
+const uuidSchema = z.string().uuid('Invalid ID format.');
+
 // ---------------------------------------------------------------------------
 // PRODUCTS ACTIONS
 // ---------------------------------------------------------------------------
+
+const productSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().min(1, 'Description is required'),
+  shortDescription: z.string().optional(),
+  price: z.coerce.number().min(0, 'Price must be positive'),
+  salePrice: z.coerce.number().min(0).optional().nullable(),
+  categoryId: z.string().nullable().optional(),
+  brandId: z.string().nullable().optional(),
+  skinType: z.string().default('all'),
+  stockQuantity: z.coerce.number().int().min(0).default(0),
+  isFeatured: z.boolean().default(false),
+  isActive: z.boolean().default(true),
+  imagesInput: z.string().optional(),
+  image: z.string().optional(),
+});
 
 export async function createProduct(formData: FormData) {
   const supabase = await createClient();
   const authCheck = await verifyAdmin(supabase);
   if (!authCheck.verified) return { error: authCheck.error };
 
-  const name = formData.get('name') as string;
-  const description = formData.get('description') as string;
-  const shortDescription = formData.get('shortDescription') as string;
-  const price = parseFloat(formData.get('price') as string);
-  const salePriceVal = formData.get('salePrice') as string;
-  const salePrice = salePriceVal ? parseFloat(salePriceVal) : null;
-  const categoryId = formData.get('categoryId') as string || null;
-  const brandId = formData.get('brandId') as string || null;
-  const skinType = formData.get('skinType') as any || 'all';
-  const stockQuantity = parseInt(formData.get('stockQuantity') as string || '0');
-  const isFeatured = formData.get('isFeatured') === 'true';
-  const isActive = formData.get('isActive') === 'true';
-  const imagesInput = formData.get('images') as string || formData.get('image') as string;
+  const raw = {
+    name: formData.get('name'),
+    description: formData.get('description'),
+    shortDescription: formData.get('shortDescription') || '',
+    price: formData.get('price'),
+    salePrice: formData.get('salePrice') || null,
+    categoryId: formData.get('categoryId') || null,
+    brandId: formData.get('brandId') || null,
+    skinType: formData.get('skinType') || 'all',
+    stockQuantity: formData.get('stockQuantity') || '0',
+    isFeatured: formData.get('isFeatured') === 'true',
+    isActive: formData.get('isActive') === 'true',
+    imagesInput: formData.get('images'),
+    image: formData.get('image'),
+  };
+
+  const parsed = productSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || 'Invalid product data' };
+  }
+  const data = parsed.data;
+
   let images: string[] = ['/images/products/facial-kit-1.png'];
-  if (imagesInput) {
+  const inputToParse = data.imagesInput || data.image;
+  if (inputToParse) {
     try {
-      images = JSON.parse(imagesInput);
+      images = JSON.parse(inputToParse);
       if (!Array.isArray(images) || images.length === 0) {
-        images = [imagesInput];
+        images = [inputToParse];
       }
     } catch {
-      images = [imagesInput];
+      images = [inputToParse];
     }
   }
 
-  if (!name || !description || isNaN(price)) {
-    return { error: 'Name, Description, and Price are required.' };
-  }
-
-  const slug = name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const slug = data.name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   try {
-    const { error } = await supabase
-      .from('products')
-      .insert({
-        name,
-        slug,
-        description,
-        short_description: shortDescription,
-        price,
-        sale_price: salePrice,
-        category_id: categoryId,
-        brand_id: brandId,
-        skin_type: skinType,
-        stock_quantity: stockQuantity,
-        is_featured: isFeatured,
-        is_active: isActive,
-        images: images,
-      });
+    const { error } = await supabase.from('products').insert({
+      name: data.name,
+      slug,
+      description: data.description,
+      short_description: data.shortDescription,
+      price: data.price,
+      sale_price: data.salePrice,
+      category_id: data.categoryId,
+      brand_id: data.brandId,
+      skin_type: data.skinType,
+      stock_quantity: data.stockQuantity,
+      is_featured: data.isFeatured,
+      is_active: data.isActive,
+      images,
+    });
 
     if (error) {
-      if (error.code === '23505') {
-        return { error: `A product with slug "${slug}" already exists. Please choose a different name.` };
-      }
-      return { error: error.message };
+      if (error.code === '23505') return { error: `A product with slug "${slug}" already exists.` };
+      console.error('Create product error:', error);
+      return { error: 'An unexpected error occurred. Please try again.' };
     }
 
     revalidatePath('/admin');
@@ -98,7 +115,8 @@ export async function createProduct(formData: FormData) {
     revalidatePath('/');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'An unexpected error occurred.' };
+    console.error('Create product exception:', err);
+    return { error: 'An unexpected error occurred. Please try again.' };
   }
 }
 
@@ -108,67 +126,64 @@ export async function updateProduct(formData: FormData) {
   if (!authCheck.verified) return { error: authCheck.error };
 
   const id = formData.get('id') as string;
-  const name = formData.get('name') as string;
-  const description = formData.get('description') as string;
-  const shortDescription = formData.get('shortDescription') as string;
-  const price = parseFloat(formData.get('price') as string);
-  const salePriceVal = formData.get('salePrice') as string;
-  const salePrice = salePriceVal ? parseFloat(salePriceVal) : null;
-  const categoryId = formData.get('categoryId') as string || null;
-  const brandId = formData.get('brandId') as string || null;
-  const skinType = formData.get('skinType') as any || 'all';
-  const stockQuantity = parseInt(formData.get('stockQuantity') as string || '0');
-  const isFeatured = formData.get('isFeatured') === 'true';
-  const isActive = formData.get('isActive') === 'true';
-  const imagesInput = formData.get('images') as string;
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) return { error: 'Invalid product ID' };
 
-  if (!id || !name || !description || isNaN(price)) {
-    return { error: 'ID, Name, Description, and Price are required.' };
+  const raw = {
+    name: formData.get('name'),
+    description: formData.get('description'),
+    shortDescription: formData.get('shortDescription') || '',
+    price: formData.get('price'),
+    salePrice: formData.get('salePrice') || null,
+    categoryId: formData.get('categoryId') || null,
+    brandId: formData.get('brandId') || null,
+    skinType: formData.get('skinType') || 'all',
+    stockQuantity: formData.get('stockQuantity') || '0',
+    isFeatured: formData.get('isFeatured') === 'true',
+    isActive: formData.get('isActive') === 'true',
+    imagesInput: formData.get('images'),
+  };
+
+  const parsed = productSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || 'Invalid product data' };
   }
+  const data = parsed.data;
 
-  const slug = name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const slug = data.name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   try {
     const updateData: any = {
-      name,
+      name: data.name,
       slug,
-      description,
-      short_description: shortDescription,
-      price,
-      sale_price: salePrice,
-      category_id: categoryId,
-      brand_id: brandId,
-      skin_type: skinType,
-      stock_quantity: stockQuantity,
-      is_featured: isFeatured,
-      is_active: isActive,
+      description: data.description,
+      short_description: data.shortDescription,
+      price: data.price,
+      sale_price: data.salePrice,
+      category_id: data.categoryId,
+      brand_id: data.brandId,
+      skin_type: data.skinType,
+      stock_quantity: data.stockQuantity,
+      is_featured: data.isFeatured,
+      is_active: data.isActive,
       updated_at: new Date().toISOString(),
     };
 
-    if (imagesInput) {
+    if (data.imagesInput) {
       try {
-        const parsed = JSON.parse(imagesInput);
-        updateData.images = Array.isArray(parsed) ? parsed : [imagesInput];
+        const pImgs = JSON.parse(data.imagesInput);
+        updateData.images = Array.isArray(pImgs) ? pImgs : [data.imagesInput];
       } catch {
-        updateData.images = [imagesInput];
+        updateData.images = [data.imagesInput];
       }
     }
 
-    const { error } = await supabase
-      .from('products')
-      .update(updateData)
-      .eq('id', id);
+    const { error } = await supabase.from('products').update(updateData).eq('id', idParsed.data);
 
     if (error) {
-      if (error.code === '23505') {
-        return { error: `A product with slug "${slug}" already exists. Please choose a different name.` };
-      }
-      return { error: error.message };
+      if (error.code === '23505') return { error: `A product with slug "${slug}" already exists.` };
+      console.error('Update product error:', error);
+      return { error: 'An unexpected error occurred. Please try again.' };
     }
 
     revalidatePath('/admin');
@@ -177,7 +192,8 @@ export async function updateProduct(formData: FormData) {
     revalidatePath('/');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'An unexpected error occurred.' };
+    console.error('Update product exception:', err);
+    return { error: 'An unexpected error occurred. Please try again.' };
   }
 }
 
@@ -186,20 +202,23 @@ export async function deleteProductAdmin(productId: string) {
   const authCheck = await verifyAdmin(supabase);
   if (!authCheck.verified) return { error: authCheck.error };
 
-  try {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', productId);
+  const parsed = uuidSchema.safeParse(productId);
+  if (!parsed.success) return { error: 'Invalid product ID' };
 
-    if (error) return { error: error.message };
+  try {
+    const { error } = await supabase.from('products').delete().eq('id', parsed.data);
+    if (error) {
+      console.error('Delete product error:', error);
+      return { error: 'An unexpected error occurred. Please try again.' };
+    }
 
     revalidatePath('/admin');
     revalidatePath('/products');
     revalidatePath('/');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'Failed to delete product.' };
+    console.error('Delete product exception:', err);
+    return { error: 'An unexpected error occurred. Please try again.' };
   }
 }
 
@@ -207,36 +226,40 @@ export async function deleteProductAdmin(productId: string) {
 // BRANDS ACTIONS
 // ---------------------------------------------------------------------------
 
+const brandSchema = z.object({
+  name: z.string().min(1, 'Brand name is required'),
+  logoUrl: z.string().nullable().optional(),
+});
+
 export async function createBrand(formData: FormData) {
   const supabase = await createClient();
   const authCheck = await verifyAdmin(supabase);
   if (!authCheck.verified) return { error: authCheck.error };
 
-  const name = formData.get('name') as string;
-  const logoUrl = formData.get('logoUrl') as string || null;
+  const raw = {
+    name: formData.get('name'),
+    logoUrl: formData.get('logoUrl') || null,
+  };
+  const parsed = brandSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const { name, logoUrl } = parsed.data;
 
-  if (!name) return { error: 'Brand name is required.' };
-
-  const slug = name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const slug = name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   try {
-    const { error } = await supabase
-      .from('brands')
-      .insert({ name, slug, logo_url: logoUrl });
-
-    if (error) return { error: error.message };
+    const { error } = await supabase.from('brands').insert({ name, slug, logo_url: logoUrl });
+    if (error) {
+      console.error('Create brand error:', error);
+      return { error: 'An unexpected error occurred.' };
+    }
 
     revalidatePath('/admin');
     revalidatePath('/products');
     revalidatePath('/');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'An unexpected error occurred.' };
+    console.error('Create brand exception:', err);
+    return { error: 'An unexpected error occurred.' };
   }
 }
 
@@ -246,37 +269,36 @@ export async function updateBrand(formData: FormData) {
   if (!authCheck.verified) return { error: authCheck.error };
 
   const id = formData.get('id') as string;
-  const name = formData.get('name') as string;
-  const logoUrl = formData.get('logoUrl') as string;
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) return { error: 'Invalid ID' };
 
-  if (!id || !name) return { error: 'ID and Brand name are required.' };
+  const raw = {
+    name: formData.get('name'),
+    logoUrl: formData.get('logoUrl'),
+  };
+  const parsed = brandSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const { name, logoUrl } = parsed.data;
 
-  const slug = name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const slug = name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   try {
     const updateData: any = { name, slug };
-    if (logoUrl !== undefined) {
-      updateData.logo_url = logoUrl || null;
+    if (logoUrl !== undefined) updateData.logo_url = logoUrl || null;
+
+    const { error } = await supabase.from('brands').update(updateData).eq('id', idParsed.data);
+    if (error) {
+      console.error('Update brand error:', error);
+      return { error: 'An unexpected error occurred.' };
     }
-
-    const { error } = await supabase
-      .from('brands')
-      .update(updateData)
-      .eq('id', id);
-
-    if (error) return { error: error.message };
 
     revalidatePath('/admin');
     revalidatePath('/products');
     revalidatePath('/');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'An unexpected error occurred.' };
+    console.error('Update brand exception:', err);
+    return { error: 'An unexpected error occurred.' };
   }
 }
 
@@ -285,25 +307,16 @@ export async function deleteBrand(brandId: string) {
   const authCheck = await verifyAdmin(supabase);
   if (!authCheck.verified) return { error: authCheck.error };
 
-  try {
-    // Prevent foreign key constraint violations by unlinking products first
-    const { error: unlinkError } = await supabase
-      .from('products')
-      .update({ brand_id: null })
-      .eq('brand_id', brandId);
-      
-    if (unlinkError) {
-      console.error('Error unlinking products from brand:', unlinkError);
-    }
+  const idParsed = uuidSchema.safeParse(brandId);
+  if (!idParsed.success) return { error: 'Invalid ID' };
 
-    const { error } = await supabase
-      .from('brands')
-      .delete()
-      .eq('id', brandId);
+  try {
+    await supabase.from('products').update({ brand_id: null }).eq('brand_id', idParsed.data);
+    const { error } = await supabase.from('brands').delete().eq('id', idParsed.data);
 
     if (error) {
-      console.error('Error deleting brand:', error);
-      return { error: error.message };
+      console.error('Delete brand error:', error);
+      return { error: 'An unexpected error occurred.' };
     }
 
     revalidatePath('/admin');
@@ -313,7 +326,7 @@ export async function deleteBrand(brandId: string) {
     return { success: true };
   } catch (err: any) {
     console.error('Delete brand exception:', err);
-    return { error: err.message || 'Failed to delete brand.' };
+    return { error: 'An unexpected error occurred.' };
   }
 }
 
@@ -321,30 +334,34 @@ export async function deleteBrand(brandId: string) {
 // CATEGORIES ACTIONS
 // ---------------------------------------------------------------------------
 
+const categorySchema = z.object({
+  name: z.string().min(1, 'Category name is required'),
+  description: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
+});
+
 export async function createCategory(formData: FormData) {
   const supabase = await createClient();
   const authCheck = await verifyAdmin(supabase);
   if (!authCheck.verified) return { error: authCheck.error };
 
-  const name = formData.get('name') as string;
-  const description = formData.get('description') as string || null;
-  const imageUrl = formData.get('imageUrl') as string || null;
+  const raw = {
+    name: formData.get('name'),
+    description: formData.get('description') || null,
+    imageUrl: formData.get('imageUrl') || null,
+  };
+  const parsed = categorySchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const { name, description, imageUrl } = parsed.data;
 
-  if (!name) return { error: 'Category name is required.' };
-
-  const slug = name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const slug = name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   try {
-    const { error } = await supabase
-      .from('categories')
-      .insert({ name, slug, description, image_url: imageUrl });
-
-    if (error) return { error: error.message };
+    const { error } = await supabase.from('categories').insert({ name, slug, description, image_url: imageUrl });
+    if (error) {
+      console.error('Create category error:', error);
+      return { error: 'An unexpected error occurred.' };
+    }
 
     revalidatePath('/admin');
     revalidatePath('/products');
@@ -352,7 +369,8 @@ export async function createCategory(formData: FormData) {
     revalidatePath('/', 'layout');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'An unexpected error occurred.' };
+    console.error('Create category exception:', err);
+    return { error: 'An unexpected error occurred.' };
   }
 }
 
@@ -362,31 +380,29 @@ export async function updateCategory(formData: FormData) {
   if (!authCheck.verified) return { error: authCheck.error };
 
   const id = formData.get('id') as string;
-  const name = formData.get('name') as string;
-  const description = formData.get('description') as string || null;
-  const imageUrl = formData.get('imageUrl') as string;
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) return { error: 'Invalid ID' };
 
-  if (!id || !name) return { error: 'ID and Category name are required.' };
+  const raw = {
+    name: formData.get('name'),
+    description: formData.get('description') || null,
+    imageUrl: formData.get('imageUrl'),
+  };
+  const parsed = categorySchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const { name, description, imageUrl } = parsed.data;
 
-  const slug = name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const slug = name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   try {
     const updateData: any = { name, slug, description };
-    if (imageUrl !== undefined) {
-      updateData.image_url = imageUrl || null;
+    if (imageUrl !== undefined) updateData.image_url = imageUrl || null;
+
+    const { error } = await supabase.from('categories').update(updateData).eq('id', idParsed.data);
+    if (error) {
+      console.error('Update category error:', error);
+      return { error: 'An unexpected error occurred.' };
     }
-
-    const { error } = await supabase
-      .from('categories')
-      .update(updateData)
-      .eq('id', id);
-
-    if (error) return { error: error.message };
 
     revalidatePath('/admin');
     revalidatePath('/products');
@@ -394,7 +410,8 @@ export async function updateCategory(formData: FormData) {
     revalidatePath('/', 'layout');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'An unexpected error occurred.' };
+    console.error('Update category exception:', err);
+    return { error: 'An unexpected error occurred.' };
   }
 }
 
@@ -403,25 +420,16 @@ export async function deleteCategory(categoryId: string) {
   const authCheck = await verifyAdmin(supabase);
   if (!authCheck.verified) return { error: authCheck.error };
 
-  try {
-    // Prevent foreign key constraint violations by unlinking products first
-    const { error: unlinkError } = await supabase
-      .from('products')
-      .update({ category_id: null })
-      .eq('category_id', categoryId);
-      
-    if (unlinkError) {
-      console.error('Error unlinking products from category:', unlinkError);
-    }
+  const idParsed = uuidSchema.safeParse(categoryId);
+  if (!idParsed.success) return { error: 'Invalid ID' };
 
-    const { error } = await supabase
-      .from('categories')
-      .delete()
-      .eq('id', categoryId);
+  try {
+    await supabase.from('products').update({ category_id: null }).eq('category_id', idParsed.data);
+    const { error } = await supabase.from('categories').delete().eq('id', idParsed.data);
 
     if (error) {
-      console.error('Error deleting category:', error);
-      return { error: error.message };
+      console.error('Delete category error:', error);
+      return { error: 'An unexpected error occurred.' };
     }
 
     revalidatePath('/admin');
@@ -431,7 +439,7 @@ export async function deleteCategory(categoryId: string) {
     return { success: true };
   } catch (err: any) {
     console.error('Delete category exception:', err);
-    return { error: err.message || 'Failed to delete category.' };
+    return { error: 'An unexpected error occurred.' };
   }
 }
 
@@ -439,47 +447,55 @@ export async function deleteCategory(categoryId: string) {
 // BLOGS ACTIONS
 // ---------------------------------------------------------------------------
 
+const blogSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  content: z.string().min(1, 'Content is required'),
+  excerpt: z.string().nullable().optional(),
+  coverImage: z.string().nullable().optional(),
+  isPublished: z.boolean().default(false),
+});
+
 export async function createBlog(formData: FormData) {
   const supabase = await createClient();
   const authCheck = await verifyAdmin(supabase);
   if (!authCheck.verified) return { error: authCheck.error };
 
-  const title = formData.get('title') as string;
-  const content = formData.get('content') as string;
-  const excerpt = formData.get('excerpt') as string || null;
-  const coverImage = formData.get('coverImage') as string || null;
-  const isPublished = formData.get('isPublished') === 'true';
+  const raw = {
+    title: formData.get('title'),
+    content: formData.get('content'),
+    excerpt: formData.get('excerpt') || null,
+    coverImage: formData.get('coverImage') || null,
+    isPublished: formData.get('isPublished') === 'true',
+  };
+  const parsed = blogSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const data = parsed.data;
 
-  if (!title || !content) return { error: 'Title and Content are required.' };
-
-  const slug = title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const slug = data.title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   try {
-    const { error } = await supabase
-      .from('blog_posts')
-      .insert({
-        title,
-        slug,
-        content,
-        excerpt,
-        cover_image: coverImage,
-        author_id: authCheck.userId,
-        is_published: isPublished,
-        published_at: isPublished ? new Date().toISOString() : null,
-      });
+    const { error } = await supabase.from('blog_posts').insert({
+      title: data.title,
+      slug,
+      content: data.content,
+      excerpt: data.excerpt,
+      cover_image: data.coverImage,
+      author_id: authCheck.userId,
+      is_published: data.isPublished,
+      published_at: data.isPublished ? new Date().toISOString() : null,
+    });
 
-    if (error) return { error: error.message };
+    if (error) {
+      console.error('Create blog error:', error);
+      return { error: 'An unexpected error occurred.' };
+    }
 
     revalidatePath('/admin');
     revalidatePath('/blog');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'An unexpected error occurred.' };
+    console.error('Create blog exception:', err);
+    return { error: 'An unexpected error occurred.' };
   }
 }
 
@@ -489,49 +505,47 @@ export async function updateBlog(formData: FormData) {
   if (!authCheck.verified) return { error: authCheck.error };
 
   const id = formData.get('id') as string;
-  const title = formData.get('title') as string;
-  const content = formData.get('content') as string;
-  const excerpt = formData.get('excerpt') as string || null;
-  const coverImage = formData.get('coverImage') as string;
-  const isPublished = formData.get('isPublished') === 'true';
+  const idParsed = uuidSchema.safeParse(id);
+  if (!idParsed.success) return { error: 'Invalid ID' };
 
-  if (!id || !title || !content) return { error: 'ID, Title, and Content are required.' };
+  const raw = {
+    title: formData.get('title'),
+    content: formData.get('content'),
+    excerpt: formData.get('excerpt') || null,
+    coverImage: formData.get('coverImage'),
+    isPublished: formData.get('isPublished') === 'true',
+  };
+  const parsed = blogSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const data = parsed.data;
 
-  const slug = title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const slug = data.title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   try {
     const updateData: any = {
-      title,
+      title: data.title,
       slug,
-      content,
-      excerpt,
-      is_published: isPublished,
-      published_at: isPublished ? new Date().toISOString() : null,
+      content: data.content,
+      excerpt: data.excerpt,
+      is_published: data.isPublished,
+      published_at: data.isPublished ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),
     };
+    if (data.coverImage !== undefined) updateData.cover_image = data.coverImage || null;
 
-    if (coverImage !== undefined) {
-      updateData.cover_image = coverImage || null;
+    const { error } = await supabase.from('blog_posts').update(updateData).eq('id', idParsed.data);
+    if (error) {
+      console.error('Update blog error:', error);
+      return { error: 'An unexpected error occurred.' };
     }
-
-    const { error } = await supabase
-      .from('blog_posts')
-      .update(updateData)
-      .eq('id', id);
-
-    if (error) return { error: error.message };
 
     revalidatePath('/admin');
     revalidatePath('/blog');
     revalidatePath(`/blog/${slug}`);
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'An unexpected error occurred.' };
+    console.error('Update blog exception:', err);
+    return { error: 'An unexpected error occurred.' };
   }
 }
 
@@ -540,19 +554,22 @@ export async function deleteBlog(blogId: string) {
   const authCheck = await verifyAdmin(supabase);
   if (!authCheck.verified) return { error: authCheck.error };
 
-  try {
-    const { error } = await supabase
-      .from('blog_posts')
-      .delete()
-      .eq('id', blogId);
+  const idParsed = uuidSchema.safeParse(blogId);
+  if (!idParsed.success) return { error: 'Invalid ID' };
 
-    if (error) return { error: error.message };
+  try {
+    const { error } = await supabase.from('blog_posts').delete().eq('id', idParsed.data);
+    if (error) {
+      console.error('Delete blog error:', error);
+      return { error: 'An unexpected error occurred.' };
+    }
 
     revalidatePath('/admin');
     revalidatePath('/blog');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'Failed to delete blog.' };
+    console.error('Delete blog exception:', err);
+    return { error: 'An unexpected error occurred.' };
   }
 }
 
@@ -560,43 +577,54 @@ export async function deleteBlog(blogId: string) {
 // SITE SETTINGS ACTIONS
 // ---------------------------------------------------------------------------
 
+const siteSettingsSchema = z.object({
+  heroTitle: z.string().min(1, 'Hero Title is required'),
+  heroSubtitle: z.string().min(1, 'Hero Subtitle is required'),
+  heroDescription: z.string().min(1, 'Hero Description is required'),
+  heroImageUrl: z.string().optional(),
+  heroButtonText: z.string().optional(),
+  heroButtonLink: z.string().optional(),
+});
+
 export async function updateSiteSettings(formData: FormData) {
   const supabase = await createClient();
   const authCheck = await verifyAdmin(supabase);
   if (!authCheck.verified) return { error: authCheck.error };
 
-  const heroTitle = formData.get('heroTitle') as string;
-  const heroSubtitle = formData.get('heroSubtitle') as string;
-  const heroDescription = formData.get('heroDescription') as string;
-  const heroImageUrl = formData.get('heroImageUrl') as string;
-  const heroButtonText = formData.get('heroButtonText') as string;
-  const heroButtonLink = formData.get('heroButtonLink') as string;
-
-  if (!heroTitle || !heroSubtitle || !heroDescription) {
-    return { error: 'Hero Title, Subtitle, and Description are required.' };
-  }
+  const raw = {
+    heroTitle: formData.get('heroTitle'),
+    heroSubtitle: formData.get('heroSubtitle'),
+    heroDescription: formData.get('heroDescription'),
+    heroImageUrl: formData.get('heroImageUrl') || '',
+    heroButtonText: formData.get('heroButtonText') || '',
+    heroButtonLink: formData.get('heroButtonLink') || '',
+  };
+  const parsed = siteSettingsSchema.safeParse(raw);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const data = parsed.data;
 
   try {
-    const { error } = await supabase
-      .from('site_settings')
-      .update({
-        hero_title: heroTitle,
-        hero_subtitle: heroSubtitle,
-        hero_description: heroDescription,
-        hero_image_url: heroImageUrl,
-        hero_button_text: heroButtonText,
-        hero_button_link: heroButtonLink,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', 'default');
+    const { error } = await supabase.from('site_settings').update({
+      hero_title: data.heroTitle,
+      hero_subtitle: data.heroSubtitle,
+      hero_description: data.heroDescription,
+      hero_image_url: data.heroImageUrl,
+      hero_button_text: data.heroButtonText,
+      hero_button_link: data.heroButtonLink,
+      updated_at: new Date().toISOString(),
+    }).eq('id', 'default');
 
-    if (error) return { error: error.message };
+    if (error) {
+      console.error('Update settings error:', error);
+      return { error: 'An unexpected error occurred.' };
+    }
 
     revalidatePath('/');
     revalidatePath('/admin');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'An unexpected error occurred.' };
+    console.error('Update settings exception:', err);
+    return { error: 'An unexpected error occurred.' };
   }
 }
 
@@ -604,24 +632,36 @@ export async function updateSiteSettings(formData: FormData) {
 // ORDERS & OTHER ACTIONS
 // ---------------------------------------------------------------------------
 
+const statusSchema = z.enum(['pending', 'payment_verifying', 'confirmed', 'shipped', 'delivered', 'cancelled']);
+
 export async function updateOrderStatusAdmin(orderId: string, status: string) {
   const supabase = await createClient();
   const authCheck = await verifyAdmin(supabase);
   if (!authCheck.verified) return { error: authCheck.error };
 
-  try {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', orderId);
+  const idParsed = uuidSchema.safeParse(orderId);
+  const statusParsed = statusSchema.safeParse(status);
+  
+  if (!idParsed.success) return { error: 'Invalid Order ID' };
+  if (!statusParsed.success) return { error: 'Invalid Status' };
 
-    if (error) return { error: error.message };
+  try {
+    const { error } = await supabase.from('orders').update({ 
+      status: statusParsed.data, 
+      updated_at: new Date().toISOString() 
+    }).eq('id', idParsed.data);
+
+    if (error) {
+      console.error('Update order status error:', error);
+      return { error: 'An unexpected error occurred.' };
+    }
 
     revalidatePath('/admin');
     revalidatePath('/account');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'Failed to update order status.' };
+    console.error('Update order status exception:', err);
+    return { error: 'An unexpected error occurred.' };
   }
 }
 
@@ -632,7 +672,8 @@ export async function syncMockData() {
 
   try {
     // Seed Categories
-    const { count: catCount } = await supabase.from('categories').select('*', { count: 'exact', head: true });
+    const { count: catCount, error: catError } = await supabase.from('categories').select('*', { count: 'exact', head: true });
+    if (catError) console.error(catError);
     if (catCount === 0) {
       await supabase.from('categories').insert([
         { name: 'Facial Kits', slug: 'facial-kits', description: 'Complete facial kits for salon-like results at home.', image_url: '/images/categories/facial-kits.png' },
@@ -643,7 +684,8 @@ export async function syncMockData() {
     }
 
     // Seed Brands
-    const { count: brandCount } = await supabase.from('brands').select('*', { count: 'exact', head: true });
+    const { count: brandCount, error: brandError } = await supabase.from('brands').select('*', { count: 'exact', head: true });
+    if (brandError) console.error(brandError);
     if (brandCount === 0) {
       await supabase.from('brands').insert([
         { name: 'O3+', slug: 'o3-plus', logo_url: '/images/brands/o3.png' },
@@ -658,6 +700,7 @@ export async function syncMockData() {
     revalidatePath('/admin');
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || 'Seeding failed.' };
+    console.error('Seed exception:', err);
+    return { error: 'Seeding failed.' };
   }
 }

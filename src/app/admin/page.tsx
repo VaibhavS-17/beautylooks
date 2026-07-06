@@ -77,8 +77,8 @@ export default async function AdminDashboardPage() {
     status: ord.status,
     date: new Date(ord.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
     shippingAddress: ord.shipping_address || null,
-    razorpayOrderId: ord.razorpay_order_id || '',
-    razorpayPaymentId: ord.razorpay_payment_id || '',
+    razorpayOrderId: ord.razorpay_order_id || null,
+    razorpayPaymentId: ord.razorpay_payment_id || null,
     items: (ord.order_items || []).map((item: any) => ({
       name: item.products?.name || 'Unknown Product',
       quantity: item.quantity,

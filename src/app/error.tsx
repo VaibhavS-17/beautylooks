@@ -12,8 +12,8 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Optionally log the error to an error reporting service like Sentry
-    console.error('Global Error Boundary Caught:', error);
+    // Log error digest only (not the full error which may contain sensitive data)
+    console.error('Global Error Boundary Caught:', error.digest || 'unknown');
   }, [error]);
 
   return (

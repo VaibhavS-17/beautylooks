@@ -166,19 +166,26 @@ export default function OrdersTab({
                               <div className="space-y-2">
                                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8A8177] flex items-center gap-1.5">
                                   <CreditCard size={12} />
-                                  Payment Info
+                                  Payment Gateway
                                 </h4>
                                 <div className="text-xs text-[#1C1917] space-y-1.5 bg-white rounded-xl p-3 border border-[#EFECE6]">
-                                  <div>
-                                    <span className="text-[#8A8177]">Razorpay Order: </span>
-                                    <span className="font-mono font-semibold">{order.razorpayOrderId || '—'}</span>
-                                  </div>
-                                  <div>
-                                    <span className="text-[#8A8177]">Payment ID: </span>
-                                    <span className="font-mono font-semibold">{order.razorpayPaymentId || '—'}</span>
-                                  </div>
+                                  {order.razorpayOrderId ? (
+                                    <>
+                                      <p className="flex flex-col">
+                                        <span className="text-[10px] text-[#8C8885] font-semibold uppercase tracking-wider">Razorpay Order ID</span>
+                                        <span className="font-mono mt-0.5">{order.razorpayOrderId}</span>
+                                      </p>
+                                      <p className="flex flex-col border-t border-[#EFECE6] pt-1.5">
+                                        <span className="text-[10px] text-[#8C8885] font-semibold uppercase tracking-wider">Razorpay Payment ID</span>
+                                        <span className="font-mono mt-0.5">{order.razorpayPaymentId || 'Pending/Failed'}</span>
+                                      </p>
+                                    </>
+                                  ) : (
+                                    <p className="text-[#8C8885] italic">No gateway reference found.</p>
+                                  )}
                                 </div>
                               </div>
+
                             </div>
 
                             {/* Ordered Items */}

@@ -281,9 +281,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 MERCHANT_UPI_VPA=your-upi-id@bank
 MERCHANT_BUSINESS_NAME=Beauty Looks Mumbai
 
-# Razorpay (Legacy — optional fallback)
-RAZORPAY_KEY_ID=rzp_test_xxx
-RAZORPAY_KEY_SECRET=xxx
 ```
 
 ---
