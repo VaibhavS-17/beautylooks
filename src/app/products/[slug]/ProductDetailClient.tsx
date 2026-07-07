@@ -507,7 +507,7 @@ export default function ProductDetailClient({
                 )}
               </div>
 
-              <div className="flex gap-2 w-full sm:flex-1">
+              <div className="flex gap-2 w-full sm:flex-1 md:relative fixed bottom-0 left-0 right-0 z-40 bg-white p-4 md:p-0 border-t border-border md:border-t-0 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.1)] md:shadow-none pb-safe">
                 <button 
                   onClick={() => {
                     addItem(product, quantity);

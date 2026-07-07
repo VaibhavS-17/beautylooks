@@ -54,6 +54,13 @@ export default function MobileBottomNav() {
     },
   ];
 
+  // Hide the global bottom nav on the product detail page because it has its own sticky CTA bar.
+  const isProductDetailPage = pathname?.match(/^\/products\/[^/]+$/);
+  
+  if (isProductDetailPage) {
+    return null;
+  }
+
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-border/50 z-50 pb-safe">
       <div className="flex items-center justify-around h-16 px-2">
@@ -65,7 +72,7 @@ export default function MobileBottomNav() {
               href={item.href}
               className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
                 isActive ? 'text-accent' : 'text-text-muted hover:text-text-main'
-              } transition-colors`}
+              } transition-all duration-200 active:scale-95`}
             >
               <item.icon size={20} strokeWidth={isActive ? 2 : 1.5} />
               <span className="text-[9px] uppercase tracking-widest font-semibold">{item.name}</span>
@@ -76,7 +83,7 @@ export default function MobileBottomNav() {
         {/* Center Cart Button */}
         <button
           onClick={openCart}
-          className="relative flex flex-col items-center justify-center -mt-6"
+          className="relative flex flex-col items-center justify-center -mt-6 transition-transform duration-200 active:scale-90"
         >
           <div className="bg-brand-dark text-primary h-14 w-14 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(202,138,4,0.3)] border-4 border-white">
             <ShoppingBag size={22} strokeWidth={1.5} />
@@ -96,7 +103,7 @@ export default function MobileBottomNav() {
               href={item.href}
               className={`relative flex flex-col items-center justify-center w-full h-full space-y-1 ${
                 isActive ? 'text-accent' : 'text-text-muted hover:text-text-main'
-              } transition-colors`}
+              } transition-all duration-200 active:scale-95`}
             >
               <item.icon size={20} strokeWidth={isActive ? 2 : 1.5} />
               {mounted && (item.badge || 0) > 0 && (

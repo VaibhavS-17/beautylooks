@@ -568,7 +568,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                 </div>
 
                 {/* Grid of Products inside this Category, sorted by Brand & Name */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-6 sm:gap-x-8 sm:gap-y-12">
                   {group.products.map((product, index) => {
                     const isOnSale = product.salePrice !== null;
                     const currentPrice = product.salePrice || product.price;
@@ -576,12 +576,12 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                     return (
                       <div key={product.id} className="product-card group cursor-pointer flex flex-col h-full transition-all duration-500 bg-transparent rounded-2xl overflow-hidden hover:shadow-gold-hover border border-transparent">
                         <Link href={`/products/${product.slug}`} className="block overflow-hidden">
-                          <div className="product-image-container h-[300px] sm:h-[400px] relative overflow-hidden bg-[#FAFAF9]">
+                          <div className="product-image-container h-[200px] sm:h-[400px] relative overflow-hidden bg-[#FAFAF9]">
                             <Image
                               src={product.images?.[0] || fallbackProductImage}
                               alt={product.name}
                               fill
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
                               className="object-cover product-image transition-transform duration-700 group-hover:scale-105"
                               priority={index < 4}
                             />
@@ -607,7 +607,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                           </div>
                         </Link>
 
-                        <div className="p-5 flex flex-col flex-grow bg-white">
+                        <div className="p-3 sm:p-5 flex flex-col flex-grow bg-white">
                           <div className="flex justify-between items-start mb-2">
                             <div className="w-full">
                               <span className="text-[10px] font-bold text-accent tracking-widest uppercase block mb-1">

@@ -21,11 +21,17 @@ export default function CartDrawer() {
         onClick={closeCart}
       />
 
-      <div className="absolute inset-y-0 right-0 max-w-full flex">
-        <div className="w-screen max-w-md transform transition-all duration-500 ease-in-out border-l border-border flex flex-col h-full bg-[#FDFBF7] shadow-2xl relative">
-          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none mix-blend-multiply z-0"></div>
+      <div className="absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto md:bottom-auto max-w-full flex justify-center md:justify-end h-[85vh] md:h-full">
+        <div className="w-screen md:max-w-md transform transition-all duration-500 ease-in-out border-t md:border-t-0 md:border-l border-border flex flex-col h-full bg-[#FDFBF7] shadow-2xl relative rounded-t-3xl md:rounded-none">
+          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none mix-blend-multiply z-0 rounded-t-3xl md:rounded-none"></div>
+          
+          {/* Drag Handle (Mobile only) */}
+          <div className="md:hidden flex justify-center pt-3 pb-1 bg-white/50 backdrop-blur relative z-20 rounded-t-3xl">
+            <div className="w-12 h-1.5 bg-border rounded-full"></div>
+          </div>
+
           {/* Header */}
-          <div className="px-6 py-6 border-b border-border flex items-center justify-between relative z-10 bg-white/50 backdrop-blur">
+          <div className="px-6 py-4 md:py-6 border-b border-border flex items-center justify-between relative z-10 bg-white/50 backdrop-blur">
             <h2 className="text-xl font-display text-text-main">Your Bag ({getTotalItems()})</h2>
             <button
               onClick={closeCart}

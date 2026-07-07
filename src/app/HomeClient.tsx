@@ -167,7 +167,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8 lg:gap-12">
             {featuredProducts.map((product) => {
               const isOnSale = product.salePrice !== null;
               const currentPrice = product.salePrice || product.price;
@@ -175,12 +175,12 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
               return (
                   <div key={product.id} className="product-card group cursor-pointer flex flex-col h-full bg-white rounded-2xl overflow-hidden hover:shadow-gold-hover border border-transparent transition-all duration-500">
                     <Link href={`/products/${product.slug}`} className="block overflow-hidden relative">
-                      <div className="h-[280px] sm:h-[350px] relative bg-[#FAFAF9] product-image-container">
+                      <div className="h-[200px] sm:h-[350px] relative bg-[#FAFAF9] product-image-container">
                         <Image
                           src={product.images?.[0] || fallbackProductImage}
                           alt={product.name}
                           fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 25vw"
+                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 25vw"
                           className="object-cover product-image"
                         />
                         <div className="absolute top-4 left-4 flex flex-col space-y-2 z-10">
@@ -197,7 +197,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                       </div>
                     </Link>
 
-                    <div className="p-5 flex flex-col flex-grow">
+                    <div className="p-3 sm:p-5 flex flex-col flex-grow">
                       <div className="flex justify-between items-start mb-2">
                         <div className="w-full">
                           <span className="text-[10px] font-semibold text-accent tracking-widest uppercase block mb-1">
