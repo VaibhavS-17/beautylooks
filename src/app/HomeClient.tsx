@@ -147,9 +147,10 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
         </div>
       </section>
 
-      {/* ================= BESTSELLERS SECTION ================= */}
-      <section className="py-16 md:py-24 bg-secondary">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ================= FEATURED PRODUCTS ================= */}
+      <section className="py-16 md:py-24 bg-gradient-to-b from-[#FDFBF7] to-white relative">
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none mix-blend-multiply"></div>
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col sm:flex-row justify-between items-end mb-16">
             <div>
               <h2 className="font-display text-3xl text-text-main mb-4">Cult Favorites</h2>
@@ -172,68 +173,80 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
               const currentPrice = product.salePrice || product.price;
 
               return (
-                <div key={product.id} className="product-card group cursor-pointer transition-all duration-500 bg-transparent">
-                  <Link href={`/products/${product.slug}`} className="block">
-                    <div className="relative h-[320px] sm:h-[400px] overflow-hidden bg-[#FAFAF9] product-image-container">
-                      <Image
-                        src={product.images?.[0] || fallbackProductImage}
-                        alt={product.name}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover product-image transition-transform duration-700 group-hover:scale-105"
-                      />
-                      <div className="absolute top-4 left-4 flex flex-col space-y-2 z-10">
-                        {product.badge === 'bestseller' && (
-                          <span className="badge-dark">BESTSELLER</span>
-                        )}
-                        {product.badge === 'sale' && (
-                          <span className="badge-gold">SALE</span>
-                        )}
-                        {product.badge === 'new' && (
-                          <span className="badge-dark">NEW</span>
-                        )}
+                  <div key={product.id} className="product-card group cursor-pointer flex flex-col h-full bg-white rounded-2xl overflow-hidden hover:shadow-gold-hover border border-transparent transition-all duration-500">
+                    <Link href={`/products/${product.slug}`} className="block overflow-hidden relative">
+                      <div className="h-[280px] sm:h-[350px] relative bg-[#FAFAF9] product-image-container">
+                        <Image
+                          src={product.images?.[0] || fallbackProductImage}
+                          alt={product.name}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 25vw"
+                          className="object-cover product-image"
+                        />
+                        <div className="absolute top-4 left-4 flex flex-col space-y-2 z-10">
+                          {product.badge === 'bestseller' && (
+                            <span className="badge-dark">BESTSELLER</span>
+                          )}
+                          {product.badge === 'sale' && (
+                            <span className="badge-dark">SALE</span>
+                          )}
+                          {product.badge === 'new' && (
+                            <span className="badge-gold">NEW</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
 
-                  <div className="pt-6 pb-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <span className="text-[10px] font-semibold text-text-muted tracking-widest uppercase block mb-1">
-                          {product.brand}
-                        </span>
-                        <h3 className="font-display text-lg text-text-main hover:text-accent transition-colors">
-                          <Link href={`/products/${product.slug}`}>{product.name}</Link>
-                        </h3>
+                    <div className="p-5 flex flex-col flex-grow">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="w-full">
+                          <span className="text-[10px] font-semibold text-accent tracking-widest uppercase block mb-1">
+                            {product.brand}
+                          </span>
+                          <h3 className="font-display text-lg text-text-main hover:text-accent transition-colors mb-1 line-clamp-2">
+                            <Link href={`/products/${product.slug}`}>{product.name}</Link>
+                          </h3>
+                          <div className="flex items-center space-x-1 mb-2">
+                            <span className="text-accent text-xs">★★★★★</span>
+                            <span className="text-[10px] text-text-muted">4.8 (112)</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right flex flex-col">
-                        <span className="text-sm font-medium text-text-main">
-                          {formatPrice(currentPrice)}
-                        </span>
-                        {isOnSale && (
-                          <span className="text-xs text-text-muted line-through mt-0.5">
-                            {formatPrice(product.price)}
+                      
+                      <div className="flex flex-col mt-auto pt-4 border-t border-[#E8E2D9]/40">
+                        {product.stockQuantity > 0 && product.stockQuantity <= 3 && (
+                          <span className="text-xs font-semibold text-[#DC2626] mb-2 block animate-pulse">
+                            🔥 {product.stockQuantity === 1 ? 'Only 1 left in stock - order soon!' : `Selling fast! Only ${product.stockQuantity} left.`}
                           </span>
                         )}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-text-main">
+                            {formatPrice(currentPrice)}
+                          </span>
+                          {isOnSale && (
+                            <span className="text-xs text-text-muted line-through mt-0.5">
+                              {formatPrice(product.price)}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          addItem(product, 1);
+                        }}
+                        disabled={product.stockQuantity === 0}
+                        className={`w-full mt-4 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all border ${
+                          product.stockQuantity > 0
+                            ? 'bg-black text-white hover:bg-accent hover:border-accent hover:shadow-gold'
+                            : 'bg-border text-text-muted cursor-not-allowed border-transparent'
+                        }`}
+                      >
+                        {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
+                      </button>
                     </div>
-                    
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        addItem(product, 1);
-                      }}
-                      disabled={product.stockQuantity === 0}
-                      className={`w-full mt-4 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all ${
-                        product.stockQuantity > 0
-                          ? 'bg-black text-white hover:bg-black/90'
-                          : 'bg-border text-text-muted cursor-not-allowed'
-                      }`}
-                    >
-                      {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
-                    </button>
                   </div>
-                </div>
               );
             })}
           </div>

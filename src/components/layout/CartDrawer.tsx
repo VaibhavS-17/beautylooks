@@ -22,9 +22,10 @@ export default function CartDrawer() {
       />
 
       <div className="absolute inset-y-0 right-0 max-w-full flex">
-        <div className="w-screen max-w-md transform transition-all duration-500 ease-in-out border-l border-border flex flex-col h-full bg-primary shadow-2xl">
+        <div className="w-screen max-w-md transform transition-all duration-500 ease-in-out border-l border-border flex flex-col h-full bg-[#FDFBF7] shadow-2xl relative">
+          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none mix-blend-multiply z-0"></div>
           {/* Header */}
-          <div className="px-6 py-6 border-b border-border flex items-center justify-between">
+          <div className="px-6 py-6 border-b border-border flex items-center justify-between relative z-10 bg-white/50 backdrop-blur">
             <h2 className="text-xl font-display text-text-main">Your Bag ({getTotalItems()})</h2>
             <button
               onClick={closeCart}
@@ -36,7 +37,7 @@ export default function CartDrawer() {
 
           {/* Free Shipping Progress */}
           {items.length > 0 && (
-            <div className="px-6 py-4 bg-secondary/30 border-b border-border">
+            <div className="px-6 py-4 bg-secondary/30 border-b border-border relative z-10">
               <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-widest text-text-main mb-2">
                 <span>Free Shipping</span>
                 <span>{getTotalPrice() >= 499 ? 'Unlocked' : `${formatPrice(499 - getTotalPrice())} away`}</span>
@@ -51,7 +52,7 @@ export default function CartDrawer() {
           )}
 
           {/* Cart items list */}
-          <div className="flex-1 overflow-y-auto py-6 px-6 no-scrollbar">
+          <div className="flex-1 overflow-y-auto py-6 px-6 no-scrollbar relative z-10">
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-6 px-4">
                 <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-secondary/50 border border-border/40 shadow-inner">
@@ -176,7 +177,7 @@ export default function CartDrawer() {
 
           {/* Footer summary */}
           {items.length > 0 && (
-            <div className="px-6 py-6 bg-primary border-t border-border">
+            <div className="px-6 py-6 bg-white/70 backdrop-blur border-t border-border relative z-10">
               <div className="flex justify-between text-sm text-text-muted mb-4">
                 <span>Subtotal</span>
                 <span>{formatPrice(getTotalPrice())}</span>

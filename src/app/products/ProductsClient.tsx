@@ -574,7 +574,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                     const currentPrice = product.salePrice || product.price;
 
                     return (
-                      <div key={product.id} className="product-card group cursor-pointer flex flex-col h-full transition-all duration-500 bg-transparent">
+                      <div key={product.id} className="product-card group cursor-pointer flex flex-col h-full transition-all duration-500 bg-transparent rounded-2xl overflow-hidden hover:shadow-gold-hover border border-transparent">
                         <Link href={`/products/${product.slug}`} className="block overflow-hidden">
                           <div className="product-image-container h-[300px] sm:h-[400px] relative overflow-hidden bg-[#FAFAF9]">
                             <Image
@@ -607,34 +607,45 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                           </div>
                         </Link>
 
-                        <div className="p-5 flex flex-col flex-grow">
+                        <div className="p-5 flex flex-col flex-grow bg-white">
                           <div className="flex justify-between items-start mb-2">
-                            <div>
+                            <div className="w-full">
                               <span className="text-[10px] font-bold text-accent tracking-widest uppercase block mb-1">
                                 {product.brand}
                               </span>
-                              <h3 className="font-display text-base text-text-main line-clamp-2 font-semibold">
+                              <h3 className="font-display text-base text-text-main line-clamp-2 font-semibold mb-1">
                                 <Link href={`/products/${product.slug}`} className="hover:text-accent transition-colors">
                                   {product.name}
                                 </Link>
                               </h3>
+                              <div className="flex items-center space-x-1 mb-2">
+                                <span className="text-accent text-xs">★★★★★</span>
+                                <span className="text-[10px] text-text-muted">4.8 (112)</span>
+                              </div>
                             </div>
                           </div>
                           
-                           <div className="flex items-center gap-2 mt-auto pt-4 border-t border-[#E8E2D9]/40 flex-wrap">
-                            <span className="text-sm font-semibold text-text-main">
-                              {formatPrice(currentPrice)}
-                            </span>
-                            {isOnSale && (
-                              <>
-                                <span className="text-xs text-text-muted line-through">
-                                  {formatPrice(product.price)}
-                                </span>
-                                <span className="bg-[#2C1E16] text-[#FAF9F6] text-[9px] uppercase tracking-widest font-semibold px-1.5 py-0.5 rounded">
-                                  {getDiscountPercent(product.price, product.salePrice!)}% OFF
-                                </span>
-                              </>
+                           <div className="flex flex-col mt-auto pt-4 border-t border-[#E8E2D9]/40">
+                            {product.stockQuantity > 0 && product.stockQuantity <= 3 && (
+                              <span className="text-xs font-semibold text-[#DC2626] mb-2 block animate-pulse">
+                                🔥 {product.stockQuantity === 1 ? 'Only 1 left in stock - order soon!' : `Selling fast! Only ${product.stockQuantity} left.`}
+                              </span>
                             )}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-semibold text-text-main">
+                                {formatPrice(currentPrice)}
+                              </span>
+                              {isOnSale && (
+                                <>
+                                  <span className="text-xs text-text-muted line-through">
+                                    {formatPrice(product.price)}
+                                  </span>
+                                  <span className="bg-[#2C1E16] text-[#FAF9F6] text-[9px] uppercase tracking-widest font-semibold px-1.5 py-0.5 rounded">
+                                    {getDiscountPercent(product.price, product.salePrice!)}% OFF
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </div>
                           
                           <button
@@ -643,10 +654,10 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                               addItem(product, 1);
                             }}
                             disabled={product.stockQuantity === 0}
-                            className={`w-full mt-5 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all ${
+                            className={`w-full mt-5 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all border ${
                               product.stockQuantity > 0
-                                ? 'bg-black text-white hover:bg-black/90'
-                                : 'bg-border text-text-muted cursor-not-allowed'
+                                ? 'bg-black text-white hover:bg-accent hover:border-accent hover:shadow-gold'
+                                : 'bg-border text-text-muted cursor-not-allowed border-transparent'
                             }`}
                           >
                             {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}

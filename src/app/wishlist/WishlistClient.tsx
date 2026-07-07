@@ -92,8 +92,13 @@ export default function WishlistClient({ products }: WishlistClientProps) {
                       </h4>
                     </div>
 
-                    <div className="mt-4">
-                      <span className="text-sm font-medium text-text-main block mb-4">
+                    <div className="mt-4 border-t border-[#E8E2D9]/40 pt-4">
+                      {product.stockQuantity > 0 && product.stockQuantity <= 3 && (
+                        <span className="text-[10px] font-semibold text-[#DC2626] mb-2 block animate-pulse">
+                          🔥 {product.stockQuantity === 1 ? 'Only 1 left!' : `Only ${product.stockQuantity} left.`}
+                        </span>
+                      )}
+                      <span className="text-sm font-semibold text-text-main block mb-2">
                         {formatPrice(currentPrice)}
                       </span>
 
@@ -103,13 +108,13 @@ export default function WishlistClient({ products }: WishlistClientProps) {
                           removeItem(product.id);
                         }}
                         disabled={product.stockQuantity === 0}
-                        className={`w-full mt-4 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all rounded-xl ${
+                        className={`w-full mt-2 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all rounded-xl border ${
                           product.stockQuantity > 0
-                            ? 'bg-brand-dark text-primary hover:bg-accent hover:text-brand-dark'
-                            : 'bg-border text-text-muted cursor-not-allowed'
+                            ? 'bg-black text-white hover:bg-accent hover:border-accent hover:shadow-gold'
+                            : 'bg-border text-text-muted cursor-not-allowed border-transparent'
                         }`}
                       >
-                        {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
+                        {product.stockQuantity > 0 ? 'Move to Cart' : 'Out of Stock'}
                       </button>
                     </div>
                   </div>

@@ -147,6 +147,41 @@ export default function ProductDetailClient({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
   const fallbackProductImage = '/images/products/facial-kit-1.png';
+  
+  // Simulated Scarcity/Urgency logic
+  const [peopleInCart, setPeopleInCart] = useState(0);
+  const [countdownStr, setCountdownStr] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState('');
+
+  useEffect(() => {
+    // Generate a static "random" number based on the product ID so it doesn't flicker on re-renders
+    const hash = product.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+    setPeopleInCart((hash % 10) + 3); // 3 to 12 people
+    
+    // Simulate countdown: "Order within 2 hrs 45 mins"
+    const updateCountdown = () => {
+      const now = new Date();
+      const cutoff = new Date();
+      cutoff.setHours(18, 0, 0, 0); // 6 PM cutoff
+      if (now > cutoff) {
+        cutoff.setDate(cutoff.getDate() + 1);
+      }
+      const diff = cutoff.getTime() - now.getTime();
+      const hrs = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      setCountdownStr(`${hrs} hrs ${mins} mins`);
+    };
+    
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000);
+    
+    // Delivery date calculation (approx 3 days)
+    const del = new Date();
+    del.setDate(del.getDate() + 3);
+    setDeliveryDate(del.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+    
+    return () => clearInterval(interval);
+  }, [product.id]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -404,7 +439,7 @@ export default function ProductDetailClient({
 
 
             {/* Badges/Info */}
-            <div className="flex flex-wrap gap-3 mb-10">
+            <div className="flex flex-wrap gap-3 mb-8">
               <div className="border border-border rounded-full px-4 py-2 text-[10px] uppercase tracking-widest font-semibold text-text-main">
                 Skin Type: {product.skinType}
               </div>
@@ -415,7 +450,17 @@ export default function ProductDetailClient({
               </div>
             </div>
 
-            {/* Actions */}
+            {/* Urgency & Scarcity Elements */}
+            <div className="flex flex-col gap-2 mb-8 bg-[#FDFBF7] p-4 border border-[#E8E2D9]/60 rounded-xl">
+              <div className="flex items-center text-sm font-semibold text-[#DC2626]">
+                <span className="mr-2 animate-pulse">🔥</span> 
+                High demand: Currently in {peopleInCart} people's carts
+              </div>
+              <div className="text-sm text-text-muted font-medium">
+                Want it by <strong className="text-text-main">{deliveryDate}</strong>? Order within <span className="text-[#CA8A04] font-bold">{countdownStr}</span>
+              </div>
+            </div>
+
             {/* Actions */}
             <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center border-t border-border/50">
               <div className="flex flex-col gap-1 w-full sm:w-auto">
@@ -484,7 +529,7 @@ export default function ProductDetailClient({
                   disabled={product.stockQuantity === 0}
                   className={`w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center ${
                     product.stockQuantity > 0 
-                      ? 'bg-text-main text-white hover:bg-accent hover:text-white shadow-lg hover:-translate-y-1' 
+                      ? 'bg-accent text-white hover:bg-black hover:text-white shadow-gold hover:-translate-y-1' 
                       : 'bg-border text-text-muted cursor-not-allowed'
                   }`}
                 >
@@ -508,6 +553,38 @@ export default function ProductDetailClient({
                 </button>
               </div>
             </div>
+
+            {/* Frequently Bought Together Mock */}
+            {relatedProducts && relatedProducts.length > 0 && (
+              <div className="mt-10 p-5 bg-[#FAFAF9] border border-[#E8E2D9] rounded-2xl">
+                <h4 className="font-display text-lg text-text-main mb-4 font-semibold">Frequently Bought Together</h4>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <div className="h-20 w-20 relative rounded-lg overflow-hidden border border-border bg-white shrink-0">
+                      <Image src={product.images?.[0] || fallbackProductImage} alt={product.name} fill className="object-cover" />
+                    </div>
+                    <div className="text-text-muted text-xl">+</div>
+                    <div className="h-20 w-20 relative rounded-lg overflow-hidden border border-border bg-white shrink-0">
+                      <Image src={relatedProducts[0].images?.[0] || fallbackProductImage} alt={relatedProducts[0].name} fill className="object-cover" />
+                    </div>
+                  </div>
+                  <div className="flex-1 text-center sm:text-left mt-2 sm:mt-0">
+                    <p className="text-sm font-semibold text-text-main mb-1">Buy the Bundle & Save</p>
+                    <p className="text-xs text-text-muted mb-3">Add <strong>{relatedProducts[0].name}</strong> to your order.</p>
+                    <button 
+                      onClick={() => {
+                        addItem(product, quantity);
+                        addItem(relatedProducts[0], 1);
+                        openCart();
+                      }}
+                      className="px-6 py-2 bg-text-main text-white text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-accent transition-colors w-full sm:w-auto"
+                    >
+                      Add Both to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
 
           </div>

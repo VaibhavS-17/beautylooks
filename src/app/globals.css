@@ -116,6 +116,16 @@
     mix-blend-mode: darken;
   }
 
+  /* Theme Accents */
+  .shadow-gold {
+    box-shadow: 0 4px 14px 0 rgba(202, 138, 4, 0.25);
+  }
+  
+  .shadow-gold-hover:hover {
+    box-shadow: 0 6px 20px 0 rgba(202, 138, 4, 0.4);
+    border-color: var(--color-accent);
+  }
+
   /* 3D perspective utilities */
   .perspective-1000 {
     perspective: 1000px;
