@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Heart, Minus, Plus, ChevronLeft, ChevronRight, Truck, Shield, RotateCcw, ArrowRight, X, Star, Loader2, Share2, Check, Leaf, Ban, Rabbit, Sparkles } from 'lucide-react';
@@ -138,6 +138,8 @@ export default function ProductDetailClient({
   hasReviewed,
   currentUserId,
 }: ProductDetailProps) {
+  
+  const router = useRouter();
   
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
@@ -415,72 +417,96 @@ export default function ProductDetailClient({
 
             {/* Actions */}
             {/* Actions */}
-            <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row gap-4 items-center border-t border-border/50">
-              <div className="flex gap-4 items-center w-full sm:w-auto">
-                <div className="flex-1 sm:w-36 flex items-center bg-white h-14 overflow-hidden border border-border shrink-0">
+            <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center border-t border-border/50">
+              <div className="flex flex-col gap-1 w-full sm:w-auto">
+                <div className="flex gap-4 items-center w-full">
+                  <div className="flex-1 sm:w-36 flex items-center bg-white h-14 overflow-hidden border border-border shrink-0">
+                    <button 
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-12 sm:px-5 h-full flex items-center justify-center hover:bg-black/5 transition-colors text-text-main"
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <span className="flex-1 text-center text-base font-semibold text-text-main">{quantity}</span>
+                    <button 
+                      onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))}
+                      disabled={quantity >= product.stockQuantity}
+                      className={`w-12 sm:px-5 h-full flex items-center justify-center transition-colors ${
+                        quantity >= product.stockQuantity 
+                          ? 'text-border cursor-not-allowed' 
+                          : 'hover:bg-black/5 text-text-main'
+                      }`}
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                  
                   <button 
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-12 sm:px-5 h-full flex items-center justify-center hover:bg-black/5 transition-colors text-text-main"
+                    onClick={handleShare}
+                    className="sm:hidden h-14 w-14 shrink-0 flex items-center justify-center border border-border bg-white hover:bg-black/5 transition-colors"
+                    aria-label="Share product"
                   >
-                    <Minus size={16} />
+                    {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
                   </button>
-                  <span className="flex-1 text-center text-base font-semibold text-text-main">{quantity}</span>
                   <button 
-                    onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))}
-                    disabled={quantity >= product.stockQuantity}
-                    className={`w-12 sm:px-5 h-full flex items-center justify-center transition-colors ${
-                      quantity >= product.stockQuantity 
-                        ? 'text-border cursor-not-allowed' 
-                        : 'hover:bg-black/5 text-text-main'
-                    }`}
+                    onClick={() => toggleWishlist(product.id)}
+                    className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
                   >
-                    <Plus size={16} />
+                    <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
                   </button>
                 </div>
+                {product.stockQuantity === 1 && (
+                  <span className="text-red-500 text-[10px] font-bold uppercase tracking-widest px-1">
+                    Only 1 left in stock
+                  </span>
+                )}
+              </div>
 
+              <div className="flex gap-2 w-full sm:flex-1">
+                <button 
+                  onClick={() => {
+                    addItem(product, quantity);
+                  }}
+                  disabled={product.stockQuantity === 0}
+                  className={`w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center border-2 border-text-main ${
+                    product.stockQuantity > 0 
+                      ? 'bg-transparent text-text-main hover:bg-text-main hover:text-white' 
+                      : 'border-border text-text-muted cursor-not-allowed'
+                  }`}
+                >
+                  Add to Cart
+                </button>
+                <button 
+                  onClick={() => {
+                    addItem(product, quantity);
+                    router.push('/checkout');
+                  }}
+                  disabled={product.stockQuantity === 0}
+                  className={`w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center ${
+                    product.stockQuantity > 0 
+                      ? 'bg-text-main text-white hover:bg-accent hover:text-white shadow-lg hover:-translate-y-1' 
+                      : 'bg-border text-text-muted cursor-not-allowed'
+                  }`}
+                >
+                  Buy Now
+                </button>
+              </div>
+
+              <div className="hidden sm:flex gap-4">
                 <button 
                   onClick={handleShare}
-                  className="sm:hidden h-14 w-14 shrink-0 flex items-center justify-center border border-border bg-white hover:bg-black/5 transition-colors"
+                  className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
                   aria-label="Share product"
                 >
                   {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
                 </button>
                 <button 
                   onClick={() => toggleWishlist(product.id)}
-                  className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
+                  className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
                 >
                   <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
                 </button>
               </div>
-
-              <button 
-                onClick={() => {
-                  addItem(product, quantity);
-                  openCart();
-                }}
-                disabled={product.stockQuantity === 0}
-                className={`w-full sm:flex-1 h-14 shrink-0 rounded-xl text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center ${
-                  product.stockQuantity > 0 
-                    ? 'bg-text-main text-white hover:bg-accent hover:text-white shadow-lg hover:shadow-[0_8px_30px_rgba(202,138,4,0.4)] hover:-translate-y-1' 
-                    : 'bg-border text-text-muted cursor-not-allowed'
-                }`}
-              >
-                {product.stockQuantity > 0 ? 'Add to Bag' : 'Out of Stock'}
-              </button>
-
-              <button 
-                onClick={handleShare}
-                className="hidden sm:flex h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
-                aria-label="Share product"
-              >
-                {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
-              </button>
-              <button 
-                onClick={() => toggleWishlist(product.id)}
-                className="hidden sm:flex h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
-              >
-                <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
-              </button>
             </div>
 
 
@@ -766,7 +792,7 @@ export default function ProductDetailClient({
         )}
       </div>
 
-      {/* Sticky Bottom "Add to Bag" Bar (Mobile & Desktop) */}
+      {/* Sticky Bottom "Add to Cart" Bar (Mobile & Desktop) */}
       <div 
         className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transform transition-transform duration-500 ease-in-out ${
           showStickyBar ? 'translate-y-0' : 'translate-y-full'
@@ -782,24 +808,37 @@ export default function ProductDetailClient({
               <span className="text-xs text-text-muted">{formatPrice(currentPrice)}</span>
             </div>
           </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="flex flex-col sm:hidden shrink-0">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-col sm:hidden shrink-0 pr-2">
               <span className="text-sm font-semibold text-text-main">{formatPrice(currentPrice)}</span>
               {product.stockQuantity === 0 && <span className="text-[10px] text-red-500">Out of Stock</span>}
             </div>
             <button 
               onClick={() => {
                 addItem(product, quantity);
-                openCart();
               }}
               disabled={product.stockQuantity === 0}
-              className={`flex-1 sm:w-48 h-12 rounded-xl text-xs font-semibold uppercase tracking-widest transition-all ${
+              className={`flex-1 sm:w-32 h-10 sm:h-12 rounded-xl text-[10px] sm:text-xs font-semibold uppercase tracking-widest transition-all border-2 border-text-main ${
+                product.stockQuantity > 0 
+                  ? 'bg-transparent text-text-main hover:bg-text-main hover:text-white' 
+                  : 'border-border text-text-muted cursor-not-allowed'
+              }`}
+            >
+              Add to Cart
+            </button>
+            <button 
+              onClick={() => {
+                addItem(product, quantity);
+                router.push('/checkout');
+              }}
+              disabled={product.stockQuantity === 0}
+              className={`flex-1 sm:w-32 h-10 sm:h-12 rounded-xl text-[10px] sm:text-xs font-semibold uppercase tracking-widest transition-all ${
                 product.stockQuantity > 0 
                   ? 'bg-brand-dark text-primary hover:bg-accent hover:text-brand-dark shadow-md' 
                   : 'bg-border text-text-muted cursor-not-allowed'
               }`}
             >
-              {product.stockQuantity > 0 ? 'Add to Bag' : 'Out of Stock'}
+              Buy Now
             </button>
           </div>
         </div>

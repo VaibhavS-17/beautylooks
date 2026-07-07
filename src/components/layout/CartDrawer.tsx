@@ -141,6 +141,11 @@ export default function CartDrawer() {
                             Remove
                           </button>
                         </div>
+                        {item.product.stockQuantity === 1 && (
+                          <span className="text-red-500 text-[10px] font-bold uppercase tracking-widest block mt-2">
+                            Only 1 left in stock
+                          </span>
+                        )}
                       </div>
                     </div>
                   );

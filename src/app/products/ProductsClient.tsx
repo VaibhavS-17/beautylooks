@@ -641,7 +641,6 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                             onClick={(e) => {
                               e.preventDefault();
                               addItem(product, 1);
-                              openCart();
                             }}
                             disabled={product.stockQuantity === 0}
                             className={`w-full mt-5 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all ${
@@ -650,7 +649,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                                 : 'bg-border text-text-muted cursor-not-allowed'
                             }`}
                           >
-                            {product.stockQuantity > 0 ? 'Add to Bag' : 'Out of Stock'}
+                            {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
                           </button>
                         </div>
                       </div>
@@ -707,7 +706,6 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                 <button
                   onClick={() => {
                     addItem(quickViewProduct, 1);
-                    openCart();
                     setQuickViewProduct(null);
                   }}
                   disabled={quickViewProduct.stockQuantity === 0}
@@ -717,7 +715,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                       : 'bg-border text-text-muted cursor-not-allowed'
                   }`}
                 >
-                  {quickViewProduct.stockQuantity > 0 ? 'Add to Bag' : 'Out of Stock'}
+                  {quickViewProduct.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
                 </button>
                 <Link 
                   href={`/products/${quickViewProduct.slug}`}

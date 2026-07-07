@@ -222,7 +222,6 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                       onClick={(e) => {
                         e.preventDefault();
                         addItem(product, 1);
-                        openCart();
                       }}
                       disabled={product.stockQuantity === 0}
                       className={`w-full mt-4 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all ${
@@ -231,7 +230,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                           : 'bg-border text-text-muted cursor-not-allowed'
                       }`}
                     >
-                      {product.stockQuantity > 0 ? 'Add to Bag' : 'Out of Stock'}
+                      {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
                     </button>
                   </div>
                 </div>

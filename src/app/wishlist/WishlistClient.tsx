@@ -101,7 +101,6 @@ export default function WishlistClient({ products }: WishlistClientProps) {
                         onClick={() => {
                           addItem(product, 1);
                           removeItem(product.id);
-                          openCart();
                         }}
                         disabled={product.stockQuantity === 0}
                         className={`w-full mt-4 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all rounded-xl ${
@@ -110,7 +109,7 @@ export default function WishlistClient({ products }: WishlistClientProps) {
                             : 'bg-border text-text-muted cursor-not-allowed'
                         }`}
                       >
-                        {product.stockQuantity > 0 ? 'Add to Bag' : 'Out of Stock'}
+                        {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
                       </button>
                     </div>
                   </div>
