@@ -25,7 +25,6 @@ export default function RootLayoutClient({ children, categories = [] }: { childr
       <Footer categories={categories} />
       <MobileBottomNav />
       <CartDrawer />
-      <CartPreviewSnackbar />
     </>
   );
 }

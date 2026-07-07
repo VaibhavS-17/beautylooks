@@ -103,6 +103,22 @@ export default function ProductDetailLoading() {
           ))}
         </div>
       </div>
+      {/* Sticky Bottom CTA Skeleton */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-[env(safe-area-inset-bottom)]">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
+          <div className="hidden sm:flex items-center gap-4 flex-1">
+            <div className="w-12 h-12 bg-secondary rounded-lg animate-pulse" />
+            <div className="flex flex-col gap-2">
+              <div className="h-4 w-32 bg-secondary rounded animate-pulse" />
+              <div className="h-3 w-16 bg-secondary rounded animate-pulse" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto pb-1 sm:pb-0">
+            <div className="flex-1 sm:w-40 h-12 bg-secondary rounded-xl animate-pulse" />
+            <div className="flex-1 sm:w-40 h-12 bg-secondary rounded-xl animate-pulse" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -507,7 +507,7 @@ export default function ProductDetailClient({
                 )}
               </div>
 
-              <div className="flex gap-2 w-full sm:flex-1 md:relative fixed bottom-0 left-0 right-0 z-40 bg-white p-4 md:p-0 border-t border-border md:border-t-0 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.1)] md:shadow-none pb-safe">
+              <div className="flex gap-2 w-full sm:flex-1 mt-4">
                 <button 
                   onClick={() => {
                     addItem(product, quantity);
@@ -871,11 +871,11 @@ export default function ProductDetailClient({
 
       {/* Sticky Bottom "Add to Cart" Bar (Mobile & Desktop) */}
       <div 
-        className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transform transition-transform duration-500 ease-in-out ${
+        className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transform transition-transform duration-500 ease-in-out pb-[env(safe-area-inset-bottom)] ${
           showStickyBar ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
           <div className="hidden sm:flex items-center gap-4 flex-1">
             <div className="relative w-12 h-12 bg-secondary rounded-lg overflow-hidden shrink-0 border border-border">
               <Image src={product.images?.[0] || fallbackProductImage} alt={product.name} fill className="object-cover" />
@@ -885,17 +885,13 @@ export default function ProductDetailClient({
               <span className="text-xs text-text-muted">{formatPrice(currentPrice)}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <div className="flex flex-col sm:hidden shrink-0 pr-2">
-              <span className="text-sm font-semibold text-text-main">{formatPrice(currentPrice)}</span>
-              {product.stockQuantity === 0 && <span className="text-[10px] text-red-500">Out of Stock</span>}
-            </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto pb-1 sm:pb-0">
             <button 
               onClick={() => {
                 addItem(product, quantity);
               }}
               disabled={product.stockQuantity === 0}
-              className={`flex-1 sm:w-32 h-10 sm:h-12 rounded-xl text-[10px] sm:text-xs font-semibold uppercase tracking-widest transition-all border-2 border-text-main ${
+              className={`flex-1 sm:w-40 h-12 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center border-2 border-text-main ${
                 product.stockQuantity > 0 
                   ? 'bg-transparent text-text-main hover:bg-text-main hover:text-white' 
                   : 'border-border text-text-muted cursor-not-allowed'
@@ -909,9 +905,9 @@ export default function ProductDetailClient({
                 router.push('/checkout');
               }}
               disabled={product.stockQuantity === 0}
-              className={`flex-1 sm:w-32 h-10 sm:h-12 rounded-xl text-[10px] sm:text-xs font-semibold uppercase tracking-widest transition-all ${
+              className={`flex-1 sm:w-40 h-12 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center ${
                 product.stockQuantity > 0 
-                  ? 'bg-brand-dark text-primary hover:bg-accent hover:text-brand-dark shadow-md' 
+                  ? 'bg-accent text-white hover:bg-black hover:text-white shadow-gold hover:-translate-y-1' 
                   : 'bg-border text-text-muted cursor-not-allowed'
               }`}
             >

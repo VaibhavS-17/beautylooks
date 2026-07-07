@@ -76,14 +76,14 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
       </div>
 
       <nav
-        className={`sticky top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 px-4 sm:px-6 lg:px-8 mb-4 ${
-          isScrolled ? 'translate-y-[-4px]' : ''
+        className={`sticky top-0 sm:top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 sm:px-6 lg:px-8 sm:mb-4 ${
+          isScrolled ? 'translate-y-0 sm:translate-y-[-4px]' : ''
         }`}
       >
-        <div className={`transition-all duration-500 rounded-2xl border ${
+        <div className={`transition-all duration-500 sm:rounded-2xl border-b sm:border ${
           isScrolled
-            ? 'bg-white/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border-white/60'
-            : 'bg-[var(--color-primary)]/95 backdrop-blur-md shadow-sm border-[var(--color-border)]'
+            ? 'bg-white/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border-white/60'
+            : 'bg-[var(--color-primary)] shadow-sm border-[var(--color-border)]'
         }`}>
         {/* Main Navbar Row */}
         <div className="px-4 sm:px-6">

@@ -32,13 +32,13 @@ export default function HomeLoading() {
         <div className="text-center mb-12">
           <div className="h-8 w-64 bg-stone-200 rounded mx-auto"></div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex flex-col space-y-4">
-              <div className="w-full aspect-[4/5] bg-stone-100 rounded-2xl"></div>
-              <div className="h-5 w-3/4 bg-stone-200 rounded mx-auto"></div>
-              <div className="h-4 w-1/2 bg-stone-100 rounded mx-auto"></div>
-              <div className="h-6 w-1/4 bg-stone-200 rounded mx-auto pt-2"></div>
+            <div key={i} className="flex flex-col space-y-2 sm:space-y-4">
+              <div className="w-full h-[180px] sm:h-[300px] bg-stone-100 rounded-2xl"></div>
+              <div className="h-4 sm:h-5 w-3/4 bg-stone-200 rounded mx-auto mt-2"></div>
+              <div className="h-3 sm:h-4 w-1/2 bg-stone-100 rounded mx-auto"></div>
+              <div className="h-5 sm:h-6 w-1/4 bg-stone-200 rounded mx-auto pt-1 sm:pt-2"></div>
             </div>
           ))}
         </div>
