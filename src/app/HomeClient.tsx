@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { formatPrice } from '@/lib/data';
 import { useCartStore } from '@/lib/store';
+import ScrollToTop from '@/components/layout/ScrollToTop';
+import NotifyMeModal from '@/components/layout/NotifyMeModal';
 
 interface HomeClientProps {
   featuredProducts: any[];
@@ -29,6 +31,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
 
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
+  const [notifyProduct, setNotifyProduct] = useState<{ name: string } | null>(null);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -234,16 +237,19 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                       <button
                         onClick={(e) => {
                           e.preventDefault();
-                          addItem(product, 1);
+                          if (product.stockQuantity > 0) {
+                            addItem(product, 1);
+                          } else {
+                            setNotifyProduct({ name: product.name });
+                          }
                         }}
-                        disabled={product.stockQuantity === 0}
                         className={`w-full mt-4 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all border ${
                           product.stockQuantity > 0
                             ? 'bg-black text-white hover:bg-accent hover:border-accent hover:shadow-gold'
-                            : 'bg-border text-text-muted cursor-not-allowed border-transparent'
+                            : 'bg-accent text-white hover:bg-black border-accent hover:border-black'
                         }`}
                       >
-                        {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
+                        {product.stockQuantity > 0 ? 'Add to Cart' : 'Notify Me'}
                       </button>
                     </div>
                   </div>
@@ -359,6 +365,16 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
           )}
         </div>
       </section>
+
+      {/* Scroll to Top */}
+      <ScrollToTop />
+
+      {/* Notify Me Modal for out-of-stock products */}
+      <NotifyMeModal
+        isOpen={!!notifyProduct}
+        onClose={() => setNotifyProduct(null)}
+        productName={notifyProduct?.name || ''}
+      />
     </div>
   );
 }

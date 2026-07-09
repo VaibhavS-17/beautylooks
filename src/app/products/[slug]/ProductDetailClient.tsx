@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, Minus, Plus, ChevronLeft, ChevronRight, Truck, Shield, RotateCcw, ArrowRight, X, Star, Loader2, Share2, Check, Leaf, Ban, Rabbit, Sparkles } from 'lucide-react';
+import { Heart, Minus, Plus, ChevronLeft, ChevronRight, Truck, Shield, RotateCcw, ArrowRight, X, Star, Loader2, Share2, Check, Leaf, Ban, Rabbit, Sparkles, Bell, ChevronDown } from 'lucide-react';
+import NotifyMeModal from '@/components/layout/NotifyMeModal';
 import { formatPrice, getDiscountPercent } from '@/lib/data';
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { createReview } from '@/app/actions/reviewActions';
@@ -204,6 +205,8 @@ export default function ProductDetailClient({
   const [reviewError, setReviewError] = useState('');
   
   const [isShared, setIsShared] = useState(false);
+  const [notifyModalOpen, setNotifyModalOpen] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -462,97 +465,118 @@ export default function ProductDetailClient({
             </div>
 
             {/* Actions */}
-            <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center border-t border-border/50">
-              <div className="flex flex-col gap-1 w-full sm:w-auto">
-                <div className="flex gap-4 items-center w-full">
-                  <div className="flex-1 sm:w-36 flex items-center bg-white h-14 overflow-hidden border border-border shrink-0">
+            {product.stockQuantity > 0 ? (
+              <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center border-t border-border/50">
+                <div className="flex flex-col gap-1 w-full sm:w-auto">
+                  <div className="flex gap-4 items-center w-full">
+                    <div className="flex-1 sm:w-36 flex items-center bg-white h-14 overflow-hidden border border-border shrink-0">
+                      <button 
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="w-12 sm:px-5 h-full flex items-center justify-center hover:bg-black/5 transition-colors text-text-main"
+                      >
+                        <Minus size={16} />
+                      </button>
+                      <span className="flex-1 text-center text-base font-semibold text-text-main">{quantity}</span>
+                      <button 
+                        onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))}
+                        disabled={quantity >= product.stockQuantity}
+                        className={`w-12 sm:px-5 h-full flex items-center justify-center transition-colors ${
+                          quantity >= product.stockQuantity 
+                            ? 'text-border cursor-not-allowed' 
+                            : 'hover:bg-black/5 text-text-main'
+                        }`}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                    
                     <button 
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-12 sm:px-5 h-full flex items-center justify-center hover:bg-black/5 transition-colors text-text-main"
+                      onClick={handleShare}
+                      className="sm:hidden h-14 w-14 shrink-0 flex items-center justify-center border border-border bg-white hover:bg-black/5 transition-colors"
+                      aria-label="Share product"
                     >
-                      <Minus size={16} />
+                      {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
                     </button>
-                    <span className="flex-1 text-center text-base font-semibold text-text-main">{quantity}</span>
                     <button 
-                      onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))}
-                      disabled={quantity >= product.stockQuantity}
-                      className={`w-12 sm:px-5 h-full flex items-center justify-center transition-colors ${
-                        quantity >= product.stockQuantity 
-                          ? 'text-border cursor-not-allowed' 
-                          : 'hover:bg-black/5 text-text-main'
-                      }`}
+                      onClick={() => toggleWishlist(product.id)}
+                      className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
                     >
-                      <Plus size={16} />
+                      <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
                     </button>
                   </div>
-                  
+                  {product.stockQuantity === 1 && (
+                    <span className="text-red-500 text-[10px] font-bold uppercase tracking-widest px-1">
+                      Only 1 left in stock
+                    </span>
+                  )}
+                </div>
+
+                {/* Desktop-only: inline Add to Cart + Buy Now */}
+                <div className="hidden sm:flex gap-2 w-full sm:flex-1 mt-4">
+                  <button 
+                    onClick={() => {
+                      addItem(product, quantity);
+                    }}
+                    className="w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center border-2 border-text-main bg-transparent text-text-main hover:bg-text-main hover:text-white"
+                  >
+                    Add to Cart
+                  </button>
+                  <button 
+                    onClick={() => {
+                      addItem(product, quantity);
+                      router.push('/checkout');
+                    }}
+                    className="w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center bg-accent text-white hover:bg-black hover:text-white shadow-gold hover:-translate-y-1"
+                  >
+                    Buy Now
+                  </button>
+                </div>
+
+                <div className="hidden sm:flex gap-4">
                   <button 
                     onClick={handleShare}
-                    className="sm:hidden h-14 w-14 shrink-0 flex items-center justify-center border border-border bg-white hover:bg-black/5 transition-colors"
+                    className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
                     aria-label="Share product"
                   >
                     {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
                   </button>
                   <button 
                     onClick={() => toggleWishlist(product.id)}
-                    className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
+                    className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
                   >
                     <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
                   </button>
                 </div>
-                {product.stockQuantity === 1 && (
-                  <span className="text-red-500 text-[10px] font-bold uppercase tracking-widest px-1">
-                    Only 1 left in stock
-                  </span>
-                )}
               </div>
-
-              <div className="flex gap-2 w-full sm:flex-1 mt-4">
-                <button 
-                  onClick={() => {
-                    addItem(product, quantity);
-                  }}
-                  disabled={product.stockQuantity === 0}
-                  className={`w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center border-2 border-text-main ${
-                    product.stockQuantity > 0 
-                      ? 'bg-transparent text-text-main hover:bg-text-main hover:text-white' 
-                      : 'border-border text-text-muted cursor-not-allowed'
-                  }`}
-                >
-                  Add to Cart
-                </button>
-                <button 
-                  onClick={() => {
-                    addItem(product, quantity);
-                    router.push('/checkout');
-                  }}
-                  disabled={product.stockQuantity === 0}
-                  className={`w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center ${
-                    product.stockQuantity > 0 
-                      ? 'bg-accent text-white hover:bg-black hover:text-white shadow-gold hover:-translate-y-1' 
-                      : 'bg-border text-text-muted cursor-not-allowed'
-                  }`}
-                >
-                  Buy Now
-                </button>
+            ) : (
+              /* Out of Stock — Notify Me CTA */
+              <div className="pt-6 sm:pt-8 border-t border-border/50">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                  <button
+                    onClick={() => setNotifyModalOpen(true)}
+                    className="w-full sm:w-auto h-14 px-10 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 bg-accent text-white hover:bg-black hover:text-white shadow-gold hover:-translate-y-1"
+                  >
+                    <Bell size={18} />
+                    Notify Me When Available
+                  </button>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={handleShare}
+                      className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
+                      aria-label="Share product"
+                    >
+                      {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
+                    </button>
+                    <button 
+                      onClick={() => toggleWishlist(product.id)}
+                      className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
+                    >
+                      <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
+                    </button>
+                  </div>
+                </div>
               </div>
-
-              <div className="hidden sm:flex gap-4">
-                <button 
-                  onClick={handleShare}
-                  className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
-                  aria-label="Share product"
-                >
-                  {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
-                </button>
-                <button 
-                  onClick={() => toggleWishlist(product.id)}
-                  className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
-                >
-                  <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
-                </button>
-              </div>
-            </div>
+            )}
 
             {/* Frequently Bought Together Mock */}
             {relatedProducts && relatedProducts.length > 0 && (
@@ -593,7 +617,7 @@ export default function ProductDetailClient({
         {/* Product Details Tabs */}
         <div className="mt-24 pt-16 border-t border-border" ref={reviewsSectionRef}>
           <div className="flex space-x-4 sm:space-x-8 mb-6 sm:mb-8 border-b border-border overflow-x-auto no-scrollbar">
-            {['description', 'ingredients', 'shipping', 'reviews'].map((tab) => (
+            {['description', 'ingredients', 'shipping', 'reviews', 'faq'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -601,7 +625,7 @@ export default function ProductDetailClient({
                   activeTab === tab ? 'text-text-main' : 'text-text-muted hover:text-text-main'
                 }`}
               >
-                {tab === 'reviews' ? `Reviews (${reviewCount})` : tab}
+                {tab === 'reviews' ? `Reviews (${reviewCount})` : tab === 'faq' ? 'FAQ' : tab}
                 {activeTab === tab && (
                   <span className="absolute bottom-0 left-0 w-full h-px bg-text-main" />
                 )}
@@ -825,6 +849,65 @@ export default function ProductDetailClient({
                 </div>
               </div>
             )}
+
+            {/* ── FAQ Tab ── */}
+            {activeTab === 'faq' && (
+              <div className="space-y-3">
+                {[
+                  {
+                    q: 'Is this product suitable for sensitive skin?',
+                    a: 'Yes, all our products are dermatologically tested. However, we recommend doing a patch test before full application, especially if you have very sensitive or reactive skin.',
+                  },
+                  {
+                    q: 'Are your products vegan and cruelty-free?',
+                    a: 'Absolutely. We are committed to 100% vegan formulations and all our products are certified cruelty-free. We never test on animals.',
+                  },
+                  {
+                    q: 'How long does shipping take?',
+                    a: 'Standard delivery within Mumbai takes 2-4 business days. Express same-day or next-day delivery is available for select pincodes. Orders above ₹499 enjoy free standard shipping.',
+                  },
+                  {
+                    q: 'What is your return policy?',
+                    a: 'We accept returns of unopened and unused products within 7 days of delivery. Due to hygiene reasons, opened cosmetics cannot be returned. Please contact our support team to initiate a return.',
+                  },
+                  {
+                    q: 'How should I store this product?',
+                    a: 'Store in a cool, dry place away from direct sunlight. Keep the lid tightly closed after each use to maintain product efficacy and freshness.',
+                  },
+                  {
+                    q: 'Can I use this product with other skincare products?',
+                    a: 'Yes, our products are designed to integrate seamlessly into your existing skincare routine. For best results, apply in the order of thinnest to thickest consistency.',
+                  },
+                ].map((faq, idx) => (
+                  <div
+                    key={idx}
+                    className="border border-border/50 rounded-xl overflow-hidden bg-white transition-shadow hover:shadow-sm"
+                  >
+                    <button
+                      onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
+                      className="w-full flex items-center justify-between p-5 text-left gap-4"
+                    >
+                      <span className="text-sm font-semibold text-text-main">{faq.q}</span>
+                      <ChevronDown
+                        size={18}
+                        className={`shrink-0 text-text-muted transition-transform duration-300 ${
+                          openFaqIndex === idx ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        openFaqIndex === idx ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'
+                      }`}
+                    >
+                      <p className="px-5 pb-5 text-sm text-text-muted font-light leading-relaxed">
+                        {faq.a}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -869,33 +952,19 @@ export default function ProductDetailClient({
         )}
       </div>
 
-      {/* Sticky Bottom "Add to Cart" Bar (Mobile & Desktop) */}
-      <div 
-        className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transform transition-transform duration-500 ease-in-out pb-[env(safe-area-inset-bottom)] ${
-          showStickyBar ? 'translate-y-0' : 'translate-y-full'
-        }`}
-      >
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
-          <div className="hidden sm:flex items-center gap-4 flex-1">
-            <div className="relative w-12 h-12 bg-secondary rounded-lg overflow-hidden shrink-0 border border-border">
-              <Image src={product.images?.[0] || fallbackProductImage} alt={product.name} fill className="object-cover" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-text-main truncate">{product.name}</span>
-              <span className="text-xs text-text-muted">{formatPrice(currentPrice)}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto pb-1 sm:pb-0">
+      {/* Sticky Bottom "Add to Cart" Bar (Mobile Only) */}
+      {product.stockQuantity > 0 && (
+        <div 
+          className={`fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transform transition-transform duration-500 ease-in-out pb-[env(safe-area-inset-bottom)] ${
+            showStickyBar ? 'translate-y-0' : 'translate-y-full'
+          }`}
+        >
+          <div className="max-w-[1920px] mx-auto px-4 py-3 flex items-center gap-2 pb-1">
             <button 
               onClick={() => {
                 addItem(product, quantity);
               }}
-              disabled={product.stockQuantity === 0}
-              className={`flex-1 sm:w-40 h-12 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center border-2 border-text-main ${
-                product.stockQuantity > 0 
-                  ? 'bg-transparent text-text-main hover:bg-text-main hover:text-white' 
-                  : 'border-border text-text-muted cursor-not-allowed'
-              }`}
+              className="flex-1 h-12 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all flex items-center justify-center border-2 border-text-main bg-transparent text-text-main hover:bg-text-main hover:text-white"
             >
               Add to Cart
             </button>
@@ -904,18 +973,13 @@ export default function ProductDetailClient({
                 addItem(product, quantity);
                 router.push('/checkout');
               }}
-              disabled={product.stockQuantity === 0}
-              className={`flex-1 sm:w-40 h-12 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center ${
-                product.stockQuantity > 0 
-                  ? 'bg-accent text-white hover:bg-black hover:text-white shadow-gold hover:-translate-y-1' 
-                  : 'bg-border text-text-muted cursor-not-allowed'
-              }`}
+              className="flex-1 h-12 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all flex items-center justify-center bg-accent text-white hover:bg-black hover:text-white shadow-gold hover:-translate-y-1"
             >
               Buy Now
             </button>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Lightbox Modal */}
       {lightboxOpen && (
@@ -927,6 +991,13 @@ export default function ProductDetailClient({
           title={product.name}
         />
       )}
+
+      {/* Notify Me Modal */}
+      <NotifyMeModal
+        isOpen={notifyModalOpen}
+        onClose={() => setNotifyModalOpen(false)}
+        productName={product.name}
+      />
     </div>
   );
 }

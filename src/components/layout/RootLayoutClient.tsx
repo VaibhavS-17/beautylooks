@@ -6,7 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CartDrawer from "@/components/layout/CartDrawer";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
-import CartPreviewSnackbar from "@/components/layout/CartPreviewSnackbar";
+
 
 export default function RootLayoutClient({ children, categories = [] }: { children: React.ReactNode, categories?: { id: string, name: string, slug: string }[] }) {
   const pathname = usePathname();

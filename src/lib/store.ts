@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toast } from 'react-hot-toast';
 import { Product, CartItem } from './types';
+import React from 'react';
 
 interface CartState {
   items: CartItem[];
@@ -27,6 +28,79 @@ export const useCartStore = create<CartState>()(
       isOpen: false,
 
       addItem: (product: Product, quantity: number = 1) => {
+        const showAddedToast = () => {
+          toast.custom(
+            (t) =>
+              React.createElement(
+                'div',
+                {
+                  className: `${
+                    t.visible ? 'animate-fade-in-up' : 'opacity-0 translate-y-2'
+                  } max-w-sm w-full bg-white shadow-2xl rounded-2xl pointer-events-auto border border-border/50 overflow-hidden`,
+                },
+                React.createElement(
+                  'div',
+                  { className: 'p-4 flex items-center gap-3' },
+                  React.createElement(
+                    'div',
+                    {
+                      className:
+                        'flex-shrink-0 w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center',
+                    },
+                    React.createElement(
+                      'svg',
+                      {
+                        xmlns: 'http://www.w3.org/2000/svg',
+                        width: 20,
+                        height: 20,
+                        viewBox: '0 0 24 24',
+                        fill: 'none',
+                        stroke: '#059669',
+                        strokeWidth: 2.5,
+                        strokeLinecap: 'round',
+                        strokeLinejoin: 'round',
+                      },
+                      React.createElement('polyline', { points: '20 6 9 17 4 12' })
+                    )
+                  ),
+                  React.createElement(
+                    'div',
+                    { className: 'flex-1 min-w-0' },
+                    React.createElement(
+                      'p',
+                      {
+                        className:
+                          'text-sm font-semibold text-[#0C0A09]',
+                      },
+                      'Added to cart'
+                    ),
+                    React.createElement(
+                      'p',
+                      {
+                        className:
+                          'text-xs text-[#44403C] mt-0.5 truncate',
+                      },
+                      product.name
+                    )
+                  ),
+                  React.createElement(
+                    'button',
+                    {
+                      onClick: () => {
+                        toast.dismiss(t.id);
+                        get().openCart();
+                      },
+                      className:
+                        'flex-shrink-0 px-4 py-2 bg-[#0C0A09] text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-[#CA8A04] transition-colors',
+                    },
+                    'View Cart'
+                  )
+                )
+              ),
+            { duration: 3000, position: 'top-center' }
+          );
+        };
+
         set((state) => {
           const existingItem = state.items.find(
             (item) => item.product.id === product.id
@@ -48,6 +122,7 @@ export const useCartStore = create<CartState>()(
                 ),
               };
             }
+            showAddedToast();
             return {
               items: state.items.map((item) =>
                 item.product.id === product.id
@@ -66,6 +141,7 @@ export const useCartStore = create<CartState>()(
             toast.error(`Only ${product.stockQuantity} items in stock`);
             return { items: [...state.items, { product, quantity: product.stockQuantity }] };
           }
+          showAddedToast();
           return { items: [...state.items, { product, quantity }] };
         });
       },
