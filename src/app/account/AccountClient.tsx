@@ -285,7 +285,7 @@ export default function AccountClient({ user, initialAddresses, initialOrders }:
   const searchParams = useSearchParams();
   
   const tabParam = searchParams.get('tab') as 'profile' | 'orders' | 'addresses' | null;
-  const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'addresses'>(tabParam || 'profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'addresses'>('profile');
 
   useEffect(() => {
     if (tabParam && ['profile', 'orders', 'addresses'].includes(tabParam)) {
@@ -388,7 +388,7 @@ export default function AccountClient({ user, initialAddresses, initialOrders }:
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#FCFBF9] py-12 text-left relative">
+    <div className="w-full min-h-screen bg-[#FCFBF9] py-12 text-left relative" suppressHydrationWarning>
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
@@ -401,10 +401,10 @@ export default function AccountClient({ user, initialAddresses, initialOrders }:
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start" suppressHydrationWarning>
           
           {/* Navigation Sidebar */}
-          <aside id="account-sidebar" className="lg:col-span-3 glass-card border border-[#EFECE6] bg-white overflow-hidden shadow-sm">
+          <aside id="account-sidebar" suppressHydrationWarning className="lg:col-span-3 glass-card border border-[#EFECE6] bg-white overflow-hidden shadow-sm">
             <div className="p-6 border-b border-[#EFECE6] text-center space-y-3">
               <div className="relative mx-auto w-fit">
                 <div className="w-16 h-16 bg-[#F9F7F3] rounded-full border border-[#C9A94E] flex items-center justify-center text-[#C9A94E]">
@@ -429,8 +429,9 @@ export default function AccountClient({ user, initialAddresses, initialOrders }:
               </div>
             </div>
 
-            <div className="p-2 flex flex-col space-y-1">
+            <div className="p-2 flex flex-col space-y-1" suppressHydrationWarning>
               <button
+                suppressHydrationWarning
                 onClick={() => handleTabChange('profile')}
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition-all duration-300 ${
                   activeTab === 'profile' ? 'bg-[#F9F7F3] text-[#9A7B2F] border-l-2 border-[#C9A94E] font-semibold' : 'text-[#5C554D] hover:text-[#C9A94E] hover:bg-[#F9F7F350]'
@@ -440,6 +441,7 @@ export default function AccountClient({ user, initialAddresses, initialOrders }:
                 <span>Profile Details</span>
               </button>
               <button
+                suppressHydrationWarning
                 onClick={() => handleTabChange('orders')}
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition-all duration-300 ${
                   activeTab === 'orders' ? 'bg-[#F9F7F3] text-[#9A7B2F] border-l-2 border-[#C9A94E] font-semibold' : 'text-[#5C554D] hover:text-[#C9A94E] hover:bg-[#F9F7F350]'
@@ -449,6 +451,7 @@ export default function AccountClient({ user, initialAddresses, initialOrders }:
                 <span>My Orders</span>
               </button>
               <button
+                suppressHydrationWarning
                 onClick={() => handleTabChange('addresses')}
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition-all duration-300 ${
                   activeTab === 'addresses' ? 'bg-[#F9F7F3] text-[#9A7B2F] border-l-2 border-[#C9A94E] font-semibold' : 'text-[#5C554D] hover:text-[#C9A94E] hover:bg-[#F9F7F350]'
@@ -457,8 +460,9 @@ export default function AccountClient({ user, initialAddresses, initialOrders }:
                 <MapPin size={16} />
                 <span>Addresses</span>
               </button>
-              <form action={signOut}>
+              <form action={signOut} suppressHydrationWarning>
                 <button
+                  suppressHydrationWarning
                   type="submit"
                   className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm text-[#C62828] hover:bg-[#C6282810]"
                 >
@@ -470,7 +474,7 @@ export default function AccountClient({ user, initialAddresses, initialOrders }:
           </aside>
 
           {/* Main Dashboard Content */}
-          <main className="lg:col-span-9 glass-card p-6 sm:p-8 border border-[#EFECE6] bg-white min-h-[400px] shadow-sm">
+          <main suppressHydrationWarning className="lg:col-span-9 glass-card p-6 sm:p-8 border border-[#EFECE6] bg-white min-h-[400px] shadow-sm">
             
             {/* Profile Tab */}
             {activeTab === 'profile' && (
