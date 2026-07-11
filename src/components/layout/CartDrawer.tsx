@@ -17,48 +17,52 @@ export default function CartDrawer() {
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-text-main opacity-50 transition-opacity"
+        className="absolute inset-0 bg-black/50 backdrop-blur-[2px] transition-opacity"
         onClick={closeCart}
       />
 
-      <div className="absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto md:bottom-auto max-w-full flex justify-center md:justify-end h-[85vh] md:h-full">
-        <div className="w-screen md:max-w-md transform transition-all duration-500 ease-in-out border-t md:border-t-0 md:border-l border-border flex flex-col h-full bg-[#FDFBF7] shadow-2xl relative rounded-t-3xl md:rounded-none">
-          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none mix-blend-multiply z-0 rounded-t-3xl md:rounded-none"></div>
-          
-          {/* Drag Handle (Mobile only) */}
-          <div className="md:hidden flex justify-center pt-3 pb-1 bg-white/50 backdrop-blur relative z-20 rounded-t-3xl">
-            <div className="w-12 h-1.5 bg-border rounded-full"></div>
-          </div>
+      {/* Responsive Drawer Container */}
+      <div className="absolute inset-0 md:inset-y-0 md:right-0 md:left-auto flex justify-end">
+        <div className="w-full h-[100dvh] md:max-w-md md:h-full bg-[#FDFBF7] shadow-2xl flex flex-col overflow-hidden relative border-l border-border/50">
+          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none mix-blend-multiply z-0"></div>
 
-          {/* Header */}
-          <div className="px-6 py-4 md:py-6 border-b border-border flex items-center justify-between relative z-10 bg-white/50 backdrop-blur">
-            <h2 className="text-xl font-display text-text-main">Your Bag ({getTotalItems()})</h2>
-            <button
-              onClick={closeCart}
-              className="text-text-main hover:opacity-60 transition-opacity p-1"
-            >
-              <X size={24} strokeWidth={1.5} />
-            </button>
-          </div>
-
-          {/* Free Shipping Progress */}
-          {items.length > 0 && (
-            <div className="px-6 py-4 bg-secondary/30 border-b border-border relative z-10">
-              <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-widest text-text-main mb-2">
-                <span>Free Shipping</span>
-                <span>{getTotalPrice() >= 499 ? 'Unlocked' : `${formatPrice(499 - getTotalPrice())} away`}</span>
-              </div>
-              <div className="w-full h-1.5 bg-border/50 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-accent transition-all duration-500 ease-out"
-                  style={{ width: `${Math.min(100, (getTotalPrice() / 499) * 100)}%` }}
-                />
-              </div>
+          {/* ── STICKY HEADER (flex-none) ── */}
+          <div className="flex-none relative z-10">
+            {/* Drag Handle (Mobile only) */}
+            <div className="md:hidden flex justify-center pt-3 pb-1 bg-white/50 backdrop-blur">
+              <div className="w-12 h-1.5 bg-border rounded-full"></div>
             </div>
-          )}
 
-          {/* Cart items list */}
-          <div className="flex-1 overflow-y-auto py-6 px-6 no-scrollbar relative z-10">
+            {/* Header: Bag Count & Close */}
+            <div className="px-6 py-4 md:py-6 border-b border-border flex items-center justify-between bg-white/50 backdrop-blur">
+              <h2 className="text-xl font-display text-text-main">Your Bag ({getTotalItems()})</h2>
+              <button
+                onClick={closeCart}
+                className="text-text-main hover:opacity-60 transition-opacity p-1"
+              >
+                <X size={24} strokeWidth={1.5} />
+              </button>
+            </div>
+
+            {/* Free Shipping Progress Tracker */}
+            {items.length > 0 && (
+              <div className="px-6 py-4 bg-secondary/30 border-b border-border">
+                <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-widest text-text-main mb-2">
+                  <span>Free Shipping</span>
+                  <span>{getTotalPrice() >= 499 ? 'Unlocked' : `${formatPrice(499 - getTotalPrice())} away`}</span>
+                </div>
+                <div className="w-full h-1.5 bg-border/50 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-accent transition-all duration-500 ease-out"
+                    style={{ width: `${Math.min(100, (getTotalPrice() / 499) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── ISOLATED MIDDLE SCROLL WRAPPER (flex-1) ── */}
+          <div className="flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] py-6 px-6 no-scrollbar relative z-10 pb-16 md:pb-8">
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-6 px-4">
                 <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-secondary/50 border border-border/40 shadow-inner">
@@ -157,33 +161,31 @@ export default function CartDrawer() {
                     </div>
                   );
                 })}
-              </div>
-            )}
 
-            {/* Perfect Pairings Upsell Block */}
-            {items.length > 0 && (
-              <div className="mt-8 bg-secondary/30 p-4 rounded-xl border border-border">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-3">Perfect Pairings</div>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-white rounded-lg border border-border flex items-center justify-center shrink-0">
-                    <span className="text-xl">✨</span>
+                {/* Perfect Pairings Upsell Block */}
+                <div className="mt-8 bg-secondary/30 p-4 rounded-xl border border-border">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-text-muted mb-3">Perfect Pairings</div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-white rounded-lg border border-border flex items-center justify-center shrink-0">
+                      <span className="text-xl">✨</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="text-xs font-semibold text-text-main truncate">Add a Premium Gift Box</h5>
+                      <p className="text-[10px] text-text-muted truncate mt-0.5">Luxurious unboxing experience</p>
+                      <span className="text-xs font-semibold text-accent block mt-1">₹299</span>
+                    </div>
+                    <button className="px-3 py-1.5 bg-white border border-accent text-accent rounded-lg text-[10px] font-bold uppercase hover:bg-accent hover:text-white transition-colors">
+                      Add
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h5 className="text-xs font-semibold text-text-main truncate">Add a Premium Gift Box</h5>
-                    <p className="text-[10px] text-text-muted truncate mt-0.5">Luxurious unboxing experience</p>
-                    <span className="text-xs font-semibold text-accent block mt-1">₹299</span>
-                  </div>
-                  <button className="px-3 py-1.5 bg-white border border-accent text-accent rounded-lg text-[10px] font-bold uppercase hover:bg-accent hover:text-white transition-colors">
-                    Add
-                  </button>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Footer summary */}
+          {/* ── STICKY FOOTER SUMMARY BOX (flex-none) ── */}
           {items.length > 0 && (
-            <div className="px-6 py-6 bg-white/70 backdrop-blur border-t border-border relative z-10">
+            <div className="flex-none px-6 py-6 bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] relative z-10" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
               <div className="flex justify-between text-sm text-text-muted mb-4">
                 <span>Subtotal</span>
                 <span>{formatPrice(getTotalPrice())}</span>

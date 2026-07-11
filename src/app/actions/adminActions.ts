@@ -42,6 +42,7 @@ const productSchema = z.object({
   isActive: z.boolean().default(true),
   imagesInput: z.string().optional(),
   image: z.string().optional(),
+  faqsInput: z.string().optional(),
 });
 
 export async function createProduct(formData: FormData) {
@@ -63,6 +64,7 @@ export async function createProduct(formData: FormData) {
     isActive: formData.get('isActive') === 'true',
     imagesInput: formData.get('images'),
     image: formData.get('image'),
+    faqsInput: formData.get('faqs') || '',
   };
 
   const parsed = productSchema.safeParse(raw);
@@ -86,6 +88,19 @@ export async function createProduct(formData: FormData) {
 
   const slug = data.name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
+  // Parse FAQs
+  let faqs: Array<{ question: string; answer: string }> = [];
+  if (data.faqsInput) {
+    try {
+      const parsedFaqs = JSON.parse(data.faqsInput);
+      if (Array.isArray(parsedFaqs)) {
+        faqs = parsedFaqs.filter((f: any) => f.question && f.answer);
+      }
+    } catch {
+      // Ignore invalid JSON, default to empty array
+    }
+  }
+
   try {
     const { error } = await supabase.from('products').insert({
       name: data.name,
@@ -101,6 +116,7 @@ export async function createProduct(formData: FormData) {
       is_featured: data.isFeatured,
       is_active: data.isActive,
       images,
+      faqs,
     });
 
     if (error) {
@@ -142,6 +158,7 @@ export async function updateProduct(formData: FormData) {
     isFeatured: formData.get('isFeatured') === 'true',
     isActive: formData.get('isActive') === 'true',
     imagesInput: formData.get('images'),
+    faqsInput: formData.get('faqs') || '',
   };
 
   const parsed = productSchema.safeParse(raw);
@@ -176,6 +193,20 @@ export async function updateProduct(formData: FormData) {
       } catch {
         updateData.images = [data.imagesInput];
       }
+    }
+
+    // Parse FAQs
+    if (data.faqsInput) {
+      try {
+        const parsedFaqs = JSON.parse(data.faqsInput);
+        if (Array.isArray(parsedFaqs)) {
+          updateData.faqs = parsedFaqs.filter((f: any) => f.question && f.answer);
+        }
+      } catch {
+        // Ignore invalid JSON
+      }
+    } else {
+      updateData.faqs = [];
     }
 
     const { error } = await supabase.from('products').update(updateData).eq('id', idParsed.data);
@@ -584,6 +615,7 @@ const siteSettingsSchema = z.object({
   heroImageUrl: z.string().optional(),
   heroButtonText: z.string().optional(),
   heroButtonLink: z.string().optional(),
+  commonFaqs: z.string().optional(),
 });
 
 export async function updateSiteSettings(formData: FormData) {
@@ -598,13 +630,23 @@ export async function updateSiteSettings(formData: FormData) {
     heroImageUrl: formData.get('heroImageUrl') || '',
     heroButtonText: formData.get('heroButtonText') || '',
     heroButtonLink: formData.get('heroButtonLink') || '',
+    commonFaqs: formData.get('commonFaqs') || '',
   };
   const parsed = siteSettingsSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
   const data = parsed.data;
 
+  let commonFaqsParsed: any[] | undefined = undefined;
+  if (data.commonFaqs) {
+    try {
+      commonFaqsParsed = JSON.parse(data.commonFaqs);
+    } catch (e) {
+      console.error('Invalid commonFaqs JSON');
+    }
+  }
+
   try {
-    const { error } = await supabase.from('site_settings').update({
+    const updatePayload: any = {
       hero_title: data.heroTitle,
       hero_subtitle: data.heroSubtitle,
       hero_description: data.heroDescription,
@@ -612,7 +654,13 @@ export async function updateSiteSettings(formData: FormData) {
       hero_button_text: data.heroButtonText,
       hero_button_link: data.heroButtonLink,
       updated_at: new Date().toISOString(),
-    }).eq('id', 'default');
+    };
+
+    if (commonFaqsParsed !== undefined) {
+      updatePayload.common_faqs = commonFaqsParsed;
+    }
+
+    const { error } = await supabase.from('site_settings').update(updatePayload).eq('id', 'default');
 
     if (error) {
       console.error('Update settings error:', error);
@@ -620,6 +668,7 @@ export async function updateSiteSettings(formData: FormData) {
     }
 
     revalidatePath('/');
+    revalidatePath('/products');
     revalidatePath('/admin');
     return { success: true };
   } catch (err: any) {

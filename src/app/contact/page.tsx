@@ -1,260 +1,156 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Phone, Mail, MapPin, Clock, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function ContactPage() {
+  const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
-    subject: 'product-query',
+    subject: '',
     message: '',
   });
-
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      subject: 'product-query',
-      message: '',
-    });
-    setTimeout(() => setSubmitted(false), 5000);
+    toast.success('Message sent! Our team will get back to you within 24 hours.');
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#FCFBF9] py-12 text-left">
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <div className="min-h-screen bg-brand-light py-16 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="border-b border-[#EFECE6] pb-6 mb-12">
-          <h1 className="text-3xl sm:text-4xl font-semibold font-display text-gold-gradient">
+        <div className="text-center mb-16">
+          <span className="text-xs font-bold uppercase tracking-[0.25em] text-accent block mb-3">
             Get In Touch
+          </span>
+          <h1 className="text-3xl sm:text-4xl font-serif text-text-main font-bold tracking-tight">
+            Contact Beauty Looks Mumbai
           </h1>
-          <p className="text-xs text-[#8A8177] mt-2 font-light">
-            We are here to assist you with order placement, product selection, or consultations.
+          <p className="text-sm text-text-muted mt-4 max-w-xl mx-auto font-light leading-relaxed">
+            Have a question about a formulation, shipping update, or beauty consultation? We would love to hear from you.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          
-          {/* Left Column: Form */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="glass-card p-6 sm:p-8 border border-[#EFECE6] bg-white space-y-6 shadow-sm">
-              <h3 className="font-display text-lg font-semibold tracking-wider text-[#9A7B2F] uppercase border-b border-[#EFECE6] pb-3">
-                Send Us a Message
-              </h3>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          {/* Contact Info Cards */}
+          <div className="space-y-6">
+            <div className="bg-white border border-border rounded-2xl p-6">
+              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-text-main mb-4">
+                <MapPin size={20} />
+              </div>
+              <h3 className="text-sm font-bold text-text-main mb-1">Flagship Studio</h3>
+              <p className="text-xs text-text-muted font-light leading-relaxed">
+                Bandra West, Mumbai<br />Maharashtra 400050, India
+              </p>
+            </div>
 
-              {submitted && (
-                <div className="p-4 bg-[#4CAF5010] border border-[#4CAF50] rounded-xl flex items-center space-x-3 text-xs text-[#2E7D32] animate-fade-in">
-                  <CheckCircle2 size={18} />
-                  <span className="font-semibold">Message sent successfully! We will get back to you shortly.</span>
+            <div className="bg-white border border-border rounded-2xl p-6">
+              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-text-main mb-4">
+                <Mail size={20} />
+              </div>
+              <h3 className="text-sm font-bold text-text-main mb-1">Email Support</h3>
+              <p className="text-xs text-text-muted font-light leading-relaxed">
+                support@beautylooksmumbai.com<br />orders@beautylooksmumbai.com
+              </p>
+            </div>
+
+            <div className="bg-white border border-border rounded-2xl p-6">
+              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-text-main mb-4">
+                <Clock size={20} />
+              </div>
+              <h3 className="text-sm font-bold text-text-main mb-1">Business Hours</h3>
+              <p className="text-xs text-text-muted font-light leading-relaxed">
+                Monday – Saturday: 10:00 AM – 7:00 PM IST<br />Sunday: Closed
+              </p>
+            </div>
+          </div>
+
+          {/* Contact Form */}
+          <div className="lg:col-span-2 bg-white border border-border rounded-3xl p-8 sm:p-10 shadow-sm">
+            {submitted ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 size={32} />
                 </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Name */}
-                  <div className="flex flex-col">
-                    <label className="text-xs text-[#5C554D] mb-1 font-medium">Your Name *</label>
+                <h3 className="text-xl font-bold text-text-main mb-2">Message Received</h3>
+                <p className="text-sm text-text-muted font-light max-w-md mx-auto">
+                  Thank you for reaching out, {formData.name}. Our Mumbai support specialists will reply via email shortly.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <h2 className="text-lg font-serif font-bold text-text-main mb-4">Send Us a Message</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-main mb-2">
+                      Full Name
+                    </label>
                     <input
                       type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
                       required
-                      placeholder="e.g. Aditi Rao"
-                      className="input-dark text-sm"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Priya Sharma"
+                      className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:border-text-main"
                     />
                   </div>
-
-                  {/* Phone */}
-                  <div className="flex flex-col">
-                    <label className="text-xs text-[#5C554D] mb-1 font-medium">Contact Phone *</label>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-main mb-2">
+                      Email Address
+                    </label>
                     <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
+                      type="email"
                       required
-                      placeholder="e.g. 9876558071"
-                      className="input-dark text-sm"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="priya@example.com"
+                      className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:border-text-main"
                     />
                   </div>
                 </div>
 
-                {/* Email */}
-                <div className="flex flex-col">
-                  <label className="text-xs text-[#5C554D] mb-1 font-medium">Email Address *</label>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-main mb-2">
+                    Subject
+                  </label>
                   <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
+                    type="text"
                     required
-                    placeholder="e.g. aditi@example.com"
-                    className="input-dark text-sm"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    placeholder="Order Inquiry / Skincare Recommendation"
+                    className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:border-text-main"
                   />
                 </div>
 
-                {/* Subject */}
-                <div className="flex flex-col">
-                  <label className="text-xs text-[#5C554D] mb-1 font-medium">Inquiry Subject *</label>
-                  <select
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleInputChange}
-                    required
-                    className="input-dark text-sm"
-                  >
-                    <option value="product-query">Product Recommendation & Query</option>
-                    <option value="order-status">Order Status Tracking</option>
-                    <option value="partner">Business & Brand Partnerships</option>
-                    <option value="other">General Feedback</option>
-                  </select>
-                </div>
-
-                {/* Message */}
-                <div className="flex flex-col">
-                  <label className="text-xs text-[#5C554D] mb-1 font-medium">Message Body *</label>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-main mb-2">
+                    Message
+                  </label>
                   <textarea
-                    name="message"
-                    rows={5}
-                    value={formData.message}
-                    onChange={handleInputChange}
+                    rows={4}
                     required
-                    placeholder="Describe your skincare concern or questions..."
-                    className="w-full bg-[#FCFBF9] border border-[#E2DDD5] rounded-lg p-3 text-xs text-[#1A1A1A] focus:outline-none focus:border-[#C9A94E]"
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    placeholder="How can we help you today?"
+                    className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:border-text-main resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="btn-gold w-full flex items-center justify-center space-x-2 py-3.5 text-sm shadow-sm"
+                  className="w-full sm:w-auto px-8 py-3.5 bg-text-main text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-black transition-colors flex items-center justify-center gap-2"
                 >
                   <Send size={14} />
-                  <span>Send Message</span>
+                  Send Message
                 </button>
               </form>
-            </div>
+            )}
           </div>
-
-          {/* Right Column: Contact Cards */}
-          <div className="lg:col-span-5 space-y-6">
-            {/* Direct Connect */}
-            <div className="glass-card p-6 border border-[#EFECE6] bg-white space-y-4 shadow-sm">
-              <h3 className="font-display text-lg font-semibold tracking-wider text-[#9A7B2F] uppercase border-b border-[#EFECE6] pb-3">
-                Quick Info
-              </h3>
-              
-              <div className="space-y-4 text-xs">
-                {/* Phone */}
-                <div className="flex items-center space-x-3">
-                  <div className="p-2.5 bg-[#F9F7F3] rounded-lg text-[#9A7B2F] border border-[#EFECE6]">
-                    <Phone size={16} />
-                  </div>
-                  <div>
-                    <span className="block text-[10px] text-[#8A8177] uppercase tracking-wider">Phone Calls</span>
-                    <a href="tel:8879655807" className="font-semibold text-[#1A1A1A] hover:text-[#9A7B2F]">8879655807</a>
-                  </div>
-                </div>
-
-                {/* WhatsApp */}
-                <div className="flex items-center space-x-3">
-                  <div className="p-2.5 bg-[#F9F7F3] rounded-lg text-[#9A7B2F] border border-[#EFECE6]">
-                    <MessageSquare size={16} />
-                  </div>
-                  <div>
-                    <span className="block text-[10px] text-[#8A8177] uppercase tracking-wider">WhatsApp Consultation</span>
-                    <a
-                      href="https://wa.me/918879655807"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-[#1A1A1A] hover:text-[#9A7B2F]"
-                    >
-                      Chat Live with Curator
-                    </a>
-                  </div>
-                </div>
-
-                {/* Email */}
-                <div className="flex items-center space-x-3">
-                  <div className="p-2.5 bg-[#F9F7F3] rounded-lg text-[#9A7B2F] border border-[#EFECE6]">
-                    <Mail size={16} />
-                  </div>
-                  <div>
-                    <span className="block text-[10px] text-[#8A8177] uppercase tracking-wider">Email Inquiry</span>
-                    <a href="mailto:hello@beautylooksmumbai.com" className="font-semibold text-[#1A1A1A] hover:text-[#9A7B2F]">hello@beautylooksmumbai.com</a>
-                  </div>
-                </div>
-
-                {/* Instagram */}
-                <div className="flex items-center space-x-3">
-                  <div className="p-2.5 bg-[#F9F7F3] rounded-lg text-[#9A7B2F] border border-[#EFECE6]">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="block text-[10px] text-[#8A8177] uppercase tracking-wider">Instagram</span>
-                    <a
-                      href="https://www.instagram.com/beauty.looks.mumbai?igsh=MTRjdHh6dDZjZ3UydQ=="
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-[#1A1A1A] hover:text-[#9A7B2F]"
-                    >
-                      @beauty.looks.mumbai
-                    </a>
-                  </div>
-                </div>
-
-                {/* MapPin */}
-                <div className="flex items-center space-x-3">
-                  <div className="p-2.5 bg-[#F9F7F3] rounded-lg text-[#9A7B2F] border border-[#EFECE6]">
-                    <MapPin size={16} />
-                  </div>
-                  <div>
-                    <span className="block text-[10px] text-[#8A8177] uppercase tracking-wider">Office Address</span>
-                    <span className="font-semibold text-[#1A1A1A]">Mumbai, Maharashtra, India</span>
-                  </div>
-                </div>
-
-                {/* Clock */}
-                <div className="flex items-center space-x-3">
-                  <div className="p-2.5 bg-[#F9F7F3] rounded-lg text-[#9A7B2F] border border-[#EFECE6]">
-                    <Clock size={16} />
-                  </div>
-                  <div>
-                    <span className="block text-[10px] text-[#8A8177] uppercase tracking-wider">Business Hours</span>
-                    <span className="font-semibold text-[#1A1A1A]">Mon - Sat: 10:00 AM - 8:00 PM</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
       </div>
     </div>

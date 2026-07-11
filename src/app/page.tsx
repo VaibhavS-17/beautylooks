@@ -20,28 +20,39 @@ export default async function Homepage() {
       is_featured,
       is_active,
       stock_quantity,
-      brands (name)
+      brands (name),
+      reviews (rating)
     `)
     .eq('is_active', true)
     .eq('is_featured', true)
     .limit(4);
 
   // Map to format HomeClient expects (brand name flattening)
-  const mappedFeaturedProducts = (featuredProducts || []).map((p: any) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    shortDescription: p.short_description,
-    price: p.price,
-    salePrice: p.sale_price,
-    images: p.images || [],
-    isFeatured: p.is_featured,
-    isActive: p.is_active,
-    stockQuantity: p.stock_quantity,
-    brand: p.brands?.name || 'Unknown',
-    badge: p.sale_price ? 'sale' : 'bestseller'
-  }));
+  const mappedFeaturedProducts = (featuredProducts || []).map((p: any) => {
+    const revs = p.reviews || [];
+    const reviewCount = revs.length;
+    const rating = reviewCount > 0
+      ? Math.round((revs.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount) * 10) / 10
+      : 0;
+
+    return {
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      description: p.description,
+      shortDescription: p.short_description,
+      price: p.price,
+      salePrice: p.sale_price,
+      images: p.images || [],
+      isFeatured: p.is_featured,
+      isActive: p.is_active,
+      stockQuantity: p.stock_quantity,
+      brand: p.brands?.name || 'Unknown',
+      badge: p.sale_price ? 'sale' : 'bestseller',
+      rating,
+      reviewCount,
+    };
+  });
 
   // Fetch categories
   const { data: categoriesData } = await supabase

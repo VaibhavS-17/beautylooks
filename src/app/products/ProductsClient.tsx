@@ -60,11 +60,13 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
   // Sync state when URL params change from navbar clicks
   useEffect(() => {
     if (categoryParam) {
-      setTimeout(() => setSelectedCategories([categoryParam]), 0);
+      const catObj = allCategories.find(c => c.slug === categoryParam || c.id === categoryParam);
+      const targetSlug = catObj ? catObj.slug : categoryParam;
+      setTimeout(() => setSelectedCategories([targetSlug]), 0);
     } else {
       setTimeout(() => setSelectedCategories([]), 0);
     }
-  }, [categoryParam]);
+  }, [categoryParam, allCategories]);
 
   const toggleCategory = (slug: string) => {
     setSelectedCategories(prev => 
@@ -130,10 +132,10 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
 
     if (selectedCategories.length > 0) {
       const selectedCategoryIds = allCategories
-        .filter(c => selectedCategories.includes(c.slug))
+        .filter(c => selectedCategories.includes(c.slug) || selectedCategories.includes(c.id))
         .map(c => c.id);
       
-      result = result.filter(p => selectedCategoryIds.includes(p.categoryId));
+      result = result.filter(p => selectedCategoryIds.includes(p.categoryId) || selectedCategories.includes(p.categoryId));
     }
 
     if (selectedBrands.length > 0) {
@@ -618,10 +620,17 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                                   {product.name}
                                 </Link>
                               </h3>
-                              <div className="flex items-center space-x-1 mb-2">
-                                <span className="text-accent text-xs">★★★★★</span>
-                                <span className="text-[10px] text-text-muted">4.8 (112)</span>
-                              </div>
+                              {product.reviewCount > 0 ? (
+                                <div className="flex items-center space-x-1 mb-2">
+                                  <span className="text-accent text-xs">★</span>
+                                  <span className="text-[11px] font-semibold text-text-main">{product.rating.toFixed(1)}</span>
+                                  <span className="text-[10px] text-text-muted">({product.reviewCount})</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center space-x-1 mb-2">
+                                  <span className="text-[10px] text-text-muted">No Reviews Yet</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                           

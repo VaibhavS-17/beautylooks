@@ -173,6 +173,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
             <div className="flex items-center justify-end gap-3 sm:gap-4 flex-1">
               {/* Search Toggle (Visible on both mobile and desktop) */}
               <button
+                suppressHydrationWarning
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
                 className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors p-2 rounded-full hover:bg-[var(--color-secondary)]/50"
                 aria-label="Search"
@@ -192,6 +193,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
 
               {/* Cart (Desktop only) */}
               <button
+                suppressHydrationWarning
                 onClick={openCart}
                 className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block"
                 aria-label="Cart"
@@ -253,6 +255,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
             <div className="flex items-center p-4 sm:p-6 border-b border-[var(--color-border)]">
               <Search size={24} className="text-[var(--color-text-muted)] shrink-0" />
               <input
+                suppressHydrationWarning
                 type="text"
                 value={searchVal}
                 onChange={e => setSearchVal(e.target.value)}
@@ -261,6 +264,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
                 autoFocus={isSearchOpen}
               />
               <button 
+                suppressHydrationWarning
                 onClick={() => setIsSearchOpen(false)}
                 className="p-2 bg-[var(--color-secondary)] hover:bg-[var(--color-border)] rounded-full transition-colors shrink-0"
               >
@@ -272,7 +276,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
               <div className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-4">Trending Searches</div>
               <div className="flex flex-wrap gap-2">
                 {['Vitamin C Serum', 'Hydrating Primer', 'Matte Lipstick', 'Sunscreen SPF 50'].map(term => (
-                  <button key={term} className="px-4 py-2 bg-white border border-[var(--color-border)] rounded-full text-xs font-medium text-[var(--color-text-main)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors">
+                  <button suppressHydrationWarning key={term} className="px-4 py-2 bg-white border border-[var(--color-border)] rounded-full text-xs font-medium text-[var(--color-text-main)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors">
                     {term}
                   </button>
                 ))}

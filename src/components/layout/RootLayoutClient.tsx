@@ -2,10 +2,12 @@
 
 import React, { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
+import { Toaster } from 'react-hot-toast';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CartDrawer from "@/components/layout/CartDrawer";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
+import ScrollToTop from "@/components/layout/ScrollToTop";
 
 
 export default function RootLayoutClient({ children, categories = [] }: { children: React.ReactNode, categories?: { id: string, name: string, slug: string }[] }) {
@@ -18,6 +20,7 @@ export default function RootLayoutClient({ children, categories = [] }: { childr
 
   return (
     <>
+      <Toaster position="top-center" toastOptions={{ duration: 3500 }} />
       <Suspense fallback={<div className="h-20 bg-[var(--color-primary)]" />}>
         <Navbar categories={categories} />
       </Suspense>
@@ -25,6 +28,7 @@ export default function RootLayoutClient({ children, categories = [] }: { childr
       <Footer categories={categories} />
       <MobileBottomNav />
       <CartDrawer />
+      <ScrollToTop />
     </>
   );
 }

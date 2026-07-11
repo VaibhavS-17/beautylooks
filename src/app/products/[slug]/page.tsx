@@ -49,6 +49,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       stock_quantity,
       skin_type,
       category_id,
+      faqs,
       brands (name),
       categories (name)
     `)
@@ -75,7 +76,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     brand: (productData as any).brands?.name || 'Unknown',
     category: (productData as any).categories?.name || 'Unknown',
     categoryId: productData.category_id,
-    badge: productData.sale_price ? 'sale' : productData.is_featured ? 'bestseller' : 'new'
+    badge: productData.sale_price ? 'sale' : productData.is_featured ? 'bestseller' : 'new',
+    faqs: (productData as any).faqs || []
   };
 
   // Fetch related products
@@ -95,29 +97,40 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       stock_quantity,
       category_id,
       brands (name),
-      categories (name)
+      categories (name),
+      reviews (rating)
     `)
     .eq('category_id', mappedProduct.categoryId)
     .neq('id', mappedProduct.id)
     .limit(4);
 
-  const mappedRelatedProducts = (relatedProductsData || []).map((p: any) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    shortDescription: p.short_description,
-    price: p.price,
-    salePrice: p.sale_price,
-    images: p.images || [],
-    isFeatured: p.is_featured,
-    isActive: p.is_active,
-    stockQuantity: p.stock_quantity,
-    brand: p.brands?.name || 'Unknown',
-    category: p.categories?.name || 'Unknown',
-    categoryId: p.category_id,
-    badge: p.sale_price ? 'sale' : p.is_featured ? 'bestseller' : 'new'
-  }));
+  const mappedRelatedProducts = (relatedProductsData || []).map((p: any) => {
+    const pReviews = p.reviews || [];
+    const pCount = pReviews.length;
+    const pAvg = pCount > 0
+      ? pReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / pCount
+      : 0;
+
+    return {
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      description: p.description,
+      shortDescription: p.short_description,
+      price: p.price,
+      salePrice: p.sale_price,
+      images: p.images || [],
+      isFeatured: p.is_featured,
+      isActive: p.is_active,
+      stockQuantity: p.stock_quantity,
+      brand: p.brands?.name || 'Unknown',
+      category: p.categories?.name || 'Unknown',
+      categoryId: p.category_id,
+      badge: p.sale_price ? 'sale' : p.is_featured ? 'bestseller' : 'new',
+      rating: Math.round(pAvg * 10) / 10,
+      reviewCount: pCount
+    };
+  });
 
   // ── Fetch Reviews ──
   const { data: reviewsData } = await supabase
@@ -127,6 +140,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       rating,
       comment,
       created_at,
+      helpful_count,
       profiles (full_name, avatar_url)
     `)
     .eq('product_id', mappedProduct.id)
@@ -139,6 +153,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     comment: r.comment as string,
     createdAt: r.created_at as string,
     avatarUrl: (r.profiles?.avatar_url as string) || null,
+    helpfulCount: (r.helpful_count as number) || 0,
   }));
 
   // Compute aggregate stats
@@ -180,10 +195,19 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       `)
       .eq('product_id', mappedProduct.id)
       .eq('orders.user_id', user.id)
-      .in('orders.status', ['confirmed', 'shipped', 'delivered']);
+      .eq('orders.status', 'delivered');
 
     canReview = (eligibleOrders && eligibleOrders.length > 0) || false;
   }
+
+  // Fetch admin-editable common FAQs from site_settings
+  const { data: siteSettingsData } = await supabase
+    .from('site_settings')
+    .select('common_faqs')
+    .eq('id', 'default')
+    .single();
+
+  const commonFaqs = siteSettingsData?.common_faqs || [];
 
   return (
     <ProductDetailClient
@@ -195,6 +219,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       canReview={canReview}
       hasReviewed={hasReviewed}
       currentUserId={currentUserId}
+      commonFaqs={commonFaqs}
     />
   );
 }

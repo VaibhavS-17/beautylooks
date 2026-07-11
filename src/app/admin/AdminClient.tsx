@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
-  LayoutDashboard, ShoppingBag, Package, Tag, Award, FileText, Settings,
+  LayoutDashboard, ShoppingBag, Package, Tag, Award, FileText, Settings, HelpCircle,
   Loader2, Check, X, Globe, ArrowUpRight
 } from 'lucide-react';
 import { 
@@ -71,6 +71,7 @@ interface AdminProduct {
   categoryId: string | null;
   brand: string;
   category: string;
+  faqs: Array<{ question: string; answer: string }>;
 }
 
 interface AdminClientProps {
@@ -92,10 +93,11 @@ interface AdminClientProps {
     hero_image_url: string;
     hero_button_text: string;
     hero_button_link: string;
+    common_faqs?: Array<{ question: string; answer: string }>;
   };
 }
 
-type TabType = 'dashboard' | 'orders' | 'products' | 'categories' | 'brands' | 'blogs' | 'settings';
+type TabType = 'dashboard' | 'orders' | 'products' | 'faqs' | 'categories' | 'brands' | 'blogs' | 'settings';
 
 // Dynamic imports of heavy components to optimize compilation speeds
 const TabLoader = () => (
@@ -119,6 +121,7 @@ const TabLoader = () => (
 const DashboardTab = dynamic(() => import('./tabs/DashboardTab'), { ssr: false, loading: TabLoader });
 const OrdersTab = dynamic(() => import('./tabs/OrdersTab'), { ssr: false, loading: TabLoader });
 const ProductsTab = dynamic(() => import('./tabs/ProductsTab'), { ssr: false, loading: TabLoader });
+const FaqsTab = dynamic(() => import('./tabs/FaqsTab'), { ssr: false, loading: TabLoader });
 const CategoriesTab = dynamic(() => import('./tabs/CategoriesTab'), { ssr: false, loading: TabLoader });
 const BrandsTab = dynamic(() => import('./tabs/BrandsTab'), { ssr: false, loading: TabLoader });
 const BlogsTab = dynamic(() => import('./tabs/BlogsTab'), { ssr: false, loading: TabLoader });
@@ -348,10 +351,11 @@ export default function AdminClient({
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, count: null },
               { id: 'orders', label: 'Orders', icon: ShoppingBag, count: orders.length },
               { id: 'products', label: 'Products', icon: Package, count: products.length },
+              { id: 'faqs', label: 'Common FAQs', icon: HelpCircle, count: siteSettings.common_faqs?.length || 4 },
               { id: 'categories', label: 'Categories', icon: Tag, count: categories.length },
               { id: 'brands', label: 'Brands', icon: Award, count: brands.length },
               { id: 'blogs', label: 'Journal', icon: FileText, count: blogPosts.length },
-              { id: 'settings', label: 'Hero Banners', icon: Settings, count: null },
+              { id: 'settings', label: 'Store Settings', icon: Settings, count: null },
             ].map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -437,6 +441,13 @@ export default function AdminClient({
               handleDeleteProduct={handleDeleteProduct}
               handleProductSubmit={handleProductSubmit}
               loading={loading}
+            />
+          )}
+
+          {activeTab === 'faqs' && (
+            <FaqsTab
+              siteSettings={siteSettings}
+              triggerToast={triggerToast}
             />
           )}
 

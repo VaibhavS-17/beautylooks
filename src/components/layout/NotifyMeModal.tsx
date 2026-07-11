@@ -1,23 +1,31 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Bell, Check, Mail } from 'lucide-react';
+import { X, Bell, Check, Mail, Loader2 } from 'lucide-react';
+import { subscribeRestockNotification } from '@/app/actions/notificationActions';
+import { useNotificationStore } from '@/lib/store';
 
 interface NotifyMeModalProps {
   isOpen: boolean;
   onClose: () => void;
+  productId: string;
   productName: string;
 }
 
-export default function NotifyMeModal({ isOpen, onClose, productName }: NotifyMeModalProps) {
+export default function NotifyMeModal({ isOpen, onClose, productId, productName }: NotifyMeModalProps) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const addRequest = useNotificationStore((s) => s.addRequest);
+  const isSubscribed = useNotificationStore((s) => s.isSubscribed);
 
   const handleClose = useCallback(() => {
     setEmail('');
     setError('');
     setIsSuccess(false);
+    setIsSubmitting(false);
     onClose();
   }, [onClose]);
 
@@ -51,7 +59,7 @@ export default function NotifyMeModal({ isOpen, onClose, productName }: NotifyMe
     return emailRegex.test(value);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -65,7 +73,31 @@ export default function NotifyMeModal({ isOpen, onClose, productName }: NotifyMe
       return;
     }
 
-    setIsSuccess(true);
+    // Check if already subscribed locally
+    if (isSubscribed(productId, email)) {
+      setIsSuccess(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await subscribeRestockNotification({
+        productId,
+        email: email.trim(),
+      });
+
+      if (result.success) {
+        addRequest(productId, productName, email.trim());
+        setIsSuccess(true);
+      } else {
+        setError(result.error || 'Failed to subscribe. Please try again.');
+      }
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -136,7 +168,8 @@ export default function NotifyMeModal({ isOpen, onClose, productName }: NotifyMe
                       if (error) setError('');
                     }}
                     placeholder="your@email.com"
-                    className="w-full border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none transition-all"
+                    disabled={isSubmitting}
+                    className="w-full border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none transition-all disabled:opacity-60"
                   />
                 </div>
                 {error && (
@@ -146,9 +179,11 @@ export default function NotifyMeModal({ isOpen, onClose, productName }: NotifyMe
 
               <button
                 type="submit"
-                className="w-full h-12 bg-accent text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all cursor-pointer"
+                disabled={isSubmitting}
+                className="w-full h-12 bg-accent text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Notify Me
+                {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                {isSubmitting ? 'Subscribing...' : 'Notify Me'}
               </button>
             </form>
           </div>

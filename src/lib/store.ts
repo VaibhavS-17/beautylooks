@@ -3,13 +3,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toast } from 'react-hot-toast';
-import { Product, CartItem } from './types';
+import { Product, CartItem, RestockNotificationRequest } from './types';
 import React from 'react';
 
 interface CartState {
   items: CartItem[];
+  buyNowItem: CartItem | null;
   isOpen: boolean;
   addItem: (product: Product, quantity?: number) => void;
+  setBuyNowItem: (item: CartItem | null) => void;
+  clearBuyNowItem: () => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -25,7 +28,11 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      buyNowItem: null,
       isOpen: false,
+
+      setBuyNowItem: (item: CartItem | null) => set({ buyNowItem: item }),
+      clearBuyNowItem: () => set({ buyNowItem: null }),
 
       addItem: (product: Product, quantity: number = 1) => {
         const showAddedToast = () => {
@@ -36,8 +43,9 @@ export const useCartStore = create<CartState>()(
                 {
                   className: `${
                     t.visible ? 'animate-fade-in-up' : 'opacity-0 translate-y-2'
-                  } max-w-sm w-full bg-white shadow-2xl rounded-2xl pointer-events-auto border border-border/50 overflow-hidden`,
+                  } max-w-md w-full bg-white shadow-2xl rounded-2xl pointer-events-auto border border-border/80 overflow-hidden`,
                 },
+                // Top row: checkmark + text
                 React.createElement(
                   'div',
                   { className: 'p-4 flex items-center gap-3' },
@@ -51,8 +59,8 @@ export const useCartStore = create<CartState>()(
                       'svg',
                       {
                         xmlns: 'http://www.w3.org/2000/svg',
-                        width: 20,
-                        height: 20,
+                        width: 22,
+                        height: 22,
                         viewBox: '0 0 24 24',
                         fill: 'none',
                         stroke: '#059669',
@@ -70,7 +78,7 @@ export const useCartStore = create<CartState>()(
                       'p',
                       {
                         className:
-                          'text-sm font-semibold text-[#0C0A09]',
+                          'text-sm font-bold text-[#0C0A09]',
                       },
                       'Added to cart'
                     ),
@@ -82,6 +90,21 @@ export const useCartStore = create<CartState>()(
                       },
                       product.name
                     )
+                  )
+                ),
+                // Bottom row: two action buttons
+                React.createElement(
+                  'div',
+                  { className: 'flex items-center gap-2 px-4 pb-4 pt-1 border-t border-border/40' },
+                  React.createElement(
+                    'a',
+                    {
+                      href: '/products',
+                      onClick: () => toast.dismiss(t.id),
+                      className:
+                        'flex-1 py-2.5 text-center text-[10px] font-bold uppercase tracking-widest border border-border rounded-xl text-[#0C0A09] hover:bg-[#FAFAF9] transition-colors no-underline',
+                    },
+                    'View all products'
                   ),
                   React.createElement(
                     'button',
@@ -91,13 +114,13 @@ export const useCartStore = create<CartState>()(
                         get().openCart();
                       },
                       className:
-                        'flex-shrink-0 px-4 py-2 bg-[#0C0A09] text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-[#CA8A04] transition-colors',
+                        'flex-1 py-2.5 text-center text-[10px] font-bold uppercase tracking-widest bg-[#CA8A04] text-white rounded-xl hover:bg-[#0C0A09] transition-colors',
                     },
                     'View Cart'
                   )
                 )
               ),
-            { duration: 3000, position: 'top-center' }
+            { duration: 4000, position: 'top-center' }
           );
         };
 
@@ -252,6 +275,47 @@ export const useWishlistStore = create<WishlistState>()(
     }),
     {
       name: 'blm-wishlist',
+    }
+  )
+);
+
+// Notification Store — tracks restock notification subscriptions
+interface NotificationState {
+  requests: RestockNotificationRequest[];
+  addRequest: (productId: string, productName: string, email: string) => void;
+  isSubscribed: (productId: string, email: string) => boolean;
+}
+
+export const useNotificationStore = create<NotificationState>()(
+  persist(
+    (set, get) => ({
+      requests: [],
+
+      addRequest: (productId: string, productName: string, email: string) => {
+        set((state) => ({
+          requests: [
+            ...state.requests,
+            {
+              id: `${productId}-${email}-${Date.now()}`,
+              productId,
+              productName,
+              email: email.toLowerCase().trim(),
+              createdAt: new Date().toISOString(),
+              status: 'pending' as const,
+            },
+          ],
+        }));
+      },
+
+      isSubscribed: (productId: string, email: string) =>
+        get().requests.some(
+          (r) =>
+            r.productId === productId &&
+            r.email.toLowerCase() === email.toLowerCase().trim()
+        ),
+    }),
+    {
+      name: 'blm-notifications',
     }
   )
 );

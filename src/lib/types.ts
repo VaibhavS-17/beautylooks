@@ -124,3 +124,12 @@ export interface Testimonial {
   rating: number;
   comment: string;
 }
+
+export interface RestockNotificationRequest {
+  id: string;
+  productId: string;
+  productName: string;
+  email: string;
+  createdAt: string;
+  status: 'pending' | 'notified';
+}

@@ -129,6 +129,7 @@ export default async function AdminDashboardPage() {
       images,
       brand_id,
       category_id,
+      faqs,
       brands (name),
       categories (name)
     `)
@@ -150,7 +151,8 @@ export default async function AdminDashboardPage() {
     brandId: p.brand_id,
     categoryId: p.category_id,
     brand: p.brands?.name || 'Unknown',
-    category: p.categories?.name || 'Unknown'
+    category: p.categories?.name || 'Unknown',
+    faqs: p.faqs || []
   }));
 
   const stats = {
@@ -174,7 +176,8 @@ export default async function AdminDashboardPage() {
         hero_description: 'Simple. Genuine. Affordable. Experience professional results at home with Mumbai\'s most trusted curated beauty sets.',
         hero_image_url: '/images/hero-beauty.png',
         hero_button_text: 'Shop Collection',
-        hero_button_link: '/products'
+        hero_button_link: '/products',
+        common_faqs: []
       }}
     />
   );

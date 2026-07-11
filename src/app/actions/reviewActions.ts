@@ -47,7 +47,7 @@ export async function createReview(data: {
       return { error: 'You have already reviewed this product.' };
     }
 
-    // Verify user has purchased this product (order with confirmed/shipped/delivered status)
+    // Verify user has purchased this product and order status is delivered
     const { data: eligibleOrders } = await supabase
       .from('order_items')
       .select(`
@@ -59,10 +59,10 @@ export async function createReview(data: {
       `)
       .eq('product_id', parsed.data.productId)
       .eq('orders.user_id', user.id)
-      .in('orders.status', ['confirmed', 'shipped', 'delivered']);
+      .eq('orders.status', 'delivered');
 
     if (!eligibleOrders || eligibleOrders.length === 0) {
-      return { error: 'You can only review products you have purchased.' };
+      return { error: 'You can only write a review once your order for this product is delivered.' };
     }
 
     // Insert review
@@ -123,6 +123,36 @@ export async function deleteReview(reviewId: string) {
     return { success: true };
   } catch (err: any) {
     console.error('Delete review exception:', err);
+    return { error: 'An unexpected error occurred. Please try again.' };
+  }
+}
+
+/**
+ * Increment the helpful count for a specific review.
+ * This is an unauthenticated action (any visitor can mark a review as helpful).
+ * Anti-spam is handled client-side via localStorage.
+ */
+export async function incrementHelpfulCount(reviewId: string) {
+  const parsed = uuidSchema.safeParse(reviewId);
+  if (!parsed.success) {
+    return { error: 'Invalid review ID.' };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase.rpc('increment_helpful_count', {
+      review_id: parsed.data,
+    });
+
+    if (error) {
+      console.error('Increment helpful count error:', error);
+      return { error: 'Failed to record your vote. Please try again.' };
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    console.error('Increment helpful count exception:', err);
     return { error: 'An unexpected error occurred. Please try again.' };
   }
 }

@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { formatPrice } from '@/lib/data';
 import { useCartStore } from '@/lib/store';
-import ScrollToTop from '@/components/layout/ScrollToTop';
 import NotifyMeModal from '@/components/layout/NotifyMeModal';
 
 interface HomeClientProps {
@@ -31,7 +30,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
 
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
-  const [notifyProduct, setNotifyProduct] = useState<{ name: string } | null>(null);
+  const [notifyProduct, setNotifyProduct] = useState<{ id: string; name: string } | null>(null);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,10 +208,17 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                           <h3 className="font-display text-lg text-text-main hover:text-accent transition-colors mb-1 line-clamp-2">
                             <Link href={`/products/${product.slug}`}>{product.name}</Link>
                           </h3>
-                          <div className="flex items-center space-x-1 mb-2">
-                            <span className="text-accent text-xs">★★★★★</span>
-                            <span className="text-[10px] text-text-muted">4.8 (112)</span>
-                          </div>
+                          {product.reviewCount > 0 ? (
+                            <div className="flex items-center space-x-1 mb-2">
+                              <span className="text-accent text-xs">★</span>
+                              <span className="text-[11px] font-semibold text-text-main">{product.rating.toFixed(1)}</span>
+                              <span className="text-[10px] text-text-muted">({product.reviewCount})</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-1 mb-2">
+                              <span className="text-[10px] text-text-muted">No Reviews Yet</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       
@@ -235,12 +241,13 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                       </div>
                       
                       <button
+                        suppressHydrationWarning
                         onClick={(e) => {
                           e.preventDefault();
                           if (product.stockQuantity > 0) {
                             addItem(product, 1);
                           } else {
-                            setNotifyProduct({ name: product.name });
+                            setNotifyProduct({ id: product.id, name: product.name });
                           }
                         }}
                         className={`w-full mt-4 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all border ${
@@ -347,6 +354,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
 
           <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row max-w-md mx-auto border border-border rounded-2xl overflow-hidden shadow-sm bg-white">
             <input
+              suppressHydrationWarning
               type="email"
               placeholder="Email Address"
               value={email}
@@ -354,7 +362,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
               className="flex-grow bg-transparent text-sm text-text-main px-6 py-4 focus:outline-none placeholder:text-text-muted/60"
               required
             />
-            <button type="submit" className="bg-text-main text-primary px-8 py-4 text-xs font-semibold uppercase tracking-widest hover:bg-accent transition-colors">
+            <button suppressHydrationWarning type="submit" className="bg-text-main text-primary px-8 py-4 text-xs font-semibold uppercase tracking-widest hover:bg-accent transition-colors">
               Subscribe
             </button>
           </form>
@@ -366,13 +374,11 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
         </div>
       </section>
 
-      {/* Scroll to Top */}
-      <ScrollToTop />
-
       {/* Notify Me Modal for out-of-stock products */}
       <NotifyMeModal
         isOpen={!!notifyProduct}
         onClose={() => setNotifyProduct(null)}
+        productId={notifyProduct?.id || ''}
         productName={notifyProduct?.name || ''}
       />
     </div>

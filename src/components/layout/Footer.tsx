@@ -8,13 +8,24 @@ export default function Footer({ categories = [] }: { categories?: { id: string,
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           
           <div className="space-y-4">
-            <Link href="/" className="block relative h-10 w-48 group">
+            <Link href="/" className="inline-flex items-center gap-3.5 group focus:outline-none">
+              <div className="relative h-12 w-12 rounded-full overflow-hidden border border-[#CA8A04]/40 shadow-md shrink-0 bg-black transition-transform duration-300 group-hover:scale-105">
                 <Image
                   src="/images/brand/logo.png"
                   alt="Beauty Looks Mumbai"
                   fill
-                  className="object-contain object-left mix-blend-multiply transition-opacity duration-300 group-hover:opacity-80"
+                  sizes="48px"
+                  className="object-contain p-0.5"
                 />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-display text-xl font-semibold tracking-wide text-white group-hover:text-[#CA8A04] transition-colors">
+                  Beauty Looks
+                </span>
+                <span className="text-[10px] uppercase tracking-[0.25em] text-[#CA8A04] font-bold">
+                  Mumbai
+                </span>
+              </div>
             </Link>
             <p className="text-primary/70 text-sm mt-4">
               Simple • Genuine • Affordable. Your trusted destination for premium beauty and cosmetics in Mumbai.

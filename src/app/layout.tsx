@@ -32,8 +32,8 @@ export default async function RootLayout({
   const { data: categories } = await supabase.from('categories').select('*').order('created_at', { ascending: true });
 
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-primary text-text-main font-sans">
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
+      <body suppressHydrationWarning className="min-h-full flex flex-col bg-primary text-text-main font-sans">
         <RootLayoutClient categories={categories || []}>{children}</RootLayoutClient>
       </body>
     </html>

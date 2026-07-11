@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Script from 'next/script';
 import { ArrowLeft, CheckCircle2, ShieldCheck, Loader2, MapPin, Smartphone, CreditCard, MessageCircle, Check } from 'lucide-react';
@@ -29,9 +30,14 @@ declare global {
   }
 }
 
-export default function CheckoutPage() {
-  const { items, getTotalPrice, clearCart } = useCartStore();
+function CheckoutContent() {
+  const searchParams = useSearchParams();
+  const isBuyNow = searchParams.get('mode') === 'buynow';
+  
+  const { items: cartItems, buyNowItem, getTotalPrice: getCartTotalPrice, clearCart, clearBuyNowItem } = useCartStore();
   const fallbackProductImage = '/images/products/facial-kit-1.png';
+
+  const checkoutItems = isBuyNow ? (buyNowItem ? [buyNowItem] : []) : cartItems;
 
   // Form State
   const [formData, setFormData] = useState({
@@ -56,7 +62,10 @@ export default function CheckoutPage() {
   const [addressesLoading, setAddressesLoading] = useState(true);
 
   // Pricing Logic
-  const totalPrice = getTotalPrice();
+  const totalPrice = isBuyNow 
+    ? (buyNowItem ? (buyNowItem.product.salePrice || buyNowItem.product.price) * buyNowItem.quantity : 0)
+    : getCartTotalPrice();
+    
   const shippingCharge = totalPrice >= 499 ? 0 : 49;
   const baseFinalTotal = totalPrice + shippingCharge;
   const discountAmount = paymentMethod === 'upi' ? baseFinalTotal * 0.02 : 0;
@@ -113,7 +122,7 @@ export default function CheckoutPage() {
     }
 
     try {
-      const orderItems = items.map(item => ({ productId: item.product.id, quantity: item.quantity }));
+      const orderItems = checkoutItems.map(item => ({ productId: item.product.id, quantity: item.quantity }));
       const res = await createRazorpayOrder({ 
         items: orderItems, 
         shippingAddress: formData,
@@ -152,7 +161,11 @@ export default function CheckoutPage() {
               razorpay_signature: response.razorpay_signature,
             });
             if (verifyRes.success) {
-              clearCart();
+              if (isBuyNow) {
+                clearBuyNowItem();
+              } else {
+                clearCart();
+              }
               setCheckoutStep('success');
             } else {
               setErrorMessage(verifyRes.error || 'Payment verification failed.');
@@ -256,7 +269,7 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {items.length === 0 ? (
+        {checkoutItems.length === 0 ? (
           <div className="text-center py-24 bg-secondary rounded-2xl max-w-md mx-auto space-y-8 shadow-sm">
             <h3 className="font-display text-3xl text-text-main">No items to checkout</h3>
             <p className="text-sm text-text-muted font-light">Add items to your bag before proceeding.</p>
@@ -436,7 +449,7 @@ export default function CheckoutPage() {
               <div className="bg-secondary/80 p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border backdrop-blur-md">
                 <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-6">Order Review</h3>
                 <div className="divide-y divide-border max-h-96 overflow-y-auto no-scrollbar mb-8">
-                  {items.map((item) => (
+                  {checkoutItems.map((item) => (
                     <div key={item.product.id} className="py-4 flex items-start justify-between text-sm">
                       <div className="flex items-start space-x-4">
                         <div className="relative w-16 h-16 bg-primary rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-border">
@@ -488,5 +501,13 @@ export default function CheckoutPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen w-full flex items-center justify-center bg-primary"><Loader2 size={32} className="animate-spin text-accent" /></div>}>
+      <CheckoutContent />
+    </Suspense>
   );
 }
