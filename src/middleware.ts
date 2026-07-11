@@ -5,11 +5,20 @@ import { NextResponse, type NextRequest } from 'next/server';
 const PUBLIC_ROUTES = [
   '/',
   '/products',
+  '/about',
+  '/contact',
+  '/faq',
+  '/shipping',
+  '/returns',
+  '/privacy',
+  '/terms',
   '/blog',
+  '/cart',
+  '/wishlist',
+  '/checkout',
   '/login',
   '/register',
   '/auth/callback',
-  '/checkout',
 ];
 
 // Routes that redirect authenticated users away (login/register)
