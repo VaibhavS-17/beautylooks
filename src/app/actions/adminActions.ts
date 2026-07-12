@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { processRestockNotifications } from '@/lib/emailService';
 
 // Helper to verify admin role
 async function verifyAdmin(supabase: any) {
@@ -170,6 +171,13 @@ export async function updateProduct(formData: FormData) {
   const slug = data.name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   try {
+    // ── Fetch old stock to detect restock transition (0 → N) ──
+    const { data: oldProduct } = await supabase
+      .from('products')
+      .select('stock_quantity, images')
+      .eq('id', idParsed.data)
+      .single();
+
     const updateData: any = {
       name: data.name,
       slug,
@@ -215,6 +223,24 @@ export async function updateProduct(formData: FormData) {
       if (error.code === '23505') return { error: `A product with slug "${slug}" already exists.` };
       console.error('Update product error:', error);
       return { error: 'An unexpected error occurred. Please try again.' };
+    }
+
+    // ── Restock Trigger: fire email notifications asynchronously ──
+    if (
+      oldProduct &&
+      oldProduct.stock_quantity === 0 &&
+      data.stockQuantity > 0
+    ) {
+      const productImages = updateData.images || oldProduct.images || [];
+      processRestockNotifications(idParsed.data, {
+        name: data.name,
+        slug,
+        price: data.price,
+        salePrice: data.salePrice ?? null,
+        images: productImages,
+      }).catch((err) =>
+        console.error('[Restock] Failed to process notifications:', err)
+      );
     }
 
     revalidatePath('/admin');

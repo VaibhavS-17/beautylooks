@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, Bell, Check, Mail, Loader2 } from 'lucide-react';
 import { subscribeRestockNotification } from '@/app/actions/notificationActions';
 import { useNotificationStore } from '@/lib/store';
+import { createClient } from '@/lib/supabase/client';
 
 interface NotifyMeModalProps {
   isOpen: boolean;
@@ -17,15 +18,29 @@ export default function NotifyMeModal({ isOpen, onClose, productId, productName 
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSessionEmail, setIsSessionEmail] = useState(false);
 
   const addRequest = useNotificationStore((s) => s.addRequest);
   const isSubscribed = useNotificationStore((s) => s.isSubscribed);
+
+  // Auto-fill email from active session
+  useEffect(() => {
+    if (!isOpen) return;
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) {
+        setEmail(session.user.email);
+        setIsSessionEmail(true);
+      }
+    });
+  }, [isOpen]);
 
   const handleClose = useCallback(() => {
     setEmail('');
     setError('');
     setIsSuccess(false);
     setIsSubmitting(false);
+    setIsSessionEmail(false);
     onClose();
   }, [onClose]);
 
@@ -169,9 +184,16 @@ export default function NotifyMeModal({ isOpen, onClose, productId, productName 
                     }}
                     placeholder="your@email.com"
                     disabled={isSubmitting}
-                    className="w-full border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none transition-all disabled:opacity-60"
+                    readOnly={isSessionEmail}
+                    className={`w-full border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none transition-all disabled:opacity-60 ${isSessionEmail ? 'bg-green-50/50 border-green-200' : ''}`}
                   />
+                  {isSessionEmail && (
+                    <Check className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                  )}
                 </div>
+                {isSessionEmail && (
+                  <p className="text-[10px] text-green-600 mt-1">Auto-filled from your account</p>
+                )}
                 {error && (
                   <p className="text-xs text-red-500 mt-1.5">{error}</p>
                 )}
