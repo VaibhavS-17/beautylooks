@@ -232,7 +232,7 @@ export async function updateProduct(formData: FormData) {
       data.stockQuantity > 0
     ) {
       const productImages = updateData.images || oldProduct.images || [];
-      processRestockNotifications(idParsed.data, {
+      await processRestockNotifications(idParsed.data, {
         name: data.name,
         slug,
         price: data.price,
