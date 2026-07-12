@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { rateLimit } from '@/lib/rate-limit';
+import { headers } from 'next/headers';
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email address.'),
@@ -101,4 +102,73 @@ export async function signOut() {
   await supabase.auth.signOut();
   revalidatePath('/', 'layout');
   redirect('/');
+}
+
+const resetPasswordSchema = z.object({
+  email: z.string().email('Invalid email address.'),
+});
+
+export async function requestPasswordReset(formData: FormData) {
+  const raw = {
+    email: formData.get('email') as string,
+  };
+
+  const parsed = resetPasswordSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || 'Invalid email address.' };
+  }
+
+  const rl = rateLimit(`resetPassword:${parsed.data.email}`, 3, 60_000);
+  if (!rl.success) {
+    return { error: 'Too many reset requests. Please try again in a minute.' };
+  }
+
+  const headersList = await headers();
+  const host = headersList.get('x-forwarded-host') || headersList.get('host') || 'beautylooks.vercel.app';
+  const protocol = headersList.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
+  const origin = `${protocol}://${host}`;
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+  });
+
+  if (error) {
+    console.error('Password reset error:', error);
+    return { error: error.message || 'Could not send password reset email. Please verify your email address.' };
+  }
+
+  return { success: true };
+}
+
+const updatePasswordSchema = z.object({
+  password: z.string().min(6, 'Password must be at least 6 characters.'),
+  confirmPassword: z.string().min(6, 'Please confirm your password.'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match.',
+  path: ['confirmPassword'],
+});
+
+export async function updatePassword(formData: FormData) {
+  const raw = {
+    password: formData.get('password') as string,
+    confirmPassword: formData.get('confirmPassword') as string,
+  };
+
+  const parsed = updatePasswordSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || 'Invalid password.' };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    console.error('Update password error:', error);
+    return { error: error.message || 'Could not update password. Your reset session may have expired.' };
+  }
+
+  return { success: true };
 }

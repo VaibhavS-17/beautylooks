@@ -5,15 +5,23 @@ export const runtime = 'edge';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from 'lucide-react';
-import { signInWithEmail } from '@/app/actions/auth';
+import { Eye, EyeOff, Mail, Lock, LogIn, Loader2, KeyRound, CheckCircle2, X, Send } from 'lucide-react';
+import { signInWithEmail, requestPasswordReset } from '@/app/actions/auth';
 import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Forgot password modal state
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState<string | null>(null);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
 
   const handleLogin = async (formData: FormData) => {
     setError(null);
@@ -22,6 +30,24 @@ export default function LoginPage() {
     if (result?.error) {
       setError(result.error);
       setLoading(false);
+    }
+  };
+
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError(null);
+    setForgotLoading(true);
+
+    const formData = new FormData();
+    formData.append('email', forgotEmail);
+
+    const result = await requestPasswordReset(formData);
+    setForgotLoading(false);
+
+    if (result?.error) {
+      setForgotError(result.error);
+    } else {
+      setForgotSuccess(true);
     }
   };
 
@@ -107,6 +133,8 @@ export default function LoginPage() {
                 <input
                   type="email"
                   name="email"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
                   placeholder="e.g. sneha@example.com"
                   required
                   className="w-full input-dark text-sm pl-11 py-3 bg-white border-[#EFECE6] focus:border-[#C9A94E] focus:ring-[#C9A94E] rounded-lg transition-all"
@@ -119,7 +147,17 @@ export default function LoginPage() {
             <div className="flex flex-col space-y-1.5">
               <div className="flex justify-between items-center">
                 <label className="text-xs text-[#5C554D] font-semibold tracking-wide uppercase">Password</label>
-                <Link href="#" onClick={(e) => { e.preventDefault(); alert('Reset password link sent (simulated)'); }} className="text-[10px] text-[#9A7B2F] hover:text-[#C9A94E] font-bold tracking-wide uppercase transition-colors">
+                <Link
+                  href="/forgot-password"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setForgotEmail(emailInput);
+                    setForgotError(null);
+                    setForgotSuccess(false);
+                    setShowForgotModal(true);
+                  }}
+                  className="text-[10px] text-[#9A7B2F] hover:text-[#C9A94E] font-bold tracking-wide uppercase transition-colors"
+                >
                   Forgot Password?
                 </Link>
               </div>
@@ -184,6 +222,119 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      {/* Interactive Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-[#EFECE6] animate-in zoom-in-95 duration-200 relative">
+            {/* Top gold accent line */}
+            <div className="h-1.5 bg-gradient-to-r from-[#C9A94E] via-[#E2C97E] to-[#9A7B2F]" />
+
+            <button
+              onClick={() => setShowForgotModal(false)}
+              className="absolute top-4 right-4 text-[#8A8177] hover:text-[#38332C] p-1.5 rounded-full hover:bg-[#F8F6F0] transition-colors"
+              aria-label="Close modal"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="p-6 sm:p-8">
+              {!forgotSuccess ? (
+                <>
+                  <div className="flex items-center space-x-3 mb-5">
+                    <div className="w-11 h-11 rounded-full bg-[#FCFBF9] border border-[#EFECE6] flex items-center justify-center text-[#C9A94E]">
+                      <KeyRound size={22} />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-semibold text-xl text-[#38332C]">Reset Password</h3>
+                      <p className="text-xs text-[#706A60]">Receive a secure link to your email</p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-[#5C554D] leading-relaxed mb-6">
+                    Enter the email address associated with your account and we&apos;ll send you instructions to reset your password.
+                  </p>
+
+                  {forgotError && (
+                    <div className="mb-5 bg-red-50 border border-red-200 text-red-700 text-xs px-4 py-3 rounded-lg">
+                      {forgotError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleForgotSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#5C554D] uppercase tracking-wide mb-1.5">
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="email"
+                          required
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          placeholder="e.g. sneha@example.com"
+                          className="w-full text-sm pl-11 py-3 bg-white border border-[#EFECE6] focus:border-[#C9A94E] focus:ring-1 focus:ring-[#C9A94E] rounded-lg transition-all text-[#38332C]"
+                        />
+                        <Mail className="absolute left-4 top-3.5 text-[#8A8177]" size={18} />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="btn-gold w-full flex items-center justify-center space-x-2 py-3.5 text-sm font-semibold shadow-md hover:shadow-lg disabled:opacity-60 transition-all rounded-lg mt-2"
+                    >
+                      {forgotLoading ? (
+                        <>
+                          <Loader2 size={17} className="animate-spin" />
+                          <span>Sending Reset Link...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send size={16} />
+                          <span>Send Reset Link</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 size={28} />
+                  </div>
+                  <h3 className="font-display font-semibold text-2xl text-[#38332C] mb-2">
+                    Check Your Email
+                  </h3>
+                  <p className="text-sm text-[#5C554D] mb-4">
+                    We&apos;ve sent a password reset link to <strong className="text-[#38332C]">{forgotEmail}</strong>.
+                  </p>
+                  <div className="bg-[#FCFBF9] border border-[#EFECE6] rounded-lg p-3.5 text-xs text-[#706A60] text-left mb-6">
+                    <p className="font-medium text-[#5C554D] mb-1">Didn&apos;t receive it?</p>
+                    <p>Be sure to check your spam or promotions folder. Reset links expire after 24 hours.</p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setForgotSuccess(false)}
+                      className="flex-1 py-2.5 text-xs font-semibold text-[#8A8177] hover:text-[#38332C] border border-[#EFECE6] rounded-lg hover:bg-[#F8F6F0] transition-colors"
+                    >
+                      Try Another Email
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotModal(false)}
+                      className="flex-1 btn-gold py-2.5 text-xs font-semibold rounded-lg shadow-sm"
+                    >
+                      Back to Sign In
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
