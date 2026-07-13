@@ -8,7 +8,8 @@ import { formatPrice } from '@/lib/data';
 import { Package, ChevronLeft } from 'lucide-react';
 import { OrderFilter } from '@/components/shared/InvoicePrintView';
 
-export default async function OrdersPage({ searchParams }: { searchParams: { status?: string, range?: string } }) {
+export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ status?: string, range?: string }> }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -32,12 +33,12 @@ export default async function OrdersPage({ searchParams }: { searchParams: { sta
     )
   `).eq('user_id', user.id).order('created_at', { ascending: false });
 
-  if (searchParams.status && searchParams.status !== 'all') {
-    query = query.eq('status', searchParams.status);
+  if (resolvedSearchParams.status && resolvedSearchParams.status !== 'all') {
+    query = query.eq('status', resolvedSearchParams.status);
   }
 
-  if (searchParams.range && searchParams.range !== 'all') {
-    const days = parseInt(searchParams.range, 10);
+  if (resolvedSearchParams.range && resolvedSearchParams.range !== 'all') {
+    const days = parseInt(resolvedSearchParams.range, 10);
     if (!isNaN(days)) {
       const date = new Date();
       date.setDate(date.getDate() - days);
@@ -58,9 +59,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: { sta
             Order History
           </h1>
         </div>
-
-        <OrderFilter currentStatus={searchParams.status} currentRange={searchParams.range} />
-
+        <OrderFilter currentStatus={resolvedSearchParams.status} currentRange={resolvedSearchParams.range} />
         <div className="space-y-4">
           {(!orders || orders.length === 0) ? (
             <div className="py-16 text-center space-y-4 glass-card border border-[#EFECE6] rounded-xl bg-white shadow-sm max-w-sm mx-auto">

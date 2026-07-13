@@ -83,7 +83,8 @@ function OrderStepper({ status }: { status: string }) {
   );
 }
 
-export default async function OrderDetailsPage({ params }: { params: { orderId: string } }) {
+export default async function OrderDetailsPage({ params }: { params: Promise<{ orderId: string }> }) {
+  const resolvedParams = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -105,7 +106,7 @@ export default async function OrderDetailsPage({ params }: { params: { orderId: 
         images
       )
     )
-  `).eq('id', params.orderId).eq('user_id', user.id).single();
+  `).eq('id', resolvedParams.orderId).eq('user_id', user.id).single();
 
   if (error || !order) {
     notFound();
