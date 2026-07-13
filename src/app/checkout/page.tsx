@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Script from 'next/script';
-import { ArrowLeft, CheckCircle2, ShieldCheck, Loader2, MapPin, Smartphone, CreditCard, MessageCircle, Check } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ShieldCheck, Loader2, MapPin, Smartphone, CreditCard, MessageCircle, Check, Plus, Trash2, Edit2, X } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
 import { createRazorpayOrder, verifyPayment } from '@/app/actions/orderActions';
+import { createAddress, updateAddress, deleteAddress } from '@/app/actions/accountActions';
 import { createClient } from '@/lib/supabase/client';
 
 interface SavedAddress {
@@ -61,6 +62,14 @@ function CheckoutContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [addressesLoading, setAddressesLoading] = useState(true);
 
+  // Modals & Scrolling
+  const paymentRef = useRef<HTMLDivElement>(null);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [showManualForm, setShowManualForm] = useState(false);
+
   // Pricing Logic
   const totalPrice = isBuyNow 
     ? (buyNowItem ? (buyNowItem.product.salePrice || buyNowItem.product.price) * buyNowItem.quantity : 0)
@@ -102,12 +111,83 @@ function CheckoutContent() {
       addressLine1: address.line1, addressLine2: address.line2 || '',
       city: address.city, state: address.state, pincode: address.pincode,
     }));
+    
+    // Auto-scroll to payment section
+    setTimeout(() => {
+      if (paymentRef.current) {
+        paymentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (selectedAddressId && name !== 'email') setSelectedAddressId(null);
+  };
+
+  // Address CRUD Handlers
+  const handleAddressSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setModalError(null);
+    setModalLoading(true);
+
+    const formDataObj = new FormData(e.currentTarget);
+    
+    let res;
+    if (editingAddress) {
+      res = await updateAddress(editingAddress.id, formDataObj);
+    } else {
+      res = await createAddress(formDataObj);
+    }
+
+    if (res.error) {
+      setModalError(res.error);
+    } else if (res.data) {
+      setIsAddressModalOpen(false);
+      
+      const newAddr: SavedAddress = {
+        id: res.data.id,
+        label: res.data.label,
+        full_name: res.data.full_name,
+        phone: res.data.phone,
+        line1: res.data.line1,
+        line2: res.data.line2,
+        city: res.data.city,
+        state: res.data.state,
+        pincode: res.data.pincode,
+        is_default: res.data.is_default
+      };
+
+      if (editingAddress) {
+        setSavedAddresses(prev => prev.map(a => a.id === editingAddress.id ? newAddr : (newAddr.is_default ? { ...a, is_default: false } : a)));
+      } else {
+        setSavedAddresses(prev => {
+          const updated = newAddr.is_default ? prev.map(a => ({ ...a, is_default: false })) : prev;
+          return [newAddr, ...updated];
+        });
+      }
+    }
+    setModalLoading(false);
+  };
+
+  const handleDeleteAddress = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // Prevent address selection
+    if (!confirm('Are you sure you want to remove this address?')) return;
+
+    const res = await deleteAddress(id);
+    if (res.error) {
+      alert(res.error);
+    } else {
+      setSavedAddresses(prev => prev.filter(addr => addr.id !== id));
+      if (selectedAddressId === id) setSelectedAddressId(null);
+    }
+  };
+
+  const openAddressModal = (address: SavedAddress | null = null) => {
+    setEditingAddress(address);
+    setModalError(null);
+    setIsAddressModalOpen(true);
   };
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
@@ -283,14 +363,16 @@ function CheckoutContent() {
               {/* Saved Addresses Section */}
               {isLoggedIn && !addressesLoading && savedAddresses.length > 0 && (
                 <div>
-                  <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-6 flex items-center space-x-3">
-                    <MapPin size={20} strokeWidth={1.5} className="text-[#C9A94E]" />
-                    <span>Saved Addresses</span>
+                  <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-6 flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <MapPin size={20} strokeWidth={1.5} className="text-[#C9A94E]" />
+                      <span>Saved Addresses</span>
+                    </div>
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {savedAddresses.map((addr) => (
                       <button type="button" key={addr.id} onClick={() => handleSelectAddress(addr)}
-                        className={`text-left border rounded-xl p-4 transition-all duration-200 space-y-2 relative ${
+                        className={`text-left border rounded-xl p-4 transition-all duration-200 space-y-2 relative flex flex-col justify-between ${
                           selectedAddressId === addr.id
                             ? 'border-[#C9A94E] bg-[#C9A94E08] ring-1 ring-[#C9A94E] shadow-md'
                             : 'border-border bg-secondary hover:border-[#C9A94E60] shadow-sm'
@@ -298,23 +380,55 @@ function CheckoutContent() {
                         {selectedAddressId === addr.id && (
                           <div className="absolute top-3 right-3"><CheckCircle2 size={18} className="text-[#C9A94E]" /></div>
                         )}
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs font-semibold text-[#9A7B2F] uppercase tracking-wider">{addr.label}</span>
-                          {addr.is_default && (
-                            <span className="text-[10px] bg-[#C9A94E15] text-[#9A7B2F] px-1.5 py-0.5 rounded-full border border-[#C9A94E30] font-semibold uppercase">Default</span>
-                          )}
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-semibold text-[#9A7B2F] uppercase tracking-wider">{addr.label}</span>
+                            {addr.is_default && (
+                              <span className="text-[10px] bg-[#C9A94E15] text-[#9A7B2F] px-1.5 py-0.5 rounded-full border border-[#C9A94E30] font-semibold uppercase">Default</span>
+                            )}
+                          </div>
+                          <div className="text-sm space-y-0.5 mt-2">
+                            <p className="font-semibold text-text-main">{addr.full_name}</p>
+                            <p className="text-text-muted font-light">{addr.line1}</p>
+                            {addr.line2 && <p className="text-text-muted font-light">{addr.line2}</p>}
+                            <p className="text-text-muted font-light">{addr.city}, {addr.state} - {addr.pincode}</p>
+                            <p className="text-text-muted font-light text-xs pt-1">📞 +91 {addr.phone}</p>
+                          </div>
                         </div>
-                        <div className="text-sm space-y-0.5">
-                          <p className="font-semibold text-text-main">{addr.full_name}</p>
-                          <p className="text-text-muted font-light">{addr.line1}</p>
-                          {addr.line2 && <p className="text-text-muted font-light">{addr.line2}</p>}
-                          <p className="text-text-muted font-light">{addr.city}, {addr.state} - {addr.pincode}</p>
-                          <p className="text-text-muted font-light text-xs pt-1">📞 +91 {addr.phone}</p>
+                        <div className="flex items-center justify-between w-full pt-3 mt-2 border-t border-black/5">
+                          <span className="text-xs font-medium text-[#C9A94E]">
+                            {selectedAddressId === addr.id ? 'Selected' : 'Select'}
+                          </span>
+                          <div className="flex items-center space-x-3">
+                            <div
+                              onClick={(e) => { e.stopPropagation(); openAddressModal(addr); }}
+                              className="text-text-muted hover:text-text-main transition-colors p-1"
+                            >
+                              <Edit2 size={14} />
+                            </div>
+                            <div
+                              onClick={(e) => handleDeleteAddress(e, addr.id)}
+                              className="text-text-muted hover:text-red-600 transition-colors p-1"
+                            >
+                              <Trash2 size={14} />
+                            </div>
+                          </div>
                         </div>
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-text-muted mt-3 font-light">Select a saved address to auto-fill, or type a new address below.</p>
+                  
+                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                    <p className="text-xs text-text-muted font-light">Select a saved address or add a new one.</p>
+                    <button 
+                      type="button" 
+                      onClick={() => openAddressModal()}
+                      className="text-sm font-semibold text-[#9A7B2F] hover:text-[#C9A94E] flex items-center space-x-1"
+                    >
+                      <Plus size={16} />
+                      <span>Add New Address</span>
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -325,50 +439,70 @@ function CheckoutContent() {
                 </div>
               )}
 
-              {/* Shipping Information */}
-              <div>
-                <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-8">Shipping Information</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
-                  <div className="flex flex-col">
-                    <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Full Name *</label>
-                    <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Contact Phone *</label>
-                    <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
-                  </div>
-                  <div className="flex flex-col sm:col-span-2">
-                    <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Email Address *</label>
-                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
-                  </div>
-                  <div className="flex flex-col sm:col-span-2">
-                    <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Street Address *</label>
-                    <input type="text" name="addressLine1" value={formData.addressLine1} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
-                  </div>
-                  <div className="flex flex-col sm:col-span-2">
-                    <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Apartment, Suite, etc. (Optional)</label>
-                    <input type="text" name="addressLine2" value={formData.addressLine2} onChange={handleInputChange} className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">City *</label>
-                    <input type="text" name="city" value={formData.city} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">State *</label>
-                    <select name="state" value={formData.state} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors appearance-none shadow-sm">
-                      <option value="">Select State</option>
-                      {indianStates.map((s) => (<option key={s} value={s}>{s}</option>))}
-                    </select>
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Pincode *</label>
-                    <input type="text" name="pincode" value={formData.pincode} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+              {/* Shipping Information (Manual Form) */}
+              {(!isLoggedIn || savedAddresses.length === 0 || showManualForm) ? (
+                <div>
+                  <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-8 flex justify-between items-center">
+                    <span>Shipping Information</span>
+                    {savedAddresses.length > 0 && (
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          setShowManualForm(false);
+                          if (savedAddresses.length > 0) handleSelectAddress(savedAddresses[0]);
+                        }}
+                        className="text-xs font-medium text-text-muted hover:text-text-main underline"
+                      >
+                        Cancel Manual Entry
+                      </button>
+                    )}
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="flex flex-col">
+                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Full Name *</label>
+                      <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Contact Phone *</label>
+                      <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                    </div>
+                    <div className="flex flex-col sm:col-span-2">
+                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Email Address *</label>
+                      <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                    </div>
+                    <div className="flex flex-col sm:col-span-2">
+                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Street Address *</label>
+                      <input type="text" name="addressLine1" value={formData.addressLine1} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                    </div>
+                    <div className="flex flex-col sm:col-span-2">
+                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Apartment, Suite, etc. (Optional)</label>
+                      <input type="text" name="addressLine2" value={formData.addressLine2} onChange={handleInputChange} className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">City *</label>
+                      <input type="text" name="city" value={formData.city} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">State *</label>
+                      <select name="state" value={formData.state} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors appearance-none shadow-sm">
+                        <option value="">Select State</option>
+                        {indianStates.map((s) => (<option key={s} value={s}>{s}</option>))}
+                      </select>
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Pincode *</label>
+                      <input type="text" name="pincode" value={formData.pincode} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="hidden">
+                  {/* Keep inputs in DOM if needed by form submit, though we handle placing order directly via state */}
+                </div>
+              )}
 
               {/* Payment Method Selection */}
-              <div>
+              <div ref={paymentRef} className="scroll-mt-24">
                 <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-6 flex items-center space-x-3">
                   <ShieldCheck size={20} strokeWidth={1.5} className="text-[#C9A94E]" />
                   <span>Payment Method</span>
@@ -500,6 +634,100 @@ function CheckoutContent() {
           </form>
         )}
       </div>
+      
+      {/* Address Modal */}
+      {isAddressModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-primary rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative no-scrollbar">
+            <div className="sticky top-0 bg-primary/90 backdrop-blur-md z-10 px-6 py-5 border-b border-border flex justify-between items-center">
+              <h3 className="font-display text-xl text-text-main">
+                {editingAddress ? 'Edit Address' : 'Add New Address'}
+              </h3>
+              <button 
+                onClick={() => setIsAddressModalOpen(false)}
+                className="text-text-muted hover:text-text-main transition-colors p-2 -mr-2"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddressSubmit} className="p-6 space-y-6">
+              {modalError && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm border border-red-200">
+                  {modalError}
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="flex flex-col sm:col-span-2">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Address Label</label>
+                  <select name="label" defaultValue={editingAddress?.label || 'Home'} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors appearance-none shadow-sm">
+                    <option value="Home">Home</option>
+                    <option value="Office">Office</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Full Name *</label>
+                  <input type="text" name="fullName" defaultValue={editingAddress?.full_name || ''} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Phone Number *</label>
+                  <input type="tel" name="phone" defaultValue={editingAddress?.phone || ''} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                </div>
+                <div className="flex flex-col sm:col-span-2">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Street Address *</label>
+                  <input type="text" name="line1" defaultValue={editingAddress?.line1 || ''} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                </div>
+                <div className="flex flex-col sm:col-span-2">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Apartment, Suite, etc. (Optional)</label>
+                  <input type="text" name="line2" defaultValue={editingAddress?.line2 || ''} className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">City *</label>
+                  <input type="text" name="city" defaultValue={editingAddress?.city || ''} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">State *</label>
+                  <select name="state" defaultValue={editingAddress?.state || ''} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors appearance-none shadow-sm">
+                    <option value="">Select State</option>
+                    {indianStates.map((s) => (<option key={s} value={s}>{s}</option>))}
+                  </select>
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Pincode *</label>
+                  <input type="text" name="pincode" defaultValue={editingAddress?.pincode || ''} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                </div>
+                
+                <div className="flex items-center space-x-3 sm:col-span-2 pt-2">
+                  <input type="checkbox" id="isDefault" name="isDefault" value="true" defaultChecked={editingAddress?.is_default || false} className="w-4 h-4 text-[#9A7B2F] border-border rounded focus:ring-[#9A7B2F]" />
+                  <label htmlFor="isDefault" className="text-sm font-medium text-text-main">Set as default shipping address</label>
+                </div>
+              </div>
+              
+              <div className="pt-6 border-t border-border flex justify-end space-x-4">
+                <button 
+                  type="button" 
+                  onClick={() => setIsAddressModalOpen(false)}
+                  disabled={modalLoading}
+                  className="px-6 py-3 text-sm font-medium text-text-muted hover:text-text-main transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={modalLoading}
+                  className="btn-primary py-3 px-8 text-sm flex items-center space-x-2"
+                >
+                  {modalLoading && <Loader2 size={16} className="animate-spin" />}
+                  <span>{editingAddress ? 'Update Address' : 'Save Address'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

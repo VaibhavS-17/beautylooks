@@ -122,3 +122,73 @@ export async function deleteAddress(addressId: string) {
     return { error: 'An unexpected error occurred. Please try again.' };
   }
 }
+
+export async function updateAddress(addressId: string, formData: FormData) {
+  const parsedId = uuidSchema.safeParse(addressId);
+  if (!parsedId.success) {
+    return { error: 'Invalid address ID.' };
+  }
+
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: 'Not authenticated' };
+  }
+
+  const raw = {
+    label: (formData.get('label') as string) || 'Home',
+    fullName: formData.get('fullName') as string,
+    phone: formData.get('phone') as string,
+    line1: formData.get('line1') as string,
+    line2: (formData.get('line2') as string) || null,
+    city: formData.get('city') as string,
+    state: formData.get('state') as string,
+    pincode: formData.get('pincode') as string,
+    isDefault: formData.get('isDefault') === 'true',
+  };
+
+  const parsed = addressSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || 'Invalid address data.' };
+  }
+
+  try {
+    // If setting as default, unset other defaults first
+    if (parsed.data.isDefault) {
+      await supabase
+        .from('addresses')
+        .update({ is_default: false })
+        .eq('user_id', user.id);
+    }
+
+    const { data: updatedAddress, error } = await supabase
+      .from('addresses')
+      .update({
+        label: parsed.data.label,
+        full_name: parsed.data.fullName,
+        phone: parsed.data.phone,
+        line1: parsed.data.line1,
+        line2: parsed.data.line2,
+        city: parsed.data.city,
+        state: parsed.data.state,
+        pincode: parsed.data.pincode,
+        is_default: parsed.data.isDefault,
+      })
+      .eq('id', parsedId.data)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Update address error:', error);
+      return { error: 'Failed to update address. Please try again.' };
+    }
+
+    revalidatePath('/account');
+    return { success: true, data: updatedAddress };
+  } catch (err: any) {
+    console.error('Update address exception:', err);
+    return { error: 'An unexpected error occurred. Please try again.' };
+  }
+}
