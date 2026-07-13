@@ -338,7 +338,7 @@ export default function AdminClient({
             <img src="/images/brand/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
           </div>
           <div>
-            <h1 className="font-display font-semibold text-xs tracking-wide">Beauty Looks</h1>
+            <h1 className="font-display font-semibold text-xs tracking-wide text-white">Beauty Looks</h1>
             <p className="text-[8px] text-[#CA8A04] tracking-widest uppercase font-bold">Store Management</p>
           </div>
         </div>
