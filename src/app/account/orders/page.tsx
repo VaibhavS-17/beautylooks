@@ -21,7 +21,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     created_at,
     total_amount,
     status,
-    shipping_address:shipping_address_id(*),
+    shipping_address,
     order_items(
       quantity,
       unit_price,
@@ -52,7 +52,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     <div className="w-full min-h-screen bg-[#FCFBF9] py-12 text-left relative">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center space-x-4 mb-8">
-          <Link href="/account" className="w-10 h-10 bg-white border border-[#EFECE6] rounded-full flex items-center justify-center text-[#4E463F] hover:bg-[#F9F7F3] hover:text-[#C9A94E] transition-colors shadow-sm">
+          <Link href="/account/profile" className="w-10 h-10 bg-white border border-[#EFECE6] rounded-full flex items-center justify-center text-[#4E463F] hover:bg-[#F9F7F3] hover:text-[#C9A94E] transition-colors shadow-sm">
             <ChevronLeft size={20} />
           </Link>
           <h1 className="text-3xl sm:text-4xl font-semibold font-display text-gold-gradient">

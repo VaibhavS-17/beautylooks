@@ -96,7 +96,7 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
     created_at,
     total_amount,
     status,
-    shipping_address:shipping_address_id(*),
+    shipping_address,
     order_items(
       quantity,
       unit_price,
