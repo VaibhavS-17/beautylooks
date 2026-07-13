@@ -39,7 +39,7 @@ interface DashboardTabProps {
 export default function DashboardTab({ stats, orders, onViewAllOrders }: DashboardTabProps) {
   return (
     <div className="space-y-8 animate-fade-in text-left">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div>
           <h2 className="text-3xl font-bold font-display text-[#1C1917]">Dashboard Overview</h2>
           <p className="text-sm text-[#8A8177]">Real-time business performance & administrative controls.</p>
@@ -119,7 +119,7 @@ export default function DashboardTab({ stats, orders, onViewAllOrders }: Dashboa
           </button>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full min-w-[600px] text-left text-xs">
             <thead>
               <tr className="bg-[#FBF9F6] border-b border-[#EFECE6] uppercase font-bold text-[#8A8177] tracking-wider">
                 <th className="p-3">Order ID</th>

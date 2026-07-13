@@ -51,7 +51,7 @@ export default function OrdersTab({
 
   return (
     <div className="space-y-6 animate-fade-in text-left">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold font-display">Orders Portal</h2>
           <p className="text-sm text-[#8A8177]">Monitor client transactions and fulfillments.</p>
@@ -63,13 +63,14 @@ export default function OrdersTab({
             placeholder="Search orders..."
             value={orderSearch}
             onChange={e => setOrderSearch(e.target.value)}
-            className="pl-9 pr-4 py-2 border border-[#EFECE6] rounded-xl text-xs focus:outline-none focus:border-[#CA8A04] bg-white w-64 shadow-sm"
+            className="pl-9 pr-4 py-2 border border-[#EFECE6] rounded-xl text-xs focus:outline-none focus:border-[#CA8A04] bg-white w-full sm:w-64 shadow-sm"
           />
         </div>
       </div>
 
       <div className="bg-white border border-[#EFECE6] rounded-2xl overflow-hidden shadow-sm">
-        <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[700px] text-left text-xs">
           <thead>
             <tr className="bg-[#FBF9F6] border-b border-[#EFECE6] uppercase font-bold text-[#8A8177] tracking-wider">
               <th className="p-4 w-10"></th>
@@ -247,6 +248,7 @@ export default function OrdersTab({
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

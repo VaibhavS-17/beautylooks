@@ -41,7 +41,7 @@ export default function BlogsTab({
 
   return (
     <div className="space-y-6 animate-fade-in text-left">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold font-display">Journal Blogs</h2>
           <p className="text-sm text-[#8A8177]">Create and edit educational guides and skincare journals.</p>
@@ -54,7 +54,7 @@ export default function BlogsTab({
               placeholder="Search blogs..."
               value={blogSearch}
               onChange={e => setBlogSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 border border-[#EFECE6] rounded-xl text-xs focus:outline-none focus:border-[#CA8A04] bg-white w-64 shadow-sm"
+              className="pl-9 pr-4 py-2 border border-[#EFECE6] rounded-xl text-xs focus:outline-none focus:border-[#CA8A04] bg-white w-full sm:w-64 shadow-sm"
             />
           </div>
           <button
@@ -71,7 +71,8 @@ export default function BlogsTab({
       </div>
 
       <div className="bg-white border border-[#EFECE6] rounded-2xl overflow-hidden shadow-sm">
-        <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[600px] text-left text-xs">
           <thead>
             <tr className="bg-[#FBF9F6] border-b border-[#EFECE6] uppercase font-bold text-[#8A8177] tracking-wider">
               <th className="p-4">Title & Info</th>
@@ -133,12 +134,13 @@ export default function BlogsTab({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* ADD BLOG MODAL */}
       {isAddBlogOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#EFECE6] w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col max-h-[90vh] animate-fade-in">
+          <div className="bg-white border border-[#EFECE6] w-[calc(100%-2rem)] max-w-2xl rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col max-h-[90vh] animate-fade-in">
             <div className="p-6 border-b border-[#EFECE6] flex justify-between items-center bg-[#FBF9F6]">
               <h3 className="font-display font-semibold text-lg text-[#1C1917]">Create Journal Post</h3>
               <button onClick={() => setIsAddBlogOpen(false)} className="text-[#8C8885] hover:text-[#1C1917] p-1.5 rounded-full hover:bg-[#EFECE6]/50">
@@ -188,7 +190,7 @@ export default function BlogsTab({
 
       {editBlogItem && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#EFECE6] w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col max-h-[90vh] animate-fade-in">
+          <div className="bg-white border border-[#EFECE6] w-[calc(100%-2rem)] max-w-2xl rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col max-h-[90vh] animate-fade-in">
             <div className="p-6 border-b border-[#EFECE6] flex justify-between items-center bg-[#FBF9F6]">
               <h3 className="font-display font-semibold text-lg text-[#1C1917]">Edit Journal Post</h3>
               <button onClick={() => setEditBlogItem(null)} className="text-[#8C8885] hover:text-[#1C1917] p-1.5 rounded-full hover:bg-[#EFECE6]/50">

@@ -33,7 +33,7 @@ export default function CategoriesTab({
 
   return (
     <div className="space-y-6 animate-fade-in text-left">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold font-display">Categories Management</h2>
           <p className="text-sm text-[#8A8177]">Control core departments & category image tiles.</p>
@@ -91,7 +91,7 @@ export default function CategoriesTab({
       {/* ADD CATEGORY MODAL */}
       {isAddCategoryOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#EFECE6] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col animate-fade-in">
+          <div className="bg-white border border-[#EFECE6] w-[calc(100%-2rem)] max-w-md rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col max-h-[90vh] overflow-y-auto animate-fade-in">
             <div className="p-6 border-b border-[#EFECE6] flex justify-between items-center bg-[#FBF9F6]">
               <h3 className="font-display font-semibold text-lg text-[#1C1917]">Add Department Category</h3>
               <button onClick={() => setIsAddCategoryOpen(false)} className="text-[#8C8885] hover:text-[#1C1917] p-1.5 rounded-full hover:bg-[#EFECE6]/50">
@@ -134,7 +134,7 @@ export default function CategoriesTab({
       {/* EDIT CATEGORY MODAL */}
       {editCategoryItem && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#EFECE6] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col animate-fade-in">
+          <div className="bg-white border border-[#EFECE6] w-[calc(100%-2rem)] max-w-md rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col max-h-[90vh] overflow-y-auto animate-fade-in">
             <div className="p-6 border-b border-[#EFECE6] flex justify-between items-center bg-[#FBF9F6]">
               <h3 className="font-display font-semibold text-lg text-[#1C1917]">Edit Category Details</h3>
               <button onClick={() => setEditCategoryItem(null)} className="text-[#8C8885] hover:text-[#1C1917] p-1.5 rounded-full hover:bg-[#EFECE6]/50">

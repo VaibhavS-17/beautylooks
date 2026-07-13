@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
   LayoutDashboard, ShoppingBag, Package, Tag, Award, FileText, Settings, HelpCircle,
-  Loader2, Check, X, Globe, ArrowUpRight
+  Loader2, Check, X, Globe, ArrowUpRight, Menu
 } from 'lucide-react';
 import { 
   createProduct, updateProduct, deleteProductAdmin,
@@ -144,6 +144,7 @@ export default function AdminClient({
   }, [searchParams]);
 
   const setActiveTab = (tab: TabType) => {
+    setIsMobileMenuOpen(false);
     setActiveTabState(tab);
     const url = new URL(window.location.href);
     url.searchParams.set('tab', tab);
@@ -165,6 +166,7 @@ export default function AdminClient({
   useEffect(() => { setBlogPosts(initialBlogs); }, [initialBlogs]);
 
   const [loading, setLoading] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -328,10 +330,46 @@ export default function AdminClient({
 
 
   return (
-    <div className="w-full min-h-screen bg-[#FBF9F6] text-[#1C1917] flex font-sans">
+    <div className="w-full min-h-screen bg-[#FBF9F6] text-[#1C1917] flex flex-col md:flex-row font-sans overflow-x-hidden">
+      {/* Mobile Header */}
+      <div className="md:hidden sticky top-0 z-30 bg-[#1C1917] text-white px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center p-0.5 shrink-0 overflow-hidden">
+            <img src="/images/brand/logo.png" alt="Logo" className="w-full h-full object-cover rounded-full" />
+          </div>
+          <div>
+            <h1 className="font-display font-semibold text-xs tracking-wide">Beauty Looks</h1>
+            <p className="text-[8px] text-[#CA8A04] tracking-widest uppercase font-bold">Store Management</p>
+          </div>
+        </div>
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+          aria-label="Toggle menu"
+        >
+          <Menu size={20} />
+        </button>
+      </div>
+
+      {/* Mobile Sidebar Backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar Navigation */}
-      <aside className="w-64 bg-[#1C1917] text-white flex flex-col justify-between shrink-0 border-r border-[#2A2725] select-none sticky top-0 h-screen">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1C1917] text-white flex flex-col justify-between shrink-0 border-r border-[#2A2725] select-none h-screen transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div>
+          {/* Mobile close button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="md:hidden absolute top-4 right-4 p-1 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+            aria-label="Close menu"
+          >
+            <X size={18} />
+          </button>
           <div className="p-6 border-b border-[#2A2725] flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center p-1 shrink-0 shadow-sm border border-stone-200 overflow-hidden">
               <img
@@ -403,7 +441,7 @@ export default function AdminClient({
       </aside>
 
       {/* Main Content Pane */}
-      <main className="flex-1 min-h-screen overflow-y-auto p-8 relative flex flex-col justify-between max-w-7xl mx-auto">
+      <main className="flex-1 min-h-screen overflow-y-auto p-4 md:p-8 relative flex flex-col justify-between w-full max-w-7xl mx-auto">
         <div>
           {/* Top toast alerts */}
           {error && (

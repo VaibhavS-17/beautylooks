@@ -69,7 +69,7 @@ export default function ProductsTab({
 
   return (
     <div className="space-y-6 animate-fade-in text-left">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold font-display">Products Catalog</h2>
           <p className="text-sm text-[#8A8177]">Manage product details, multi-image galleries, and stock.</p>
@@ -82,7 +82,7 @@ export default function ProductsTab({
               placeholder="Search catalog..."
               value={productSearch}
               onChange={e => setProductSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 border border-[#EFECE6] rounded-xl text-xs focus:outline-none focus:border-[#CA8A04] bg-white w-64 shadow-sm"
+              className="pl-9 pr-4 py-2 border border-[#EFECE6] rounded-xl text-xs focus:outline-none focus:border-[#CA8A04] bg-white w-full sm:w-64 shadow-sm"
             />
           </div>
           <button
@@ -100,7 +100,8 @@ export default function ProductsTab({
       </div>
 
       <div className="bg-white border border-[#EFECE6] rounded-2xl overflow-hidden shadow-sm">
-        <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[700px] text-left text-xs">
           <thead>
             <tr className="bg-[#FBF9F6] border-b border-[#EFECE6] uppercase font-bold text-[#8A8177] tracking-wider">
               <th className="p-4">Item Details</th>
@@ -187,12 +188,13 @@ export default function ProductsTab({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* ADD PRODUCT MODAL */}
       {isAddProductOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#EFECE6] w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col max-h-[90vh] animate-fade-in">
+          <div className="bg-white border border-[#EFECE6] w-[calc(100%-2rem)] max-w-3xl rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col max-h-[90vh] animate-fade-in">
             <div className="p-6 border-b border-[#EFECE6] flex justify-between items-center bg-[#FBF9F6]">
               <div>
                 <h3 className="font-display font-semibold text-lg text-[#1C1917]">Add New Catalog Product</h3>
@@ -360,7 +362,7 @@ export default function ProductsTab({
       {/* EDIT PRODUCT MODAL */}
       {editProductItem && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#EFECE6] w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col max-h-[90vh] animate-fade-in">
+          <div className="bg-white border border-[#EFECE6] w-[calc(100%-2rem)] max-w-3xl rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col max-h-[90vh] animate-fade-in">
             <div className="p-6 border-b border-[#EFECE6] flex justify-between items-center bg-[#FBF9F6]">
               <div>
                 <h3 className="font-display font-semibold text-lg text-[#1C1917]">Edit Product Details</h3>
