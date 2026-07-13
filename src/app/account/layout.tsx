@@ -51,7 +51,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
 
         <div className="bg-white rounded-2xl shadow-sm border border-[#EFECE6] overflow-hidden flex flex-col md:flex-row min-h-[600px]">
           {/* Sidebar */}
-          <div className="hidden md:block w-72 flex-shrink-0">
+          <div className="md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-[#EFECE6] bg-white">
              <AccountSidebar user={userProfile} />
           </div>
 
