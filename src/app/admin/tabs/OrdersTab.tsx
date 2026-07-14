@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Loader2, ChevronDown, ChevronUp, MapPin, CreditCard } from 'lucide-react';
+import { Search, Loader2, ChevronDown, ChevronUp, MapPin, CreditCard, CheckSquare, Square } from 'lucide-react';
 import Image from 'next/image';
 import { formatPrice } from '@/lib/data';
 
@@ -10,8 +10,9 @@ interface AdminOrder {
   customerName: string;
   customerEmail: string;
   amount: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'failed';
   date: string;
+  failedAt?: string | null;
   shippingAddress?: any;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
@@ -31,6 +32,9 @@ export default function OrdersTab({
 }: OrdersTabProps) {
   const [orderSearch, setOrderSearch] = useState('');
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<string>('shipped');
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
   const filteredOrders = orders.filter(o => 
     o.customerName.toLowerCase().includes(orderSearch.toLowerCase()) ||
@@ -47,6 +51,38 @@ export default function OrdersTab({
       }
       return next;
     });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedOrders.size === filteredOrders.length) {
+      setSelectedOrders(new Set());
+    } else {
+      setSelectedOrders(new Set(filteredOrders.map((o) => o.id)));
+    }
+  };
+
+  const toggleSelectOrder = (orderId: string) => {
+    setSelectedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkAction = async () => {
+    setIsBulkUpdating(true);
+    try {
+      for (const id of selectedOrders) {
+        await handleOrderStatus(id, bulkStatus);
+      }
+      setSelectedOrders(new Set());
+    } finally {
+      setIsBulkUpdating(false);
+    }
   };
 
   return (
@@ -68,12 +104,51 @@ export default function OrdersTab({
         </div>
       </div>
 
+      {selectedOrders.size > 0 && (
+        <div className="bg-[#1C1917] text-white p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg animate-fade-in">
+          <span className="text-xs font-semibold">{selectedOrders.size} order{selectedOrders.size !== 1 ? 's' : ''} selected</span>
+          <div className="flex items-center gap-3">
+            <select
+              value={bulkStatus}
+              onChange={(e) => setBulkStatus(e.target.value)}
+              className="bg-white/10 text-white border border-white/20 rounded-lg py-1.5 px-3 text-xs outline-none"
+            >
+              <option value="shipped" className="text-black">Mark Shipped</option>
+              <option value="delivered" className="text-black">Mark Delivered</option>
+              <option value="cancelled" className="text-black">Mark Cancelled</option>
+            </select>
+            <button
+              onClick={handleBulkAction}
+              disabled={isBulkUpdating}
+              className="bg-[#CA8A04] hover:bg-amber-600 px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors disabled:opacity-50"
+            >
+              {isBulkUpdating && <Loader2 size={12} className="animate-spin" />}
+              <span>Apply</span>
+            </button>
+            <button
+              onClick={() => setSelectedOrders(new Set())}
+              className="text-white/60 hover:text-white text-xs font-semibold transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white border border-[#EFECE6] rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
         <table className="w-full min-w-[700px] text-left text-xs">
           <thead>
             <tr className="bg-[#FBF9F6] border-b border-[#EFECE6] uppercase font-bold text-[#8A8177] tracking-wider">
-              <th className="p-4 w-10"></th>
+              <th className="p-4 w-10">
+                <button onClick={toggleSelectAll} className="p-0.5 rounded hover:bg-[#EFECE6] transition-colors" type="button">
+                  {selectedOrders.size === filteredOrders.length && filteredOrders.length > 0 ? (
+                    <CheckSquare size={16} className="text-[#CA8A04]" />
+                  ) : (
+                    <Square size={16} className="text-[#8A8177]" />
+                  )}
+                </button>
+              </th>
               <th className="p-4">Order ID</th>
               <th className="p-4">Customer</th>
               <th className="p-4">Amount</th>
@@ -95,18 +170,31 @@ export default function OrdersTab({
                   <React.Fragment key={order.id}>
                     <tr className={`hover:bg-[#FBF9F6]/50 cursor-pointer ${isExpanded ? 'bg-[#FBF9F6]/30' : ''}`} onClick={() => toggleExpand(order.id)}>
                       <td className="p-4">
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); toggleExpand(order.id); }}
-                          className="p-1 rounded-md hover:bg-[#EFECE6] transition-colors"
-                          aria-label={isExpanded ? 'Collapse order details' : 'Expand order details'}
-                        >
-                          {isExpanded ? (
-                            <ChevronUp size={14} className="text-[#8A8177]" />
-                          ) : (
-                            <ChevronDown size={14} className="text-[#8A8177]" />
-                          )}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); toggleSelectOrder(order.id); }}
+                            className="p-0.5 rounded hover:bg-[#EFECE6] transition-colors"
+                          >
+                            {selectedOrders.has(order.id) ? (
+                              <CheckSquare size={15} className="text-[#CA8A04]" />
+                            ) : (
+                              <Square size={15} className="text-[#8A8177]" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); toggleExpand(order.id); }}
+                            className="p-1 rounded-md hover:bg-[#EFECE6] transition-colors"
+                            aria-label={isExpanded ? 'Collapse order details' : 'Expand order details'}
+                          >
+                            {isExpanded ? (
+                              <ChevronUp size={14} className="text-[#8A8177]" />
+                            ) : (
+                              <ChevronDown size={14} className="text-[#8A8177]" />
+                            )}
+                          </button>
+                        </div>
                       </td>
                       <td className="p-4 font-mono font-bold">#{order.id.slice(0, 8)}</td>
                       <td className="p-4">
@@ -120,12 +208,27 @@ export default function OrdersTab({
                         ) : (
                           <select
                             value={order.status}
+                            disabled={order.status === 'failed' || order.status === 'cancelled'}
                             onClick={(e) => e.stopPropagation()}
                             onChange={e => handleOrderStatus(order.id, e.target.value)}
-                            className="bg-[#FBF9F6] border border-[#EFECE6] py-1 px-2.5 rounded-lg text-xs font-semibold text-[#1C1917] outline-none focus:border-[#CA8A04]"
+                            className={`py-1 px-2.5 rounded-lg text-xs font-semibold outline-none ${
+                              order.status === 'failed'
+                                ? 'bg-red-50 border border-red-200 text-red-700 cursor-not-allowed opacity-80'
+                                : order.status === 'cancelled'
+                                ? 'bg-stone-100 border border-stone-200 text-stone-600 cursor-not-allowed opacity-80'
+                                : order.status === 'confirmed'
+                                ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 focus:border-emerald-500'
+                                : order.status === 'shipped'
+                                ? 'bg-blue-50 border border-blue-200 text-blue-700 focus:border-blue-500'
+                                : order.status === 'delivered'
+                                ? 'bg-purple-50 border border-purple-200 text-purple-700 focus:border-purple-500'
+                                : 'bg-amber-50 border border-amber-200 text-amber-700 focus:border-amber-500'
+                            }`}
                           >
-                            <option value="pending">Pending</option>
-                            <option value="confirmed">Confirmed</option>
+                            {order.status === 'pending' && <option value="pending" hidden>Pending (Auto)</option>}
+                            {order.status === 'confirmed' && <option value="confirmed" hidden>Confirmed (Auto)</option>}
+                            {order.status === 'failed' && <option value="failed" hidden>Failed (Auto)</option>}
+                            {order.status === 'cancelled' && <option value="cancelled" hidden>Cancelled</option>}
                             <option value="shipped">Shipped</option>
                             <option value="delivered">Delivered</option>
                             <option value="cancelled">Cancelled</option>
@@ -178,8 +281,14 @@ export default function OrdersTab({
                                       </p>
                                       <p className="flex flex-col border-t border-[#EFECE6] pt-1.5">
                                         <span className="text-[10px] text-[#8C8885] font-semibold uppercase tracking-wider">Razorpay Payment ID</span>
-                                        <span className="font-mono mt-0.5">{order.razorpayPaymentId || 'Pending/Failed'}</span>
+                                        <span className="font-mono mt-0.5">{order.razorpayPaymentId || (order.status === 'failed' ? 'FAILED' : 'Pending')}</span>
                                       </p>
+                                      {order.failedAt && (
+                                        <p className="flex flex-col border-t border-[#EFECE6] pt-1.5 text-red-600">
+                                          <span className="text-[10px] font-semibold uppercase tracking-wider">Failed At</span>
+                                          <span className="font-mono text-xs mt-0.5">{order.failedAt}</span>
+                                        </p>
+                                      )}
                                     </>
                                   ) : (
                                     <p className="text-[#8C8885] italic">No gateway reference found.</p>

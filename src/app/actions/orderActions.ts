@@ -222,3 +222,31 @@ export async function verifyPayment(data: {
     return { success: false, error: 'An unexpected error occurred during verification.' };
   }
 }
+
+export async function recordPaymentFailure(data: { order_id: string; reason?: string } | string) {
+  const supabase = await createClient();
+  const orderId = typeof data === 'string' ? data : data.order_id;
+  if (!orderId) return { success: false, error: 'Order ID is required.' };
+
+  try {
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        status: 'failed',
+        failed_at: new Date().toISOString(),
+      })
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('Record Payment Failure Error:', error);
+      return { success: false, error: 'Failed to record payment failure status.' };
+    }
+
+    revalidatePath('/', 'layout');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Record Payment Failure Exception:', error);
+    return { success: false, error: 'An unexpected error occurred while recording failure.' };
+  }
+}
+

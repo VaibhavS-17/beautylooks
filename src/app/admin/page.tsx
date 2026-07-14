@@ -50,6 +50,7 @@ export default async function AdminDashboardPage() {
       total_amount,
       status,
       created_at,
+      failed_at,
       shipping_address,
       razorpay_order_id,
       razorpay_payment_id,
@@ -76,6 +77,7 @@ export default async function AdminDashboardPage() {
     amount: Number(ord.total_amount),
     status: ord.status,
     date: new Date(ord.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
+    failedAt: ord.failed_at ? new Date(ord.failed_at).toLocaleString('en-IN', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : null,
     shippingAddress: ord.shipping_address || null,
     razorpayOrderId: ord.razorpay_order_id || null,
     razorpayPaymentId: ord.razorpay_payment_id || null,
@@ -162,6 +164,32 @@ export default async function AdminDashboardPage() {
     activeCustomers: activeCustomers || 0
   };
 
+  // Fetch all reviews for the reviews tab
+  const { data: reviewsData } = await supabase
+    .from('reviews')
+    .select(`
+      id,
+      rating,
+      comment,
+      created_at,
+      profiles (full_name, phone),
+      products (id, name, slug, images)
+    `)
+    .order('created_at', { ascending: false });
+
+  const mappedReviews = (reviewsData || []).map((r: any) => ({
+    id: r.id,
+    rating: r.rating,
+    comment: r.comment || '',
+    createdAt: new Date(r.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
+    customerName: r.profiles?.full_name || 'Anonymous Customer',
+    customerPhone: r.profiles?.phone ? `+91 ${r.profiles.phone}` : null,
+    productId: r.products?.id || null,
+    productName: r.products?.name || 'Unknown Product',
+    productSlug: r.products?.slug || null,
+    productImage: r.products?.images?.[0] || null
+  }));
+
   return (
     <AdminClient 
       stats={stats} 
@@ -170,6 +198,7 @@ export default async function AdminDashboardPage() {
       brands={brands || []}
       products={mappedAdminProducts}
       blogPosts={blogPosts || []}
+      reviews={mappedReviews}
       siteSettings={siteSettings || {
         hero_title: 'Unveil Your Radiance',
         hero_subtitle: 'The Autumn Collection',

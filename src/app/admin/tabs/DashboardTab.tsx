@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { DollarSign, TrendingUp, Package, Users, ChevronRight } from 'lucide-react';
+import { DollarSign, TrendingUp, Package, Users, ChevronRight, AlertTriangle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatPrice } from '@/lib/data';
 
@@ -21,8 +21,9 @@ interface AdminOrder {
   customerName: string;
   customerEmail: string;
   amount: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'failed';
   date: string;
+  failedAt?: string | null;
 }
 
 interface DashboardTabProps {
@@ -33,10 +34,12 @@ interface DashboardTabProps {
     activeCustomers: number;
   };
   orders: AdminOrder[];
+  products?: Array<{ id: string; name: string; stockQuantity: number }>;
   onViewAllOrders: () => void;
+  onNavigateToProducts?: (filter?: string) => void;
 }
 
-export default function DashboardTab({ stats, orders, onViewAllOrders }: DashboardTabProps) {
+export default function DashboardTab({ stats, orders, products = [], onViewAllOrders, onNavigateToProducts }: DashboardTabProps) {
   return (
     <div className="space-y-8 animate-fade-in text-left">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -69,6 +72,62 @@ export default function DashboardTab({ stats, orders, onViewAllOrders }: Dashboa
           );
         })}
       </div>
+
+      {/* Low Stock Alerts */}
+      {(() => {
+        const lowStockProducts = products.filter(p => p.stockQuantity < 5);
+        if (lowStockProducts.length === 0) return null;
+        return (
+          <div className="bg-gradient-to-r from-red-50 to-amber-50 border border-red-200/80 rounded-2xl p-6 shadow-sm animate-fade-in">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-red-100 text-red-600 rounded-xl shrink-0">
+                  <AlertTriangle size={20} />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-sm text-red-900">
+                    Low Inventory Alert — {lowStockProducts.length} {lowStockProducts.length === 1 ? 'Product' : 'Products'}
+                  </h3>
+                  <p className="text-xs text-red-700/80 mt-0.5 font-light">
+                    These products have fewer than 5 units remaining and may need restocking.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {lowStockProducts.slice(0, 8).map(item => (
+                      <span
+                        key={item.id}
+                        className="px-2.5 py-1 bg-white/90 border border-red-200 rounded-lg text-xs font-semibold text-[#1C1917] flex items-center gap-1.5 shadow-xs"
+                      >
+                        <span className="truncate max-w-[140px]">{item.name}</span>
+                        <span className="bg-red-600 text-white text-[9px] px-1.5 py-px rounded font-bold shrink-0">
+                          {item.stockQuantity} left
+                        </span>
+                      </span>
+                    ))}
+                    {lowStockProducts.length > 8 && (
+                      <button
+                        type="button"
+                        onClick={() => onNavigateToProducts?.('low-stock')}
+                        className="px-2.5 py-1 bg-white/80 hover:bg-white border border-red-200 rounded-lg text-xs text-red-700 font-semibold transition-colors cursor-pointer shadow-2xs"
+                      >
+                        +{lowStockProducts.length - 8} more →
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {onNavigateToProducts && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateToProducts('low-stock')}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shrink-0 shadow-sm cursor-pointer"
+                >
+                  Restock Now →
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Sales Chart */}
       <div className="bg-white border border-[#EFECE6] rounded-2xl overflow-hidden shadow-sm p-6">

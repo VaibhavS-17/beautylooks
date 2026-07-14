@@ -8,7 +8,7 @@ import Script from 'next/script';
 import { ArrowLeft, CheckCircle2, ShieldCheck, Loader2, MapPin, Smartphone, CreditCard, MessageCircle, Check, Plus, Trash2, Edit2, X } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
-import { createRazorpayOrder, verifyPayment } from '@/app/actions/orderActions';
+import { createRazorpayOrder, verifyPayment, recordPaymentFailure } from '@/app/actions/orderActions';
 import { createAddress, updateAddress, deleteAddress } from '@/app/actions/accountActions';
 import { createClient } from '@/lib/supabase/client';
 
@@ -257,8 +257,11 @@ function CheckoutContent() {
           }
         },
         modal: {
-          ondismiss: function () {
+          ondismiss: async function () {
             setIsProcessing(false);
+            if (res.orderId) {
+              await recordPaymentFailure({ order_id: res.orderId, reason: 'User dismissed checkout modal' });
+            }
           }
         }
       };
@@ -283,9 +286,12 @@ function CheckoutContent() {
       }
 
       const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response: any) {
-        setErrorMessage(response.error.description);
+      rzp.on('payment.failed', async function (response: any) {
+        setErrorMessage(response.error?.description || 'Payment failed.');
         setIsProcessing(false);
+        if (res.orderId) {
+          await recordPaymentFailure({ order_id: res.orderId, reason: response.error?.description || 'Payment failed' });
+        }
       });
       rzp.open();
 
@@ -514,7 +520,7 @@ function CheckoutContent() {
                       ? 'border-[#C9A94E] bg-[#C9A94E08] ring-1 ring-[#C9A94E] shadow-md'
                       : 'border-border bg-secondary hover:border-[#C9A94E60] shadow-sm'
                   }`}>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
                       <div className="flex items-center space-x-4">
                         <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
                           paymentMethod === 'upi' ? 'border-[#C9A94E]' : 'border-border'
@@ -529,8 +535,8 @@ function CheckoutContent() {
                           </div>
                         </div>
                       </div>
-                      <div className="bg-[#16a34a15] text-[#16a34a] border border-[#16a34a30] px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1">
-                        <Check size={14} />
+                      <div className="bg-[#16a34a15] text-[#16a34a] border border-[#16a34a30] px-3.5 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 shrink-0">
+                        <Check size={13} />
                         <span>Save 2% Instantly</span>
                       </div>
                     </div>

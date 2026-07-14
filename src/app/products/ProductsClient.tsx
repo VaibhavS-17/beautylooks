@@ -28,6 +28,7 @@ interface ProductsClientProps {
 function ProductCatalogContent({ products, allCategories, allBrands }: ProductsClientProps) {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
+  const searchParam = searchParams.get('search');
   const fallbackProductImage = '/images/products/facial-kit-1.png';
 
   const addItem = useCartStore((state) => state.addItem);
@@ -66,7 +67,13 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
     } else {
       setTimeout(() => setSelectedCategories([]), 0);
     }
-  }, [categoryParam, allCategories]);
+
+    if (searchParam) {
+      setTimeout(() => setSearchQuery(searchParam), 0);
+    } else {
+      setTimeout(() => setSearchQuery(''), 0);
+    }
+  }, [categoryParam, searchParam, allCategories]);
 
   const toggleCategory = (slug: string) => {
     setSelectedCategories(prev => 
@@ -126,7 +133,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
     if (debouncedSearchQuery) {
       const q = debouncedSearchQuery.toLowerCase();
       result = result.filter(
-        p => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q)
+        p => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || (p.category && p.category.toLowerCase().includes(q)) || (p.shortDescription && p.shortDescription.toLowerCase().includes(q)) || (p.description && p.description.toLowerCase().includes(q))
       );
     }
 

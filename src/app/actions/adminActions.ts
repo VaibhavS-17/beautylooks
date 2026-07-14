@@ -707,7 +707,7 @@ export async function updateSiteSettings(formData: FormData) {
 // ORDERS & OTHER ACTIONS
 // ---------------------------------------------------------------------------
 
-const statusSchema = z.enum(['pending', 'payment_verifying', 'confirmed', 'shipped', 'delivered', 'cancelled']);
+const statusSchema = z.enum(['pending', 'payment_verifying', 'confirmed', 'shipped', 'delivered', 'cancelled', 'failed']);
 
 export async function updateOrderStatusAdmin(orderId: string, status: string) {
   const supabase = await createClient();
@@ -779,3 +779,32 @@ export async function syncMockData() {
     return { error: 'Seeding failed.' };
   }
 }
+
+// ---------------------------------------------------------------------------
+// REVIEWS ACTIONS
+// ---------------------------------------------------------------------------
+
+export async function deleteReviewAdmin(reviewId: string) {
+  const supabase = await createClient();
+  const authCheck = await verifyAdmin(supabase);
+  if (!authCheck.verified) return { error: authCheck.error };
+
+  const idParsed = uuidSchema.safeParse(reviewId);
+  if (!idParsed.success) return { error: 'Invalid review ID' };
+
+  try {
+    const { error } = await supabase.from('reviews').delete().eq('id', reviewId);
+    if (error) {
+      console.error('Delete review error:', error);
+      return { error: 'An unexpected error occurred.' };
+    }
+
+    revalidatePath('/admin');
+    revalidatePath('/products/[slug]', 'page');
+    return { success: true };
+  } catch (err: any) {
+    console.error('Delete review exception:', err);
+    return { error: 'An unexpected error occurred.' };
+  }
+}
+

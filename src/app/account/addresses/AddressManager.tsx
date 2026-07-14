@@ -106,16 +106,19 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center border-b border-[#EFECE6] pb-3">
-        <h3 className="font-display text-lg font-semibold tracking-wider text-[#9A7B2F] uppercase">
-          Shipping Addresses
-        </h3>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#EFECE6] pb-4 px-1">
+        <div>
+          <h3 className="font-display text-lg font-semibold tracking-wider text-[#9A7B2F] uppercase">
+            Shipping Addresses
+          </h3>
+          <p className="text-xs text-[#8A8177] mt-0.5 font-light">Manage your saved delivery destinations.</p>
+        </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="text-sm text-[#9A7B2F] hover:text-[#C9A94E] font-bold flex items-center space-x-1"
+          className="w-full sm:w-auto px-4 py-2 bg-[#9A7B2F] hover:bg-[#1C1917] text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
         >
           <Plus size={14} />
-          <span>Add New</span>
+          <span>Add New Address</span>
         </button>
       </div>
 

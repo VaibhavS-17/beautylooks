@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search, Plus, Image as ImageIcon, Edit, Trash2, Loader2, X } from 'lucide-react';
 import { formatPrice } from '@/lib/data';
 import MultiMediaUploader from '@/components/admin/MultiMediaUploader';
@@ -54,18 +55,28 @@ export default function ProductsTab({
   handleProductSubmit,
   loading
 }: ProductsTabProps) {
+  const searchParams = useSearchParams();
   const [productSearch, setProductSearch] = useState('');
+  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [editProductItem, setEditProductItem] = useState<AdminProduct | null>(null);
   const [productMediaUrls, setProductMediaUrls] = useState<string[]>([]);
   const [faqsList, setFaqsList] = useState<Array<{ question: string; answer: string }>>([]);
+  const [modalTab, setModalTab] = useState<'general' | 'media' | 'faqs'>('general');
   const fallbackProductImage = '/images/products/facial-kit-1.png';
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-    p.brand.toLowerCase().includes(productSearch.toLowerCase()) ||
-    p.category.toLowerCase().includes(productSearch.toLowerCase())
-  );
+  useEffect(() => {
+    setShowLowStockOnly(searchParams.get('filter') === 'low-stock');
+  }, [searchParams]);
+
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = 
+      p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+      p.brand.toLowerCase().includes(productSearch.toLowerCase()) ||
+      p.category.toLowerCase().includes(productSearch.toLowerCase());
+    const matchesStock = showLowStockOnly ? p.stockQuantity < 5 : true;
+    return matchesSearch && matchesStock;
+  });
 
   return (
     <div className="space-y-6 animate-fade-in text-left">
@@ -74,7 +85,25 @@ export default function ProductsTab({
           <h2 className="text-2xl font-bold font-display">Products Catalog</h2>
           <p className="text-sm text-[#8A8177]">Manage product details, multi-image galleries, and stock.</p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {showLowStockOnly && (
+            <div className="flex items-center gap-1.5 bg-red-100 text-red-700 px-3 py-1.5 rounded-xl text-xs font-semibold border border-red-200 shadow-xs animate-fade-in">
+              <span>⚠️ Low Stock (&lt;5 units)</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLowStockOnly(false);
+                  const url = new URL(window.location.href);
+                  url.searchParams.delete('filter');
+                  window.history.pushState({}, '', url.toString());
+                }}
+                className="hover:bg-red-200 rounded-full p-0.5 transition-colors cursor-pointer"
+                aria-label="Clear low stock filter"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8177]" />
             <input
@@ -86,12 +115,14 @@ export default function ProductsTab({
             />
           </div>
           <button
+            type="button"
             onClick={() => {
               setProductMediaUrls([]);
               setFaqsList([]);
+              setModalTab('general');
               setIsAddProductOpen(true);
             }}
-            className="px-4 py-2 bg-[#CA8A04] text-white rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-[#1C1917] transition-all flex items-center space-x-1.5 shadow-sm"
+            className="px-4 py-2 bg-[#CA8A04] text-white rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-[#1C1917] transition-all flex items-center space-x-1.5 shadow-sm cursor-pointer"
           >
             <Plus size={14} />
             <span>Add Product</span>
@@ -168,6 +199,7 @@ export default function ProductsTab({
                       onClick={() => {
                         setProductMediaUrls(product.images || []);
                         setFaqsList(product.faqs || []);
+                        setModalTab('general');
                         setEditProductItem(product);
                       }}
                       className="p-1.5 border border-[#EFECE6] hover:border-[#CA8A04] hover:text-[#CA8A04] rounded-lg transition-colors inline-block bg-white"
@@ -205,23 +237,32 @@ export default function ProductsTab({
               </button>
             </div>
 
+            {/* Tab Navigation */}
+            <div className="flex border-b border-[#EFECE6] bg-[#FBF9F6] px-6 gap-1">
+              {[
+                { id: 'general' as const, label: 'General Info' },
+                { id: 'media' as const, label: `Media (${productMediaUrls.length})` },
+                { id: 'faqs' as const, label: `FAQs (${faqsList.length})` }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setModalTab(tab.id)}
+                  className={`py-3 px-4 border-b-2 text-xs font-bold uppercase tracking-wider transition-all ${
+                    modalTab === tab.id ? 'border-[#CA8A04] text-[#1C1917]' : 'border-transparent text-[#8A8177] hover:text-[#1C1917]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
             <form onSubmit={async (e) => {
               await handleProductSubmit(e, false);
               setIsAddProductOpen(false);
             }} className="flex-1 overflow-y-auto p-6 space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <MultiMediaUploader
-                    label="Product Images & Videos"
-                    folder="products"
-                    currentValues={productMediaUrls}
-                    onChange={setProductMediaUrls}
-                    maxFiles={8}
-                    acceptVideo={true}
-                    required
-                  />
-                </div>
-
+              {/* Tab: General Info */}
+              <div className={modalTab === 'general' ? '' : 'hidden'}>
                 <div className="space-y-4">
                   <div className="flex flex-col">
                     <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">Product Name *</label>
@@ -293,57 +334,72 @@ export default function ProductsTab({
                       <label htmlFor="isActiveAdd" className="text-xs text-[#5C554D] cursor-pointer select-none">Active & Visible</label>
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  {/* FAQ Repeater */}
-                  <div className="space-y-3 pt-4 border-t border-[#EFECE6]">
-                    <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-relaxed">
-                      <span>💡 <strong>Storewide Common FAQs Fallback:</strong> If left blank, this product automatically displays the storewide Common FAQs configured in the <strong>Common FAQs</strong> sidebar tab.</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D]">Product FAQs (Optional)</label>
+              {/* Tab: Media */}
+              <div className={modalTab === 'media' ? '' : 'hidden'}>
+                <MultiMediaUploader
+                  label="Product Images & Videos"
+                  folder="products"
+                  currentValues={productMediaUrls}
+                  onChange={setProductMediaUrls}
+                  maxFiles={8}
+                  acceptVideo={true}
+                  required
+                />
+              </div>
+
+              {/* Tab: FAQs */}
+              <div className={modalTab === 'faqs' ? '' : 'hidden'}>
+                <div className="space-y-3">
+                  <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-relaxed">
+                    <span>💡 <strong>Storewide Common FAQs Fallback:</strong> If left blank, this product automatically displays the storewide Common FAQs configured in the <strong>Common FAQs</strong> sidebar tab.</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D]">Product FAQs (Optional)</label>
+                    <button
+                      type="button"
+                      onClick={() => setFaqsList([...faqsList, { question: '', answer: '' }])}
+                      className="text-[10px] font-bold uppercase tracking-wider text-[#CA8A04] hover:text-[#1C1917] transition-colors flex items-center gap-1"
+                    >
+                      <Plus size={12} /> Add FAQ
+                    </button>
+                  </div>
+                  {faqsList.map((faq, idx) => (
+                    <div key={idx} className="p-3 bg-[#FBF9F6] border border-[#EFECE6] rounded-xl space-y-2 relative">
+                      <input
+                        type="text"
+                        placeholder="Question (e.g. How often should I use this?)"
+                        value={faq.question}
+                        onChange={(e) => {
+                          const updated = [...faqsList];
+                          updated[idx] = { ...updated[idx], question: e.target.value };
+                          setFaqsList(updated);
+                        }}
+                        className="w-full text-xs py-2 px-3 border border-[#EFECE6] rounded-lg focus:border-[#CA8A04] outline-none bg-white"
+                      />
+                      <textarea
+                        placeholder="Answer..."
+                        rows={2}
+                        value={faq.answer}
+                        onChange={(e) => {
+                          const updated = [...faqsList];
+                          updated[idx] = { ...updated[idx], answer: e.target.value };
+                          setFaqsList(updated);
+                        }}
+                        className="w-full text-xs py-2 px-3 border border-[#EFECE6] rounded-lg focus:border-[#CA8A04] outline-none bg-white"
+                      />
                       <button
                         type="button"
-                        onClick={() => setFaqsList([...faqsList, { question: '', answer: '' }])}
-                        className="text-[10px] font-bold uppercase tracking-wider text-[#CA8A04] hover:text-[#1C1917] transition-colors flex items-center gap-1"
+                        onClick={() => setFaqsList(faqsList.filter((_, i) => i !== idx))}
+                        className="text-red-500 text-[10px] font-bold uppercase tracking-wider hover:text-red-700"
                       >
-                        <Plus size={12} /> Add FAQ
+                        Remove
                       </button>
                     </div>
-                    {faqsList.map((faq, idx) => (
-                      <div key={idx} className="p-3 bg-[#FBF9F6] border border-[#EFECE6] rounded-xl space-y-2 relative">
-                        <input
-                          type="text"
-                          placeholder="Question (e.g. How often should I use this?)"
-                          value={faq.question}
-                          onChange={(e) => {
-                            const updated = [...faqsList];
-                            updated[idx] = { ...updated[idx], question: e.target.value };
-                            setFaqsList(updated);
-                          }}
-                          className="w-full text-xs py-2 px-3 border border-[#EFECE6] rounded-lg focus:border-[#CA8A04] outline-none bg-white"
-                        />
-                        <textarea
-                          placeholder="Answer..."
-                          rows={2}
-                          value={faq.answer}
-                          onChange={(e) => {
-                            const updated = [...faqsList];
-                            updated[idx] = { ...updated[idx], answer: e.target.value };
-                            setFaqsList(updated);
-                          }}
-                          className="w-full text-xs py-2 px-3 border border-[#EFECE6] rounded-lg focus:border-[#CA8A04] outline-none bg-white"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setFaqsList(faqsList.filter((_, i) => i !== idx))}
-                          className="text-red-500 text-[10px] font-bold uppercase tracking-wider hover:text-red-700"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                    <input type="hidden" name="faqs" value={JSON.stringify(faqsList.filter(f => f.question.trim() && f.answer.trim()))} />
-                  </div>
+                  ))}
+                  <input type="hidden" name="faqs" value={JSON.stringify(faqsList.filter(f => f.question.trim() && f.answer.trim()))} />
                 </div>
               </div>
 
@@ -373,25 +429,34 @@ export default function ProductsTab({
               </button>
             </div>
 
+            {/* Tab Navigation */}
+            <div className="flex border-b border-[#EFECE6] bg-[#FBF9F6] px-6 gap-1">
+              {[
+                { id: 'general' as const, label: 'General Info' },
+                { id: 'media' as const, label: `Media (${productMediaUrls.length})` },
+                { id: 'faqs' as const, label: `FAQs (${faqsList.length})` }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setModalTab(tab.id)}
+                  className={`py-3 px-4 border-b-2 text-xs font-bold uppercase tracking-wider transition-all ${
+                    modalTab === tab.id ? 'border-[#CA8A04] text-[#1C1917]' : 'border-transparent text-[#8A8177] hover:text-[#1C1917]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
             <form onSubmit={async (e) => {
               await handleProductSubmit(e, true);
               setEditProductItem(null);
             }} className="flex-1 overflow-y-auto p-6 space-y-6">
               <input type="hidden" name="id" value={editProductItem.id} />
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <MultiMediaUploader
-                    label="Product Images & Videos"
-                    folder="products"
-                    currentValues={productMediaUrls}
-                    onChange={setProductMediaUrls}
-                    maxFiles={8}
-                    acceptVideo={true}
-                    required
-                  />
-                </div>
 
+              {/* Tab: General Info */}
+              <div className={modalTab === 'general' ? '' : 'hidden'}>
                 <div className="space-y-4">
                   <div className="flex flex-col">
                     <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">Product Name *</label>
@@ -463,57 +528,72 @@ export default function ProductsTab({
                       <label htmlFor="isActiveEdit" className="text-xs text-[#5C554D] cursor-pointer select-none">Active & Visible</label>
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  {/* FAQ Repeater */}
-                  <div className="space-y-3 pt-4 border-t border-[#EFECE6]">
-                    <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-relaxed">
-                      <span>💡 <strong>Storewide Common FAQs Fallback:</strong> If left blank, this product automatically displays the storewide Common FAQs configured in the <strong>Common FAQs</strong> sidebar tab.</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D]">Product FAQs (Optional)</label>
+              {/* Tab: Media */}
+              <div className={modalTab === 'media' ? '' : 'hidden'}>
+                <MultiMediaUploader
+                  label="Product Images & Videos"
+                  folder="products"
+                  currentValues={productMediaUrls}
+                  onChange={setProductMediaUrls}
+                  maxFiles={8}
+                  acceptVideo={true}
+                  required
+                />
+              </div>
+
+              {/* Tab: FAQs */}
+              <div className={modalTab === 'faqs' ? '' : 'hidden'}>
+                <div className="space-y-3">
+                  <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-relaxed">
+                    <span>💡 <strong>Storewide Common FAQs Fallback:</strong> If left blank, this product automatically displays the storewide Common FAQs configured in the <strong>Common FAQs</strong> sidebar tab.</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D]">Product FAQs (Optional)</label>
+                    <button
+                      type="button"
+                      onClick={() => setFaqsList([...faqsList, { question: '', answer: '' }])}
+                      className="text-[10px] font-bold uppercase tracking-wider text-[#CA8A04] hover:text-[#1C1917] transition-colors flex items-center gap-1"
+                    >
+                      <Plus size={12} /> Add FAQ
+                    </button>
+                  </div>
+                  {faqsList.map((faq, idx) => (
+                    <div key={idx} className="p-3 bg-[#FBF9F6] border border-[#EFECE6] rounded-xl space-y-2 relative">
+                      <input
+                        type="text"
+                        placeholder="Question (e.g. How often should I use this?)"
+                        value={faq.question}
+                        onChange={(e) => {
+                          const updated = [...faqsList];
+                          updated[idx] = { ...updated[idx], question: e.target.value };
+                          setFaqsList(updated);
+                        }}
+                        className="w-full text-xs py-2 px-3 border border-[#EFECE6] rounded-lg focus:border-[#CA8A04] outline-none bg-white"
+                      />
+                      <textarea
+                        placeholder="Answer..."
+                        rows={2}
+                        value={faq.answer}
+                        onChange={(e) => {
+                          const updated = [...faqsList];
+                          updated[idx] = { ...updated[idx], answer: e.target.value };
+                          setFaqsList(updated);
+                        }}
+                        className="w-full text-xs py-2 px-3 border border-[#EFECE6] rounded-lg focus:border-[#CA8A04] outline-none bg-white"
+                      />
                       <button
                         type="button"
-                        onClick={() => setFaqsList([...faqsList, { question: '', answer: '' }])}
-                        className="text-[10px] font-bold uppercase tracking-wider text-[#CA8A04] hover:text-[#1C1917] transition-colors flex items-center gap-1"
+                        onClick={() => setFaqsList(faqsList.filter((_, i) => i !== idx))}
+                        className="text-red-500 text-[10px] font-bold uppercase tracking-wider hover:text-red-700"
                       >
-                        <Plus size={12} /> Add FAQ
+                        Remove
                       </button>
                     </div>
-                    {faqsList.map((faq, idx) => (
-                      <div key={idx} className="p-3 bg-[#FBF9F6] border border-[#EFECE6] rounded-xl space-y-2 relative">
-                        <input
-                          type="text"
-                          placeholder="Question (e.g. How often should I use this?)"
-                          value={faq.question}
-                          onChange={(e) => {
-                            const updated = [...faqsList];
-                            updated[idx] = { ...updated[idx], question: e.target.value };
-                            setFaqsList(updated);
-                          }}
-                          className="w-full text-xs py-2 px-3 border border-[#EFECE6] rounded-lg focus:border-[#CA8A04] outline-none bg-white"
-                        />
-                        <textarea
-                          placeholder="Answer..."
-                          rows={2}
-                          value={faq.answer}
-                          onChange={(e) => {
-                            const updated = [...faqsList];
-                            updated[idx] = { ...updated[idx], answer: e.target.value };
-                            setFaqsList(updated);
-                          }}
-                          className="w-full text-xs py-2 px-3 border border-[#EFECE6] rounded-lg focus:border-[#CA8A04] outline-none bg-white"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setFaqsList(faqsList.filter((_, i) => i !== idx))}
-                          className="text-red-500 text-[10px] font-bold uppercase tracking-wider hover:text-red-700"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                    <input type="hidden" name="faqs" value={JSON.stringify(faqsList.filter(f => f.question.trim() && f.answer.trim()))} />
-                  </div>
+                  ))}
+                  <input type="hidden" name="faqs" value={JSON.stringify(faqsList.filter(f => f.question.trim() && f.answer.trim()))} />
                 </div>
               </div>
 

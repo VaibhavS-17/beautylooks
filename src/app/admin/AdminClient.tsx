@@ -6,14 +6,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
   LayoutDashboard, ShoppingBag, Package, Tag, Award, FileText, Settings, HelpCircle,
-  Loader2, Check, X, Globe, ArrowUpRight, Menu
+  Loader2, Check, X, Globe, ArrowUpRight, Menu, MessageSquare, Star
 } from 'lucide-react';
 import { 
   createProduct, updateProduct, deleteProductAdmin,
   createBrand, updateBrand, deleteBrand,
   createCategory, updateCategory, deleteCategory,
   createBlog, updateBlog, deleteBlog,
-  updateSiteSettings, updateOrderStatusAdmin
+  updateSiteSettings, updateOrderStatusAdmin,
+  deleteReviewAdmin
 } from '@/app/actions/adminActions';
 
 // Type definitions
@@ -22,8 +23,9 @@ interface AdminOrder {
   customerName: string;
   customerEmail: string;
   amount: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'failed';
   date: string;
+  failedAt?: string | null;
   shippingAddress?: any;
   items?: Array<{ name: string; quantity: number; unitPrice: number; image?: string }>;
 }
@@ -74,6 +76,19 @@ interface AdminProduct {
   faqs: Array<{ question: string; answer: string }>;
 }
 
+export interface AdminReview {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  customerName: string;
+  customerPhone: string | null;
+  productId: string | null;
+  productName: string;
+  productSlug: string | null;
+  productImage: string | null;
+}
+
 interface AdminClientProps {
   stats: {
     totalProducts: number;
@@ -86,6 +101,7 @@ interface AdminClientProps {
   brands: BrandItem[];
   products: AdminProduct[];
   blogPosts: BlogItem[];
+  reviews: AdminReview[];
   siteSettings: {
     hero_title: string;
     hero_subtitle: string;
@@ -97,7 +113,7 @@ interface AdminClientProps {
   };
 }
 
-type TabType = 'dashboard' | 'orders' | 'products' | 'faqs' | 'categories' | 'brands' | 'blogs' | 'settings';
+type TabType = 'dashboard' | 'orders' | 'products' | 'faqs' | 'categories' | 'brands' | 'blogs' | 'reviews' | 'settings';
 
 // Dynamic imports of heavy components to optimize compilation speeds
 const TabLoader = () => (
@@ -125,10 +141,11 @@ const FaqsTab = dynamic(() => import('./tabs/FaqsTab'), { ssr: false, loading: T
 const CategoriesTab = dynamic(() => import('./tabs/CategoriesTab'), { ssr: false, loading: TabLoader });
 const BrandsTab = dynamic(() => import('./tabs/BrandsTab'), { ssr: false, loading: TabLoader });
 const BlogsTab = dynamic(() => import('./tabs/BlogsTab'), { ssr: false, loading: TabLoader });
+const ReviewsTab = dynamic(() => import('./tabs/ReviewsTab'), { ssr: false, loading: TabLoader });
 const SettingsTab = dynamic(() => import('./tabs/SettingsTab'), { ssr: false, loading: TabLoader });
 
 export default function AdminClient({ 
-  stats, recentOrders: initialOrders, categories: initialCategories, brands: initialBrands, products: initialProducts, blogPosts: initialBlogs, siteSettings 
+  stats, recentOrders: initialOrders, categories: initialCategories, brands: initialBrands, products: initialProducts, blogPosts: initialBlogs, reviews: initialReviews = [], siteSettings 
 }: AdminClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -138,16 +155,21 @@ export default function AdminClient({
 
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab') as TabType;
-    if (tabFromUrl && ['dashboard', 'orders', 'products', 'categories', 'brands', 'blogs', 'settings'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['dashboard', 'orders', 'products', 'faqs', 'categories', 'brands', 'blogs', 'reviews', 'settings'].includes(tabFromUrl)) {
       setActiveTabState(tabFromUrl);
     }
   }, [searchParams]);
 
-  const setActiveTab = (tab: TabType) => {
+  const setActiveTab = (tab: TabType, extraParams?: Record<string, string>) => {
     setIsMobileMenuOpen(false);
     setActiveTabState(tab);
     const url = new URL(window.location.href);
     url.searchParams.set('tab', tab);
+    if (extraParams) {
+      Object.entries(extraParams).forEach(([k, v]) => url.searchParams.set(k, v));
+    } else {
+      url.searchParams.delete('filter');
+    }
     window.history.pushState({}, '', url.toString());
   };
 
@@ -157,6 +179,7 @@ export default function AdminClient({
   const [brands, setBrands] = useState<BrandItem[]>(initialBrands);
   const [products, setProducts] = useState<AdminProduct[]>(initialProducts);
   const [blogPosts, setBlogPosts] = useState<BlogItem[]>(initialBlogs);
+  const [reviews, setReviews] = useState<AdminReview[]>(initialReviews);
 
   // Sync state if server props update
   useEffect(() => { setOrders(initialOrders); }, [initialOrders]);
@@ -164,6 +187,7 @@ export default function AdminClient({
   useEffect(() => { setBrands(initialBrands); }, [initialBrands]);
   useEffect(() => { setProducts(initialProducts); }, [initialProducts]);
   useEffect(() => { setBlogPosts(initialBlogs); }, [initialBlogs]);
+  useEffect(() => { setReviews(initialReviews); }, [initialReviews]);
 
   const [loading, setLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -176,6 +200,7 @@ export default function AdminClient({
   const [deletingBrandId, setDeletingBrandId] = useState<string | null>(null);
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
   const [deletingBlogId, setDeletingBlogId] = useState<string | null>(null);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
 
   const triggerToast = (msg: string, isError = false) => {
     if (isError) {
@@ -190,13 +215,19 @@ export default function AdminClient({
   // Order Status handler
   const handleOrderStatus = async (orderId: string, status: any) => {
     setUpdatingOrderId(orderId);
-    const res = await updateOrderStatusAdmin(orderId, status);
-    setUpdatingOrderId(null);
-    if (res.error) triggerToast(res.error, true);
-    else {
-      triggerToast('Order status updated!');
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
-      router.refresh();
+    try {
+      const res = await updateOrderStatusAdmin(orderId, status);
+      if (res.error) {
+        triggerToast(res.error, true);
+      } else {
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+        triggerToast(`Order #${orderId.slice(0, 8)} → ${status.charAt(0).toUpperCase() + status.slice(1)}`);
+        router.refresh();
+      }
+    } catch (err: any) {
+      triggerToast('An unexpected error occurred while updating order status.', true);
+    } finally {
+      setUpdatingOrderId(null);
     }
   };
 
@@ -225,6 +256,25 @@ export default function AdminClient({
       triggerToast('Brand deleted!');
       setBrands(prev => prev.filter(b => b.id !== id));
       router.refresh();
+    }
+  };
+
+  // Review Delete
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm('Are you sure you want to delete this customer review?')) return;
+    setDeletingReviewId(reviewId);
+    try {
+      const res = await deleteReviewAdmin(reviewId);
+      if (res.error) {
+        triggerToast(res.error, true);
+      } else {
+        setReviews(prev => prev.filter(r => r.id !== reviewId));
+        triggerToast('Review deleted successfully.');
+      }
+    } catch (err: any) {
+      triggerToast('An unexpected error occurred while deleting review.', true);
+    } finally {
+      setDeletingReviewId(null);
     }
   };
 
@@ -360,7 +410,7 @@ export default function AdminClient({
       )}
 
       {/* Sidebar Navigation */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1C1917] text-white flex flex-col justify-between shrink-0 border-r border-[#2A2725] select-none h-screen transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1C1917] text-white flex flex-col justify-between shrink-0 border-r border-[#2A2725] select-none h-screen overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transform transition-transform duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div>
           {/* Mobile close button */}
           <button
@@ -389,6 +439,7 @@ export default function AdminClient({
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, count: null },
               { id: 'orders', label: 'Orders', icon: ShoppingBag, count: orders.length },
               { id: 'products', label: 'Products', icon: Package, count: products.length },
+              { id: 'reviews', label: 'Reviews', icon: Star, count: reviews.length },
               { id: 'faqs', label: 'Common FAQs', icon: HelpCircle, count: siteSettings.common_faqs?.length || 4 },
               { id: 'categories', label: 'Categories', icon: Tag, count: categories.length },
               { id: 'brands', label: 'Brands', icon: Award, count: brands.length },
@@ -441,7 +492,7 @@ export default function AdminClient({
       </aside>
 
       {/* Main Content Pane */}
-      <main className="flex-1 min-h-screen overflow-y-auto p-4 md:p-8 relative flex flex-col justify-between w-full max-w-7xl mx-auto">
+      <main className="flex-1 min-h-screen p-4 md:p-8 md:ml-64 relative flex flex-col justify-between w-full max-w-7xl mx-auto">
         <div>
           {/* Top toast alerts */}
           {error && (
@@ -459,7 +510,7 @@ export default function AdminClient({
 
           {/* Render Active Tab dynamically */}
           {activeTab === 'dashboard' && (
-            <DashboardTab stats={stats} orders={orders} onViewAllOrders={() => setActiveTab('orders')} />
+            <DashboardTab stats={stats} orders={orders} products={products} onViewAllOrders={() => setActiveTab('orders')} onNavigateToProducts={(filter?: string) => filter ? setActiveTab('products', { filter }) : setActiveTab('products')} />
           )}
 
           {activeTab === 'orders' && (
@@ -516,6 +567,14 @@ export default function AdminClient({
               handleDeleteBlog={handleDeleteBlog}
               handleBlogSubmit={handleBlogSubmit}
               loading={loading}
+            />
+          )}
+
+          {activeTab === 'reviews' && (
+            <ReviewsTab
+              reviews={reviews}
+              deletingReviewId={deletingReviewId}
+              handleDeleteReview={handleDeleteReview}
             />
           )}
 

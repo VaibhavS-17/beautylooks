@@ -278,8 +278,12 @@ export default function ProductDetailClient({
   const reviewsSectionRef = useRef<HTMLDivElement>(null);
   
   const addItem = useCartStore((state) => state.addItem);
+  const cartItems = useCartStore((state) => state.items);
   const setBuyNowItem = useCartStore((state) => state.setBuyNowItem);
   const openCart = useCartStore((state) => state.openCart);
+
+  const existingCartItem = cartItems.find((item) => item.product.id === product.id);
+  const existingCartQty = existingCartItem ? existingCartItem.quantity : 0;
   
   const wishlistItems = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
@@ -299,6 +303,7 @@ export default function ProductDetailClient({
   const isOnSale = product.salePrice !== null;
   const currentPrice = product.salePrice || product.price;
   const isWishlisted = wishlistItems.includes(product.id);
+  const isMaxStockReached = (existingCartQty + quantity) > product.stockQuantity;
 
   // ── Rating distribution ──
   const ratingDistribution = [5, 4, 3, 2, 1].map((star) => ({
@@ -563,9 +568,14 @@ export default function ProductDetailClient({
                     onClick={() => {
                       addItem(product, quantity);
                     }}
-                    className="w-full sm:w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center border-2 border-text-main bg-transparent text-text-main hover:bg-text-main hover:text-white"
+                    disabled={isMaxStockReached}
+                    className={`w-full sm:w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center border-2 ${
+                      isMaxStockReached
+                        ? 'border-[#EFECE6] bg-[#FBF9F6] text-[#8C8885] cursor-not-allowed opacity-75'
+                        : 'border-text-main bg-transparent text-text-main hover:bg-text-main hover:text-white'
+                    }`}
                   >
-                    Add to Cart
+                    {isMaxStockReached ? 'Max Stock Reached' : 'Add to Cart'}
                   </button>
                   <button 
                     onClick={() => {
