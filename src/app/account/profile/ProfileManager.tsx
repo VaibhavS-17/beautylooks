@@ -50,7 +50,7 @@ export default function ProfileManager({ userProfile }: ProfileManagerProps) {
             setIsEditing(!isEditing);
             setError(null);
           }}
-          className="text-sm font-medium text-[#9A7B2F] hover:text-[#C9A94E] flex items-center space-x-1 bg-[#C9A94E10] px-3 py-1.5 rounded-full transition-colors"
+          className="shrink-0 text-sm font-medium text-[#9A7B2F] hover:text-[#C9A94E] flex items-center space-x-1 bg-[#C9A94E10] px-3 py-1.5 rounded-full transition-colors"
         >
           {isEditing ? (
             <>

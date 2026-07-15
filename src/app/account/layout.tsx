@@ -41,7 +41,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F7F3] pt-20 pb-12">
+    <div className="min-h-screen bg-[#F9F7F3] pt-28 md:pt-32 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Mobile Header / Title */}
@@ -57,7 +57,9 @@ export default async function AccountLayout({ children }: { children: React.Reac
 
           {/* Main Content Area */}
           <div className="flex-1 overflow-x-hidden">
-            {children}
+            <div className="p-4 sm:p-6 md:p-8">
+              {children}
+            </div>
           </div>
         </div>
       </div>

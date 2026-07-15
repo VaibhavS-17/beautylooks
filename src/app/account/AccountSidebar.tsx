@@ -84,8 +84,8 @@ export default function AccountSidebar({
       </div>
 
       {/* --- MOBILE NAVIGATION BAR --- */}
-      <div className="md:hidden flex flex-col w-full">
-        <nav className="flex items-center overflow-x-auto p-3 space-x-2 no-scrollbar bg-[#FCFBF9]">
+      <div className="md:hidden flex flex-col w-full border-b border-[#EFECE6]">
+        <nav className="flex items-center overflow-x-auto p-3 sm:px-4 space-x-2 no-scrollbar bg-[#FCFBF9]">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = pathname.startsWith(item.href);
