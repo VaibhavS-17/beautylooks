@@ -263,7 +263,7 @@ export async function deleteProductAdmin(productId: string) {
   if (!parsed.success) return { error: 'Invalid product ID' };
 
   try {
-    const { error } = await supabase.from('products').delete().eq('id', parsed.data);
+    const { error } = await supabase.from('products').update({ is_active: false }).eq('id', parsed.data);
     if (error) {
       console.error('Delete product error:', error);
       return { error: 'An unexpected error occurred. Please try again.' };
@@ -721,6 +721,27 @@ export async function updateOrderStatusAdmin(orderId: string, status: string) {
   if (!statusParsed.success) return { error: 'Invalid Status' };
 
   try {
+    const { data: order } = await supabase.from('orders').select('status').eq('id', idParsed.data).single();
+    if (!order) return { error: 'Order not found' };
+
+    const currentStatus = order.status;
+    const nextStatus = statusParsed.data;
+
+    // State machine transitions
+    const validTransitions: Record<string, string[]> = {
+      pending: ['confirmed', 'failed', 'cancelled', 'payment_verifying'],
+      payment_verifying: ['confirmed', 'failed', 'cancelled'],
+      confirmed: ['shipped', 'cancelled'],
+      shipped: ['delivered'],
+      delivered: [],
+      cancelled: [],
+      failed: []
+    };
+
+    if (currentStatus !== nextStatus && !(validTransitions[currentStatus] || []).includes(nextStatus)) {
+      return { error: `Invalid transition from ${currentStatus} to ${nextStatus}` };
+    }
+
     const { error } = await supabase.from('orders').update({ 
       status: statusParsed.data, 
       updated_at: new Date().toISOString() 

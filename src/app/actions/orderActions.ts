@@ -33,7 +33,7 @@ export async function createRazorpayOrder(data: {
     const { data: { user } } = await supabase.auth.getUser();
 
     // 1. Rate Limiting
-    const rl = rateLimit(`createRazorpayOrder:${user?.id || 'anon'}`, 5, 60_000);
+    const rl = await rateLimit(`createRazorpayOrder:${user?.id || 'anon'}`, 5, 60_000);
     if (!rl.success) return { success: false, error: 'Too many requests. Please try again later.' };
 
     // 2. Validate input schema
@@ -149,8 +149,20 @@ export async function verifyPayment(data: {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      return { success: false, error: 'Unauthorized. Admin access required.' };
+    }
+
     // Rate limit
-    const rl = rateLimit(`verifyPayment:${user?.id || 'anon'}`, 10, 60_000);
+    const rl = await rateLimit(`verifyPayment:${user?.id || 'anon'}`, 10, 60_000);
     if (!rl.success) return { success: false, error: 'Too many requests.' };
 
     const parsed = verifyPaymentSchema.safeParse(data);

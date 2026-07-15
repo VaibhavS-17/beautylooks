@@ -110,7 +110,17 @@ export async function processRestockNotifications(
 // ─────────────────────────────────────────────────────────────
 // HTML Email Template
 // ─────────────────────────────────────────────────────────────
+function escapeHtml(unsafe: string) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function generateRestockEmailTemplate(product: RestockProduct): string {
+  const safeName = escapeHtml(product.name);
   const productUrl = `${APP_URL}/products/${product.slug}`;
   const price = product.salePrice ?? product.price;
   const originalPrice = product.salePrice ? product.price : null;
@@ -122,7 +132,7 @@ function generateRestockEmailTemplate(product: RestockProduct): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${product.name} is Back In Stock!</title>
+  <title>${safeName} is Back In Stock!</title>
 </head>
 <body style="margin:0; padding:0; background-color:#f5f3ee; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f3ee;">
@@ -154,7 +164,7 @@ function generateRestockEmailTemplate(product: RestockProduct): string {
             <td style="padding:32px 32px 16px; text-align:center;">
               <img
                 src="${imageUrl}"
-                alt="${product.name}"
+                alt="${safeName}"
                 width="240"
                 style="display:block; margin:0 auto; border-radius:12px; max-width:100%; height:auto;"
               />
@@ -165,7 +175,7 @@ function generateRestockEmailTemplate(product: RestockProduct): string {
           <tr>
             <td style="padding:0 32px 24px; text-align:center;">
               <h2 style="margin:0 0 8px; color:#1a1a1a; font-size:20px; font-weight:700; font-family:Georgia,'Times New Roman',serif;">
-                ${product.name}
+                ${safeName}
               </h2>
               <p style="margin:0; font-size:24px; font-weight:800; color:#1a1a1a;">
                 ₹${price.toLocaleString('en-IN')}

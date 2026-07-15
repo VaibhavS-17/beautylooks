@@ -31,7 +31,7 @@ export async function signInWithEmail(formData: FormData) {
   }
 
   // Rate limit login attempts by email
-  const rl = rateLimit(`signIn:${parsed.data.email}`, 5, 60_000);
+  const rl = await rateLimit(`signIn:${parsed.data.email}`, 5, 60_000);
   if (!rl.success) {
     return { error: 'Too many login attempts. Please try again in a minute.' };
   }
@@ -63,7 +63,7 @@ export async function signUp(formData: FormData) {
   }
 
   // Rate limit signup attempts by email
-  const rl = rateLimit(`signUp:${parsed.data.email}`, 3, 60_000);
+  const rl = await rateLimit(`signUp:${parsed.data.email}`, 3, 60_000);
   if (!rl.success) {
     return { error: 'Too many signup attempts. Please try again later.' };
   }
@@ -118,7 +118,7 @@ export async function requestPasswordReset(formData: FormData) {
     return { error: parsed.error.issues[0]?.message || 'Invalid email address.' };
   }
 
-  const rl = rateLimit(`resetPassword:${parsed.data.email}`, 3, 60_000);
+  const rl = await rateLimit(`resetPassword:${parsed.data.email}`, 3, 60_000);
   if (!rl.success) {
     return { error: 'Too many reset requests. Please try again in a minute.' };
   }

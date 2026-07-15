@@ -13,8 +13,7 @@ export async function POST(req: Request) {
       .update(rawBody)
       .digest('hex');
 
-    // In production, verify signature strictly if webhook secret is configured
-    if (expectedSignature !== signature && process.env.NODE_ENV === 'production' && process.env.RAZORPAY_WEBHOOK_SECRET) {
+    if (expectedSignature !== signature) {
       return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 });
     }
 
