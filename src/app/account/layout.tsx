@@ -41,7 +41,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F7F3] pt-28 md:pt-32 pb-20">
+    <div className="min-h-screen bg-[#F9F7F3] pt-6 sm:pt-8 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Mobile Header / Title */}
@@ -49,7 +49,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
           <h1 className="font-display text-2xl font-bold text-[#1A1A1A]">My Account</h1>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-[#EFECE6] overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+        <div className="bg-white rounded-2xl shadow-sm border border-[#EFECE6] overflow-hidden flex flex-col md:flex-row">
           {/* Sidebar */}
           <div className="md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-[#EFECE6] bg-white">
              <AccountSidebar user={userProfile} />
