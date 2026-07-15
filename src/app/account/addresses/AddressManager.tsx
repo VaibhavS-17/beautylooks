@@ -20,6 +20,7 @@ interface AddressItem {
 export default function AddressManager({ initialAddresses }: { initialAddresses: AddressItem[] }) {
   const [addresses, setAddresses] = useState<AddressItem[]>(initialAddresses);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<AddressItem | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,14 +64,35 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
     }
   };
 
-  const handleAddAddress = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleEditClick = (addr: AddressItem) => {
+    setEditingAddress(addr);
+    setNewAddressForm({ city: addr.city, state: addr.state, pincode: addr.pincode });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenNewModal = () => {
+    setEditingAddress(null);
+    setNewAddressForm({ city: '', state: '', pincode: '' });
+    setIsModalOpen(true);
+  };
+
+  const handleAddOrUpdateAddress = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     setModalLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const res = await createAddress(formData);
+    
+    // Check if we are updating or creating
+    let res;
+    if (editingAddress?.id) {
+      // Import updateAddress if not already imported, but let's assume it's imported above. Wait! We need to make sure updateAddress is imported.
+      // We will add it to the import below, but for now we'll call it dynamically or assume it's imported.
+      res = await import('@/app/actions/accountActions').then(mod => mod.updateAddress(editingAddress.id!, formData));
+    } else {
+      res = await createAddress(formData);
+    }
 
     if (res.error) {
       setError(res.error);
@@ -81,7 +103,7 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
       setNewAddressForm({ city: '', state: '', pincode: '' });
       
       if (res.data) {
-        const newAddr: AddressItem = {
+        const savedAddr: AddressItem = {
           id: res.data.id,
           label: res.data.label,
           fullName: res.data.full_name,
@@ -95,12 +117,18 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
         };
         
         setAddresses(prev => {
-          const updated = newAddr.isDefault 
+          let updated = savedAddr.isDefault 
             ? prev.map(a => ({ ...a, isDefault: false })) 
             : prev;
-          return [newAddr, ...updated];
+            
+          if (editingAddress?.id) {
+            return updated.map(a => a.id === savedAddr.id ? savedAddr : a);
+          } else {
+            return [savedAddr, ...updated];
+          }
         });
       }
+      setEditingAddress(null);
     }
   };
 
@@ -114,7 +142,7 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
           <p className="text-xs text-[#8A8177] mt-0.5 font-light">Manage your saved delivery destinations.</p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleOpenNewModal}
           className="w-full sm:w-auto px-4 py-2 bg-[#9A7B2F] hover:bg-[#1C1917] text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm shrink-0"
         >
           <Plus size={14} />
@@ -134,7 +162,7 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
             </p>
           </div>
           <button 
-            onClick={() => setIsModalOpen(true)} 
+            onClick={handleOpenNewModal} 
             className="btn-gold text-sm inline-block py-2.5 px-6 shadow-sm"
           >
             Add shipping address
@@ -163,15 +191,23 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
                 <span className="block pt-1">📞 +91 {addr.phone}</span>
               </div>
 
-              <div className="flex justify-between items-center border-t border-[#EFECE6] pt-3 text-xs">
+              <div className="flex justify-between items-center border-t border-[#EFECE6] pt-3 text-xs mt-2">
                 <span className="text-[#9A7B2F] font-semibold">Verified Address</span>
-                <button 
-                  onClick={() => handleDeleteAddress(addr.id)} 
-                  className="text-[#C62828] hover:text-red-700 font-semibold flex items-center space-x-1"
-                >
-                  <Trash2 size={12} />
-                  <span>Remove</span>
-                </button>
+                <div className="flex items-center space-x-4">
+                  <button 
+                    onClick={() => handleEditClick(addr)}
+                    className="text-[#9A7B2F] hover:text-[#7A6125] font-semibold flex items-center space-x-1"
+                  >
+                    <span>Edit</span>
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteAddress(addr.id)} 
+                    className="text-[#C62828] hover:text-red-700 font-semibold flex items-center space-x-1"
+                  >
+                    <Trash2 size={12} />
+                    <span>Remove</span>
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -183,7 +219,7 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
           <div className="bg-white border border-[#EFECE6] w-full max-w-lg rounded-2xl shadow-xl overflow-hidden text-left relative flex flex-col max-h-[90vh]">
             <div className="p-6 border-b border-[#EFECE6] flex justify-between items-center bg-[#FCFBF9]">
               <div>
-                <h3 className="font-display font-semibold text-lg text-[#9A7B2F] tracking-wide">Add New Address</h3>
+                <h3 className="font-display font-semibold text-lg text-[#9A7B2F] tracking-wide">{editingAddress ? 'Edit Address' : 'Add New Address'}</h3>
                 <p className="text-xs text-[#4E463F] mt-0.5">Please provide your valid shipping details</p>
               </div>
               <button 
@@ -200,11 +236,11 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
               </div>
             )}
 
-            <form onSubmit={handleAddAddress} className="flex-1 overflow-y-auto p-6 space-y-4">
+            <form onSubmit={handleAddOrUpdateAddress} className="flex-1 overflow-y-auto p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col col-span-2">
                   <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">Address Label</label>
-                  <select name="label" defaultValue="Home" className="w-full input-dark text-sm py-2">
+                  <select name="label" defaultValue={editingAddress?.label || "Home"} className="w-full input-dark text-sm py-2">
                     <option value="Home">Home</option>
                     <option value="Office">Office / Work</option>
                     <option value="Other">Other</option>
@@ -213,18 +249,18 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
 
                 <div className="flex flex-col col-span-2">
                   <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">Full Name</label>
-                  <input type="text" name="fullName" placeholder="e.g. Priya Sharma" required className="w-full input-dark text-sm py-2" />
+                  <input type="text" name="fullName" defaultValue={editingAddress?.fullName} placeholder="e.g. Priya Sharma" required className="w-full input-dark text-sm py-2" />
                 </div>
 
                 <div className="flex flex-col col-span-2">
                   <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">Phone Number</label>
-                  <input type="tel" name="phone" placeholder="e.g. 9876543210" required className="w-full input-dark text-sm py-2" />
+                  <input type="tel" name="phone" defaultValue={editingAddress?.phone} placeholder="e.g. 9876543210" required className="w-full input-dark text-sm py-2" />
                 </div>
 
                 <div className="flex flex-col col-span-2">
                   <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">Street Address</label>
-                  <input type="text" name="line1" placeholder="Flat, House no., Building, Company" required className="w-full input-dark text-sm py-2 mb-2" />
-                  <input type="text" name="line2" placeholder="Area, Colony, Street, Sector" className="w-full input-dark text-sm py-2" />
+                  <input type="text" name="line1" defaultValue={editingAddress?.line1} placeholder="Flat, House no., Building, Company" required className="w-full input-dark text-sm py-2 mb-2" />
+                  <input type="text" name="line2" defaultValue={editingAddress?.line2} placeholder="Area, Colony, Street, Sector" className="w-full input-dark text-sm py-2" />
                 </div>
 
                 <div className="flex flex-col col-span-2 relative">
@@ -248,7 +284,7 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
                 </div>
 
                 <div className="flex items-center space-x-2 col-span-2 mt-2">
-                  <input type="checkbox" name="isDefault" id="isDefault" className="rounded border-[#EFECE6] text-[#C9A94E] focus:ring-[#C9A94E]" />
+                  <input type="checkbox" name="isDefault" id="isDefault" defaultChecked={editingAddress?.isDefault} className="rounded border-[#EFECE6] text-[#C9A94E] focus:ring-[#C9A94E]" />
                   <label htmlFor="isDefault" className="text-sm text-[#5C554D]">Set as default shipping address</label>
                 </div>
               </div>
@@ -259,7 +295,7 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
                 </button>
                 <button type="submit" disabled={modalLoading} className="btn-gold py-2 px-6 shadow-sm flex items-center space-x-2">
                   {modalLoading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
-                  <span>Save Address</span>
+                  <span>{editingAddress ? 'Update Address' : 'Save Address'}</span>
                 </button>
               </div>
             </form>

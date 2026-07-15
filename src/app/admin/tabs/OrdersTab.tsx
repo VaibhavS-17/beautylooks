@@ -255,8 +255,8 @@ export default function OrdersTab({
                                   <div className="text-xs text-[#1C1917] space-y-0.5 bg-white rounded-xl p-3 border border-[#EFECE6]">
                                     <p className="font-semibold">{addr.fullName || addr.full_name || '—'}</p>
                                     {(addr.phone) && <p className="text-[#8A8177]">📱 {addr.phone}</p>}
-                                    <p>{addr.line1 || addr.address_line1 || '—'}</p>
-                                    {(addr.line2 || addr.address_line2) && <p>{addr.line2 || addr.address_line2}</p>}
+                                    <p>{addr.line1 || addr.addressLine1 || addr.address_line1 || '—'}</p>
+                                    {(addr.line2 || addr.addressLine2 || addr.address_line2) && <p>{addr.line2 || addr.addressLine2 || addr.address_line2}</p>}
                                     <p>
                                       {addr.city || '—'}, {addr.state || '—'} — {addr.pincode || addr.zip || '—'}
                                     </p>

@@ -201,6 +201,15 @@ function CheckoutContent() {
       return;
     }
 
+    if (!formData.fullName || !formData.phone || !formData.addressLine1 || !formData.city || !formData.state || !formData.pincode || !formData.email) {
+      setErrorMessage('Please complete all required shipping and contact fields before proceeding.');
+      setIsProcessing(false);
+      
+      // Auto-scroll to the top so the user can see what's missing
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     try {
       const orderItems = checkoutItems.map(item => ({ productId: item.product.id, quantity: item.quantity }));
       const res = await createRazorpayOrder({ 
