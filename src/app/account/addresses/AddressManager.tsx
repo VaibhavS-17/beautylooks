@@ -260,7 +260,7 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
                 <div className="flex flex-col col-span-2">
                   <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">Street Address</label>
                   <input type="text" name="line1" defaultValue={editingAddress?.line1} placeholder="Flat, House no., Building, Company" required className="w-full input-dark text-sm py-2 mb-2" />
-                  <input type="text" name="line2" defaultValue={editingAddress?.line2} placeholder="Area, Colony, Street, Sector" className="w-full input-dark text-sm py-2" />
+                  <input type="text" name="line2" defaultValue={editingAddress?.line2} placeholder="Area, Colony, Street, Sector" required className="w-full input-dark text-sm py-2" />
                 </div>
 
                 <div className="flex flex-col col-span-2 relative">

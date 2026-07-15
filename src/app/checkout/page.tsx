@@ -201,7 +201,7 @@ function CheckoutContent() {
       return;
     }
 
-    if (!formData.fullName || !formData.phone || !formData.addressLine1 || !formData.city || !formData.state || !formData.pincode || !formData.email) {
+    if (!formData.fullName || !formData.phone || !formData.addressLine1 || !formData.addressLine2 || !formData.city || !formData.state || !formData.pincode || !formData.email) {
       setErrorMessage('Please complete all required shipping and contact fields before proceeding.');
       setIsProcessing(false);
       
@@ -490,8 +490,8 @@ function CheckoutContent() {
                       <input type="text" name="addressLine1" value={formData.addressLine1} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
                     </div>
                     <div className="flex flex-col sm:col-span-2">
-                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Apartment, Suite, etc. (Optional)</label>
-                      <input type="text" name="addressLine2" value={formData.addressLine2} onChange={handleInputChange} className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Area, Colony, Street, Sector *</label>
+                      <input type="text" name="addressLine2" value={formData.addressLine2} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
                     </div>
                     <div className="flex flex-col">
                       <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">City *</label>

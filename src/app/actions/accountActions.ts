@@ -9,7 +9,7 @@ const addressSchema = z.object({
   fullName: z.string().min(1, 'Full name is required.').max(100),
   phone: z.string().min(10, 'Valid phone number is required.').max(15),
   line1: z.string().min(1, 'Address line 1 is required.').max(200),
-  line2: z.string().max(200).nullable().optional(),
+  line2: z.string().min(1, 'Address line 2 is required.').max(200),
   city: z.string().min(1, 'City is required.').max(100),
   state: z.string().min(1, 'State is required.').max(100),
   pincode: z.string().min(6, 'Valid pincode is required.').max(10),
