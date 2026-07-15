@@ -227,7 +227,7 @@ export async function recordPaymentFailure(data: { order_id: string; reason?: st
   if (!orderId) return { success: false, error: 'Order ID is required.' };
 
   try {
-    const { error } = await supabase
+    const { error } = await adminClient
       .from('orders')
       .update({
         status: 'failed',
