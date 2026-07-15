@@ -72,7 +72,7 @@ function CheckoutContent() {
 
   // Pricing Logic
   const totalPrice = isBuyNow 
-    ? (buyNowItem ? (buyNowItem.product.salePrice || buyNowItem.product.price) * buyNowItem.quantity : 0)
+    ? (buyNowItem ? (buyNowItem.product.salePrice ?? buyNowItem.product.price) * buyNowItem.quantity : 0)
     : getCartTotalPrice();
     
   const shippingCharge = totalPrice >= 499 ? 0 : 49;
@@ -609,7 +609,7 @@ function CheckoutContent() {
                           <span className="block text-[10px] text-text-muted uppercase tracking-widest font-semibold">Qty: {item.quantity}</span>
                         </div>
                       </div>
-                      <span className="font-medium text-text-main">{formatPrice((item.product.salePrice || item.product.price) * item.quantity)}</span>
+                      <span className="font-medium text-text-main">{formatPrice((item.product.salePrice ?? item.product.price) * item.quantity)}</span>
                     </div>
                   ))}
                 </div>

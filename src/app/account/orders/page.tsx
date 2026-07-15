@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import { formatPrice } from '@/lib/data';
 import { Package, ChevronLeft } from 'lucide-react';
 import { OrderFilter } from '@/components/shared/InvoicePrintView';
+import ReorderButton from './ReorderButton';
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ status?: string, range?: string }> }) {
   const resolvedSearchParams = await searchParams;
@@ -120,7 +121,10 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                   <span className="text-[#706A60]">Total amount</span>
                   <span className="text-sm font-bold text-[#9A7B2F]">{formatPrice(order.total_amount)}</span>
                 </div>
-                <span className="text-[#9A7B2F] font-medium text-xs group-hover:underline">View Details →</span>
+                <div className="flex items-center space-x-4">
+                  <ReorderButton orderItems={order.order_items} />
+                  <span className="text-[#9A7B2F] font-medium text-xs group-hover:underline">View Details →</span>
+                </div>
               </div>
             </Link>
           ))

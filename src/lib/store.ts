@@ -186,6 +186,10 @@ export const useCartStore = create<CartState>()(
         set((state) => {
           const existingItem = state.items.find(i => i.product.id === productId);
           if (existingItem && quantity > existingItem.product.stockQuantity) {
+            if (existingItem.product.stockQuantity <= 0) {
+              toast.error("This product is out of stock", { id: `stock-limit-${existingItem.product.id}` });
+              return { items: state.items.filter(item => item.product.id !== productId) };
+            }
             const noun = existingItem.product.stockQuantity === 1 ? 'item' : 'items';
             toast.error(`Only ${existingItem.product.stockQuantity} ${noun} available in stock`, { id: `stock-limit-${existingItem.product.id}` });
             return {
@@ -215,7 +219,7 @@ export const useCartStore = create<CartState>()(
 
       getTotalPrice: () => {
         return get().items.reduce((total, item) => {
-          const price = item.product.salePrice || item.product.price;
+          const price = item.product.salePrice ?? item.product.price;
           return total + price * item.quantity;
         }, 0);
       },

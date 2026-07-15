@@ -616,7 +616,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                           </div>
                         </Link>
 
-                        <div className="p-3 sm:p-5 flex flex-col flex-grow bg-white">
+                        <div className="p-2.5 sm:p-5 flex flex-col flex-grow bg-white">
                           <div className="flex justify-between items-start mb-2">
                             <div className="w-full">
                               <span className="text-[10px] font-bold text-accent tracking-widest uppercase block mb-1">
@@ -670,10 +670,10 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                               addItem(product, 1);
                             }}
                             disabled={product.stockQuantity === 0}
-                            className={`w-full mt-5 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all border ${
+                            className={`w-full mt-5 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all ${
                               product.stockQuantity > 0
-                                ? 'bg-black text-white hover:bg-accent hover:border-accent hover:shadow-gold'
-                                : 'bg-border text-text-muted cursor-not-allowed border-transparent'
+                                ? 'bg-accent text-white shadow-md rounded-lg hover:bg-black'
+                                : 'bg-border text-text-muted cursor-not-allowed rounded-lg'
                             }`}
                           >
                             {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}

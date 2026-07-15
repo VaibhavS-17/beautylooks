@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@/lib/supabase/server';
-
+import { createAdminClient } from '@/lib/supabase/admin';
 export async function POST(req: Request) {
   try {
     const rawBody = await req.text();
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     if (event === 'payment.failed') {
       const razorpayOrderId = payload.payload?.payment?.entity?.order_id;
       if (razorpayOrderId) {
-        const supabase = await createClient();
+        const supabase = createAdminClient();
         await supabase
           .from('orders')
           .update({

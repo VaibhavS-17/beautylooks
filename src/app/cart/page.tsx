@@ -64,7 +64,7 @@ export default function CartPage() {
             <div className="lg:col-span-8 space-y-6">
               <div className="space-y-3 sm:space-y-0 sm:divide-y sm:divide-border sm:bg-white sm:rounded-2xl sm:border sm:border-border sm:overflow-hidden sm:shadow-xs">
                 {items.map((item) => {
-                  const itemPrice = item.product.salePrice || item.product.price;
+                  const itemPrice = item.product.salePrice ?? item.product.price;
                   const originalPrice = item.product.price;
                   const hasDiscount = item.product.salePrice !== null && item.product.salePrice < originalPrice;
                   const discountPercent = hasDiscount ? Math.round(((originalPrice - itemPrice) / originalPrice) * 100) : 0;

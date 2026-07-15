@@ -44,7 +44,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
   return (
     <div className="w-full bg-primary overflow-hidden">
       {/* ================= HERO SECTION ================= */}
-      <section className="relative w-full h-[90vh] flex items-center justify-center bg-[#111]">
+      <section className="relative w-full h-[65vh] sm:h-[80vh] flex items-center justify-center bg-[#111]">
         <div className="absolute inset-0 z-0">
           <Image
             src={heroImageUrl}
@@ -114,7 +114,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
           <div className="w-12 h-px bg-accent mx-auto" />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
           {categories.map((category) => (
             <Link
               href={`/products?category=${category.slug}`}
@@ -199,7 +199,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                       </div>
                     </Link>
 
-                    <div className="p-3 sm:p-5 flex flex-col flex-grow">
+                    <div className="p-2.5 sm:p-5 flex flex-col flex-grow">
                       <div className="flex justify-between items-start mb-2">
                         <div className="w-full">
                           <span className="text-[10px] font-semibold text-accent tracking-widest uppercase block mb-1">
@@ -250,10 +250,10 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                             setNotifyProduct({ id: product.id, name: product.name });
                           }
                         }}
-                        className={`w-full mt-4 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all border ${
+                        className={`w-full mt-4 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all ${
                           product.stockQuantity > 0
-                            ? 'bg-black text-white hover:bg-accent hover:border-accent hover:shadow-gold'
-                            : 'bg-accent text-white hover:bg-black border-accent hover:border-black'
+                            ? 'bg-accent text-white shadow-md rounded-lg hover:bg-black'
+                            : 'bg-black text-white shadow-md rounded-lg hover:bg-gray-800'
                         }`}
                       >
                         {product.stockQuantity > 0 ? 'Add to Cart' : 'Notify Me'}

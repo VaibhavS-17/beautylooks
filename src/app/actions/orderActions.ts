@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { rateLimit } from '@/lib/rate-limit';
@@ -50,15 +51,19 @@ export async function createRazorpayOrder(data: {
     const productIds = parsed.data.items.map(item => item.productId);
     const { data: products } = await supabase
       .from('products')
-      .select('id, price, sale_price')
+      .select('id, price, sale_price, stock_quantity')
       .in('id', productIds);
 
     let calculatedTotal = 0;
-    parsed.data.items.forEach(item => {
+    for (const item of parsed.data.items) {
       const product = products?.find(p => p.id === item.productId);
-      const unitPrice = product?.sale_price || product?.price || 0;
+      if (!product) return { success: false, error: 'Product not found.' };
+      if (item.quantity > product.stock_quantity) {
+        return { success: false, error: 'Insufficient stock for one or more items.' };
+      }
+      const unitPrice = product.sale_price ?? product.price ?? 0;
       calculatedTotal += unitPrice * item.quantity;
-    });
+    }
 
     // 4. Apply 2% discount for UPI
     let finalAmount = calculatedTotal;
@@ -106,7 +111,7 @@ export async function createRazorpayOrder(data: {
           order_id: order.id,
           product_id: item.productId,
           quantity: item.quantity,
-          unit_price: product?.sale_price || product?.price || 0,
+          unit_price: product?.sale_price ?? product?.price ?? 0,
         };
       });
       await supabase.from('order_items').insert(orderItemsToInsert);
@@ -177,8 +182,10 @@ export async function verifyPayment(data: {
       return { success: false, error: 'Order not found.' };
     }
     
+    const adminClient = createAdminClient();
+    
     // 3. Update order to confirmed
-    const { error } = await supabase
+    const { error } = await adminClient
       .from('orders')
       .update({
         status: 'confirmed',
@@ -192,26 +199,17 @@ export async function verifyPayment(data: {
     }
 
     // 4. Decrement stock
-    const { data: orderItems } = await supabase
+    const { data: orderItems } = await adminClient
       .from('order_items')
       .select('product_id, quantity')
       .eq('order_id', parsed.data.order_id);
 
     if (orderItems && orderItems.length > 0) {
       for (const item of orderItems) {
-        const { data: product } = await supabase
-          .from('products')
-          .select('stock_quantity')
-          .eq('id', item.product_id)
-          .single();
-
-        if (product) {
-          const newStock = Math.max(0, product.stock_quantity - item.quantity);
-          await supabase
-            .from('products')
-            .update({ stock_quantity: newStock, updated_at: new Date().toISOString() })
-            .eq('id', item.product_id);
-        }
+        await adminClient.rpc('decrement_stock', {
+          p_product_id: item.product_id,
+          p_quantity: item.quantity
+        });
       }
     }
 
@@ -224,7 +222,7 @@ export async function verifyPayment(data: {
 }
 
 export async function recordPaymentFailure(data: { order_id: string; reason?: string } | string) {
-  const supabase = await createClient();
+  const adminClient = createAdminClient();
   const orderId = typeof data === 'string' ? data : data.order_id;
   if (!orderId) return { success: false, error: 'Order ID is required.' };
 

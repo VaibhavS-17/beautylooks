@@ -43,7 +43,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
         .from('products')
         .select('id, name, slug, price, sale_price, images, brand, categories(name)')
         .eq('is_active', true)
-        .or(`name.ilike.%${debouncedSearchVal}%,brand.ilike.%${debouncedSearchVal}%,short_description.ilike.%${debouncedSearchVal}%`)
+        .textSearch('name', debouncedSearchVal, { type: 'websearch' })
         .limit(6);
 
       if (isMounted) {
@@ -279,6 +279,16 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
           </div>
         </div>
 
+        {/* Mobile Search Bar (Visible only on mobile) */}
+        <div className="md:hidden px-4 pb-3">
+          <button 
+            onClick={() => setIsSearchOpen(true)}
+            className="w-full relative flex items-center bg-white border border-[var(--color-border)] rounded-lg pl-3 pr-4 py-2.5 text-sm text-[var(--color-text-muted)] focus:outline-none shadow-sm"
+          >
+            <Search size={16} className="text-[var(--color-text-muted)] mr-2" />
+            <span className="font-light">Search products, brands...</span>
+          </button>
+        </div>
         {/* Perks Bar — fills the empty space near logo on wider screens */}
         <div className="hidden lg:block border-t border-[var(--color-border)] bg-[var(--color-secondary)]/50 rounded-b-2xl">
           <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">

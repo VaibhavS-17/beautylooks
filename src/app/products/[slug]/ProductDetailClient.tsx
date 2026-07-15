@@ -149,6 +149,7 @@ export default function ProductDetailClient({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
+  const [isSubscription, setIsSubscription] = useState(false);
   const fallbackProductImage = '/images/products/facial-kit-1.png';
   
   // Simulated Scarcity/Urgency logic
@@ -493,7 +494,7 @@ export default function ProductDetailClient({
 
 
             {/* Badges/Info */}
-            <div className="flex flex-wrap gap-3 mb-8">
+            <div className="flex flex-wrap gap-3 mb-6">
               <div className="border border-border rounded-full px-4 py-2 text-[10px] uppercase tracking-widest font-semibold text-text-main">
                 Skin Type: {product.skinType}
               </div>
@@ -502,6 +503,38 @@ export default function ProductDetailClient({
               }`}>
                 {product.stockQuantity > 0 ? 'In Stock' : 'Out of Stock'}
               </div>
+            </div>
+
+            {/* Subscribe & Save Mockup */}
+            <div className="mb-8 border border-border/60 rounded-xl overflow-hidden bg-[#FCFBF9]">
+              <label className={`flex items-start p-4 cursor-pointer transition-colors ${!isSubscription ? 'bg-[#F4F1EB] border-b border-border/60' : ''}`}>
+                <div className="flex-shrink-0 mt-0.5">
+                  <input type="radio" name="purchaseType" checked={!isSubscription} onChange={() => setIsSubscription(false)} className="w-4 h-4 text-accent border-border/60 focus:ring-accent" />
+                </div>
+                <div className="ml-3 flex-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-bold text-text-main">One-time purchase</span>
+                    <span className="text-sm font-semibold text-text-main">
+                      {formatPrice(product.salePrice ?? product.price)}
+                    </span>
+                  </div>
+                </div>
+              </label>
+              
+              <label className={`flex items-start p-4 cursor-pointer transition-colors ${isSubscription ? 'bg-[#F4F1EB]' : ''}`}>
+                <div className="flex-shrink-0 mt-0.5">
+                  <input type="radio" name="purchaseType" checked={isSubscription} onChange={() => setIsSubscription(true)} className="w-4 h-4 text-accent border-border/60 focus:ring-accent" />
+                </div>
+                <div className="ml-3 flex-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-bold text-text-main">Subscribe & Save 15%</span>
+                    <span className="text-sm font-semibold text-text-main">
+                      {formatPrice((product.salePrice ?? product.price) * 0.85)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-muted mt-1">Deliver every 1, 2, or 3 months. Cancel anytime.</p>
+                </div>
+              </label>
             </div>
 
             {/* Urgency & Scarcity Elements */}
