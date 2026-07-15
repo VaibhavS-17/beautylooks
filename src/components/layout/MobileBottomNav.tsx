@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Tag, ShoppingBag, Heart, User } from 'lucide-react';
+import { Home, Search, Heart, User, ShoppingBag, Tag } from 'lucide-react';
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
 
@@ -21,10 +21,14 @@ export default function MobileBottomNav() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       setIsLoggedIn(!!user);
+      if (user) useWishlistStore.getState().syncWithDB();
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session?.user);
+      if (session?.user && _event === 'SIGNED_IN') {
+        useWishlistStore.getState().syncWithDB();
+      }
     });
 
     return () => subscription.unsubscribe();

@@ -38,7 +38,7 @@ export default async function AdminDashboardPage() {
   const { data: revenueData } = await supabase
     .from('orders')
     .select('total_amount')
-    .not('status', 'eq', 'cancelled');
+    .in('status', ['confirmed', 'shipped', 'delivered']);
 
   const grossRevenue = (revenueData || []).reduce((sum, item) => sum + Number(item.total_amount), 0);
 
@@ -190,6 +190,11 @@ export default async function AdminDashboardPage() {
     productImage: r.products?.images?.[0] || null
   }));
 
+  const { data: discountCodesData } = await supabase
+    .from('discount_codes')
+    .select('*')
+    .order('created_at', { ascending: false });
+
   return (
     <AdminClient 
       stats={stats} 
@@ -199,6 +204,7 @@ export default async function AdminDashboardPage() {
       products={mappedAdminProducts}
       blogPosts={blogPosts || []}
       reviews={mappedReviews}
+      discountCodes={discountCodesData || []}
       siteSettings={siteSettings || {
         hero_title: 'Unveil Your Radiance',
         hero_subtitle: 'The Autumn Collection',

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
   LayoutDashboard, ShoppingBag, Package, Tag, Award, FileText, Settings, HelpCircle,
-  Loader2, Check, X, Globe, ArrowUpRight, Menu, MessageSquare, Star
+  Loader2, Check, X, Globe, ArrowUpRight, Menu, MessageSquare, Star, Percent
 } from 'lucide-react';
 import { 
   createProduct, updateProduct, deleteProductAdmin,
@@ -102,6 +102,7 @@ interface AdminClientProps {
   products: AdminProduct[];
   blogPosts: BlogItem[];
   reviews: AdminReview[];
+  discountCodes: any[];
   siteSettings: {
     hero_title: string;
     hero_subtitle: string;
@@ -113,7 +114,7 @@ interface AdminClientProps {
   };
 }
 
-type TabType = 'dashboard' | 'orders' | 'products' | 'faqs' | 'categories' | 'brands' | 'blogs' | 'reviews' | 'settings';
+type TabType = 'dashboard' | 'orders' | 'products' | 'faqs' | 'categories' | 'brands' | 'blogs' | 'reviews' | 'discounts' | 'settings';
 
 // Dynamic imports of heavy components to optimize compilation speeds
 const TabLoader = () => (
@@ -142,10 +143,11 @@ const CategoriesTab = dynamic(() => import('./tabs/CategoriesTab'), { ssr: false
 const BrandsTab = dynamic(() => import('./tabs/BrandsTab'), { ssr: false, loading: TabLoader });
 const BlogsTab = dynamic(() => import('./tabs/BlogsTab'), { ssr: false, loading: TabLoader });
 const ReviewsTab = dynamic(() => import('./tabs/ReviewsTab'), { ssr: false, loading: TabLoader });
+const DiscountsTab = dynamic(() => import('./tabs/DiscountsTab'), { ssr: false, loading: TabLoader });
 const SettingsTab = dynamic(() => import('./tabs/SettingsTab'), { ssr: false, loading: TabLoader });
 
 export default function AdminClient({ 
-  stats, recentOrders: initialOrders, categories: initialCategories, brands: initialBrands, products: initialProducts, blogPosts: initialBlogs, reviews: initialReviews = [], siteSettings 
+  stats, recentOrders: initialOrders, categories: initialCategories, brands: initialBrands, products: initialProducts, blogPosts: initialBlogs, reviews: initialReviews = [], discountCodes: initialDiscountCodes = [], siteSettings 
 }: AdminClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -155,7 +157,7 @@ export default function AdminClient({
 
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab') as TabType;
-    if (tabFromUrl && ['dashboard', 'orders', 'products', 'faqs', 'categories', 'brands', 'blogs', 'reviews', 'settings'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['dashboard', 'orders', 'products', 'faqs', 'categories', 'brands', 'blogs', 'reviews', 'discounts', 'settings'].includes(tabFromUrl)) {
       setActiveTabState(tabFromUrl);
     }
   }, [searchParams]);
@@ -180,6 +182,7 @@ export default function AdminClient({
   const [products, setProducts] = useState<AdminProduct[]>(initialProducts);
   const [blogPosts, setBlogPosts] = useState<BlogItem[]>(initialBlogs);
   const [reviews, setReviews] = useState<AdminReview[]>(initialReviews);
+  const [discountCodes, setDiscountCodes] = useState<any[]>(initialDiscountCodes);
 
   // Sync state if server props update
   useEffect(() => { setOrders(initialOrders); }, [initialOrders]);
@@ -188,6 +191,7 @@ export default function AdminClient({
   useEffect(() => { setProducts(initialProducts); }, [initialProducts]);
   useEffect(() => { setBlogPosts(initialBlogs); }, [initialBlogs]);
   useEffect(() => { setReviews(initialReviews); }, [initialReviews]);
+  useEffect(() => { setDiscountCodes(initialDiscountCodes); }, [initialDiscountCodes]);
 
   const [loading, setLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -444,6 +448,7 @@ export default function AdminClient({
               { id: 'categories', label: 'Categories', icon: Tag, count: categories.length },
               { id: 'brands', label: 'Brands', icon: Award, count: brands.length },
               { id: 'blogs', label: 'Journal', icon: FileText, count: blogPosts.length },
+              { id: 'discounts', label: 'Discounts', icon: Percent, count: discountCodes.length },
               { id: 'settings', label: 'Store Settings', icon: Settings, count: null },
             ].map(tab => {
               const Icon = tab.icon;
@@ -575,6 +580,12 @@ export default function AdminClient({
               reviews={reviews}
               deletingReviewId={deletingReviewId}
               handleDeleteReview={handleDeleteReview}
+            />
+          )}
+
+          {activeTab === 'discounts' && (
+            <DiscountsTab
+              discountCodes={discountCodes}
             />
           )}
 

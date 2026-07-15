@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { rateLimit } from '@/lib/rate-limit';
+import { validateDiscountCode } from './discountActions';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 
@@ -20,12 +21,14 @@ const createOrderSchema = z.object({
   })).min(1, 'Order must contain at least one item'),
   shippingAddress: z.any(),
   paymentMethod: z.enum(['upi', 'standard']),
+  discountCode: z.string().optional(),
 });
 
 export async function createRazorpayOrder(data: {
   items: Array<{ productId: string; quantity: string | number }>;
   shippingAddress: any;
   paymentMethod: 'upi' | 'standard';
+  discountCode?: string;
 }) {
   const supabase = await createClient();
 
@@ -41,6 +44,7 @@ export async function createRazorpayOrder(data: {
       items: data.items.map(i => ({ productId: i.productId, quantity: Number(i.quantity) })),
       shippingAddress: data.shippingAddress,
       paymentMethod: data.paymentMethod,
+      discountCode: data.discountCode,
     };
     const parsed = createOrderSchema.safeParse(rawData);
     if (!parsed.success) {
@@ -65,10 +69,24 @@ export async function createRazorpayOrder(data: {
       calculatedTotal += unitPrice * item.quantity;
     }
 
+    const shippingCharge = calculatedTotal >= 499 ? 0 : 49;
+    let baseFinal = calculatedTotal + shippingCharge;
+
+    // Apply Coupon Code if valid
+    let couponDiscountAmount = 0;
+    if (parsed.data.discountCode) {
+      const discountCheck = await validateDiscountCode(parsed.data.discountCode);
+      if (discountCheck.success && discountCheck.discount) {
+        couponDiscountAmount = baseFinal * (discountCheck.discount.discount_percent / 100);
+      }
+    }
+
     // 4. Apply 2% discount for UPI
-    let finalAmount = calculatedTotal;
+    let finalAmount = baseFinal - couponDiscountAmount;
+    let upiDiscount = 0;
     if (parsed.data.paymentMethod === 'upi') {
-      finalAmount = calculatedTotal * 0.98; // 2% discount
+      upiDiscount = finalAmount * 0.02; // 2% discount
+      finalAmount = finalAmount - upiDiscount;
     }
 
     // Razorpay expects amount in paise (multiply by 100)

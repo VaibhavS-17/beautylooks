@@ -9,6 +9,7 @@ import { ArrowLeft, CheckCircle2, ShieldCheck, Loader2, MapPin, Smartphone, Cred
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
 import { createRazorpayOrder, verifyPayment, recordPaymentFailure } from '@/app/actions/orderActions';
+import { validateDiscountCode } from '@/app/actions/discountActions';
 import { createAddress, updateAddress, deleteAddress } from '@/app/actions/accountActions';
 import { createClient } from '@/lib/supabase/client';
 
@@ -70,6 +71,12 @@ function CheckoutContent() {
   const [modalError, setModalError] = useState<string | null>(null);
   const [showManualForm, setShowManualForm] = useState(false);
 
+  // Discount Codes
+  const [discountCodeInput, setDiscountCodeInput] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState<{code: string, percent: number} | null>(null);
+  const [discountError, setDiscountError] = useState('');
+  const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
+
   // Pricing Logic
   const totalPrice = isBuyNow 
     ? (buyNowItem ? (buyNowItem.product.salePrice ?? buyNowItem.product.price) * buyNowItem.quantity : 0)
@@ -77,8 +84,41 @@ function CheckoutContent() {
     
   const shippingCharge = totalPrice >= 499 ? 0 : 49;
   const baseFinalTotal = totalPrice + shippingCharge;
-  const discountAmount = paymentMethod === 'upi' ? baseFinalTotal * 0.02 : 0;
-  const finalTotal = baseFinalTotal - discountAmount;
+  const couponDiscountAmount = appliedDiscount ? baseFinalTotal * (appliedDiscount.percent / 100) : 0;
+  
+  const totalAfterCoupon = baseFinalTotal - couponDiscountAmount;
+  const upiDiscountAmount = paymentMethod === 'upi' ? totalAfterCoupon * 0.02 : 0;
+  
+  const finalTotal = totalAfterCoupon - upiDiscountAmount;
+
+  const handleApplyDiscount = async () => {
+    if (!discountCodeInput.trim()) {
+      setDiscountError('Please enter a code');
+      return;
+    }
+    setIsApplyingDiscount(true);
+    setDiscountError('');
+    try {
+      const res = await validateDiscountCode(discountCodeInput.trim());
+      if (res.error) {
+        setDiscountError(res.error);
+        setAppliedDiscount(null);
+      } else if (res.success && res.discount) {
+        setAppliedDiscount({ code: res.discount.code, percent: res.discount.discount_percent });
+        setDiscountError('');
+      }
+    } catch (err) {
+      setDiscountError('Failed to apply discount');
+    } finally {
+      setIsApplyingDiscount(false);
+    }
+  };
+
+  const removeDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCodeInput('');
+    setDiscountError('');
+  };
 
   const indianStates = [
     'Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu', 'Gujarat',
@@ -215,7 +255,8 @@ function CheckoutContent() {
       const res = await createRazorpayOrder({ 
         items: orderItems, 
         shippingAddress: formData,
-        paymentMethod 
+        paymentMethod,
+        discountCode: appliedDiscount?.code
       });
 
       if (!res.success || !res.razorpayOrderId) {
@@ -617,14 +658,56 @@ function CheckoutContent() {
                   <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(totalPrice)}</span></div>
                   <div className="flex justify-between"><span>Shipping</span><span>{totalPrice >= 499 ? 'Complimentary' : formatPrice(shippingCharge)}</span></div>
                   
-                  {/* Dynamic Discount Row */}
+                  {/* Dynamic Discount Rows */}
+                  {appliedDiscount && (
+                    <div className="flex justify-between text-[#16a34a] font-medium">
+                      <span>Coupon ({appliedDiscount.code})</span>
+                      <span>- {formatPrice(couponDiscountAmount)}</span>
+                    </div>
+                  )}
                   {paymentMethod === 'upi' && (
                     <div className="flex justify-between text-[#16a34a] font-medium">
                       <span>UPI 2% Discount</span>
-                      <span>- {formatPrice(discountAmount)}</span>
+                      <span>- {formatPrice(upiDiscountAmount)}</span>
                     </div>
                   )}
                 </div>
+                
+                {/* Apply Coupon Section */}
+                <div className="border-t border-border pt-6">
+                  <h4 className="text-sm font-semibold text-text-main mb-3">Apply Coupon</h4>
+                  {appliedDiscount ? (
+                    <div className="flex items-center justify-between bg-green-50/50 border border-green-200 p-3 rounded-xl">
+                      <div className="flex items-center space-x-2 text-green-700">
+                        <CheckCircle2 size={16} />
+                        <span className="text-sm font-medium">{appliedDiscount.code} applied</span>
+                      </div>
+                      <button type="button" onClick={removeDiscount} className="text-xs text-red-500 hover:text-red-600 font-medium">Remove</button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex space-x-2">
+                        <input
+                          type="text"
+                          value={discountCodeInput}
+                          onChange={(e) => setDiscountCodeInput(e.target.value.toUpperCase())}
+                          placeholder="Enter code"
+                          className="flex-1 input-field uppercase py-2.5 text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyDiscount}
+                          disabled={isApplyingDiscount || !discountCodeInput.trim()}
+                          className="btn-secondary px-4 py-2.5 text-sm whitespace-nowrap disabled:opacity-50"
+                        >
+                          {isApplyingDiscount ? '...' : 'Apply'}
+                        </button>
+                      </div>
+                      {discountError && <p className="text-xs text-red-500 mt-2">{discountError}</p>}
+                    </div>
+                  )}
+                </div>
+
                 <div className="border-t border-border pt-6 mt-6 mb-8 flex justify-between items-center text-base font-semibold text-text-main">
                   <span>Final Total</span><span>{formatPrice(finalTotal)}</span>
                 </div>

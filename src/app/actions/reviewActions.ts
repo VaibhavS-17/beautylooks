@@ -59,7 +59,7 @@ export async function createReview(data: {
       `)
       .eq('product_id', parsed.data.productId)
       .eq('orders.user_id', user.id)
-      .eq('orders.status', 'delivered');
+      .in('orders.status', ['delivered', 'Delivered']);
 
     if (!eligibleOrders || eligibleOrders.length === 0) {
       return { error: 'You can only write a review once your order for this product is delivered.' };

@@ -2,6 +2,12 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 // Persistent rate limiter for Server Actions using Supabase
 export async function rateLimit(key: string, limit: number = 10, windowMs: number = 60_000): Promise<{ success: boolean; remaining: number }> {
+  // If no service role key is configured (e.g. local dev), bypass rate limiting
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.warn('Rate limiting bypassed: SUPABASE_SERVICE_ROLE_KEY is not defined.');
+    return { success: true, remaining: 99 };
+  }
+
   // Use admin client to bypass RLS for rate limit table
   const supabase = createAdminClient();
   

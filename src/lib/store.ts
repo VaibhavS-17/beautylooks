@@ -236,6 +236,8 @@ export const useCartStore = create<CartState>()(
   )
 );
 
+import { addWishlistItemToDB, removeWishlistItemFromDB, syncWishlistWithDB } from '@/app/actions/wishlistActions';
+
 // Wishlist Store
 interface WishlistState {
   items: string[];
@@ -244,6 +246,7 @@ interface WishlistState {
   toggleItem: (productId: string) => void;
   isInWishlist: (productId: string) => boolean;
   clearWishlist: () => void;
+  syncWithDB: () => Promise<void>;
 }
 
 export const useWishlistStore = create<WishlistState>()(
@@ -257,12 +260,16 @@ export const useWishlistStore = create<WishlistState>()(
             ? state.items
             : [...state.items, productId],
         }));
+        // Fire and forget DB update
+        addWishlistItemToDB(productId).catch(console.error);
       },
 
       removeItem: (productId: string) => {
         set((state) => ({
           items: state.items.filter((id) => id !== productId),
         }));
+        // Fire and forget DB update
+        removeWishlistItemFromDB(productId).catch(console.error);
       },
 
       toggleItem: (productId: string) => {
@@ -279,6 +286,18 @@ export const useWishlistStore = create<WishlistState>()(
       },
 
       clearWishlist: () => set({ items: [] }),
+
+      syncWithDB: async () => {
+        const localItems = get().items;
+        try {
+          const res = await syncWishlistWithDB(localItems);
+          if (res.success && res.items) {
+            set({ items: res.items });
+          }
+        } catch (err) {
+          console.error('Failed to sync wishlist with DB', err);
+        }
+      },
     }),
     {
       name: 'blm-wishlist',

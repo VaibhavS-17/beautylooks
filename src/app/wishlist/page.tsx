@@ -12,6 +12,7 @@ export default async function WishlistPage() {
       slug,
       price,
       sale_price,
+      stock_quantity,
       images,
       brands (name)
     `)
@@ -23,6 +24,7 @@ export default async function WishlistPage() {
     slug: p.slug,
     price: p.price,
     salePrice: p.sale_price,
+    stockQuantity: p.stock_quantity,
     images: p.images || [],
     brand: (p as any).brands?.name || 'Unknown',
   }));

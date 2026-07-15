@@ -15,8 +15,12 @@ const signInSchema = z.object({
 const signUpSchema = z.object({
   email: z.string().email('Invalid email address.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
+  confirmPassword: z.string().min(6, 'Confirm password is required.'),
   fullName: z.string().min(1, 'Full name is required.').max(100),
   phone: z.string().min(10, 'Phone number must be at least 10 digits.').max(15).optional().or(z.literal('')),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
 export async function signInWithEmail(formData: FormData) {
@@ -53,6 +57,7 @@ export async function signUp(formData: FormData) {
   const raw = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
+    confirmPassword: formData.get('confirmPassword') as string,
     fullName: formData.get('fullName') as string,
     phone: formData.get('phone') as string,
   };

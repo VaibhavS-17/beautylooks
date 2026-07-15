@@ -596,7 +596,7 @@ export default function ProductDetailClient({
                 </div>
 
                 {/* Unified: Add to Cart + Buy Now for all viewports */}
-                <div className="flex flex-col sm:flex-row gap-3 w-full mt-4">
+                <div className="flex flex-col sm:flex-row gap-3 w-full mt-4 sm:mt-0">
                   <button 
                     onClick={() => {
                       addItem(product, quantity);
