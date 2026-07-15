@@ -192,3 +192,106 @@ export async function updateAddress(addressId: string, formData: FormData) {
     return { error: 'An unexpected error occurred. Please try again.' };
   }
 }
+
+export async function updateProfile(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return { error: 'Not authenticated' };
+  }
+
+  const fullName = formData.get('fullName') as string;
+  const phone = formData.get('phone') as string;
+
+  if (!fullName || fullName.trim().length < 2) {
+    return { error: 'Full name must be at least 2 characters.' };
+  }
+
+  try {
+    // Update profiles table
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        full_name: fullName.trim(),
+        phone: phone.trim() || null,
+      })
+      .eq('id', user.id);
+
+    if (profileError) {
+      console.error('Update profile error:', profileError);
+      return { error: 'Failed to update profile data.' };
+    }
+
+    // Update user metadata in auth
+    const { error: authError } = await supabase.auth.updateUser({
+      data: {
+        full_name: fullName.trim(),
+        phone: phone.trim() || null,
+      }
+    });
+
+    if (authError) {
+      console.error('Update user metadata error:', authError);
+      return { error: 'Failed to update user profile.' };
+    }
+
+    revalidatePath('/account/profile');
+    return { success: true };
+  } catch (err: any) {
+    console.error('Update profile exception:', err);
+    return { error: 'An unexpected error occurred. Please try again.' };
+  }
+}
+
+export async function updatePassword(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user || !user.email) {
+    return { error: 'Not authenticated' };
+  }
+
+  const currentPassword = formData.get('currentPassword') as string;
+  const newPassword = formData.get('newPassword') as string;
+  const confirmPassword = formData.get('confirmPassword') as string;
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return { error: 'All password fields are required.' };
+  }
+
+  if (newPassword !== confirmPassword) {
+    return { error: 'New passwords do not match.' };
+  }
+
+  if (newPassword.length < 8) {
+    return { error: 'New password must be at least 8 characters.' };
+  }
+
+  try {
+    // 1. Verify current password
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+
+    if (signInError) {
+      return { error: 'Incorrect current password.' };
+    }
+
+    // 2. Update to new password
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (updateError) {
+      console.error('Update password error:', updateError);
+      return { error: 'Failed to update password.' };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Update password exception:', err);
+    return { error: 'An unexpected error occurred. Please try again.' };
+  }
+}

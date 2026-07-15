@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
-import { User, Mail, PhoneIcon, Calendar, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import ProfileManager from './ProfileManager';
+import SecurityManager from './SecurityManager';
 
 export const runtime = 'edge';
 
@@ -26,61 +28,8 @@ export default async function ProfilePage() {
 
   return (
     <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-500">
-      <div className="flex items-center justify-between border-b border-[#EFECE6] pb-4">
-        <h3 className="font-display text-xl font-semibold tracking-wide text-[#1A1A1A]">
-          Personal Information
-        </h3>
-      </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-[#FCFBF9] border border-[#EFECE6] rounded-2xl p-5 hover:shadow-md transition-shadow group">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-full bg-[#F9F7F3] border border-[#C9A94E30] flex items-center justify-center text-[#9A7B2F] group-hover:scale-110 transition-transform">
-              <User size={20} />
-            </div>
-            <div>
-              <span className="block text-xs text-[#706A60] uppercase tracking-wider font-semibold">Full Name</span>
-              <span className="text-[#1A1A1A] font-medium text-lg mt-0.5 block">{userProfile.fullName}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-[#FCFBF9] border border-[#EFECE6] rounded-2xl p-5 hover:shadow-md transition-shadow group">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-full bg-[#F9F7F3] border border-[#C9A94E30] flex items-center justify-center text-[#9A7B2F] group-hover:scale-110 transition-transform">
-              <Mail size={20} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <span className="block text-xs text-[#706A60] uppercase tracking-wider font-semibold">Email Address</span>
-              <span className="text-[#1A1A1A] font-medium text-lg mt-0.5 block truncate">{userProfile.email}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-[#FCFBF9] border border-[#EFECE6] rounded-2xl p-5 hover:shadow-md transition-shadow group">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-full bg-[#F9F7F3] border border-[#C9A94E30] flex items-center justify-center text-[#9A7B2F] group-hover:scale-110 transition-transform">
-              <PhoneIcon size={20} />
-            </div>
-            <div>
-              <span className="block text-xs text-[#706A60] uppercase tracking-wider font-semibold">Contact Phone</span>
-              <span className="text-[#1A1A1A] font-medium text-lg mt-0.5 block">{userProfile.phone ? `+91 ${userProfile.phone}` : 'Not set'}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-[#FCFBF9] border border-[#EFECE6] rounded-2xl p-5 hover:shadow-md transition-shadow group">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-full bg-[#F9F7F3] border border-[#C9A94E30] flex items-center justify-center text-[#9A7B2F] group-hover:scale-110 transition-transform">
-              <Calendar size={20} />
-            </div>
-            <div>
-              <span className="block text-xs text-[#706A60] uppercase tracking-wider font-semibold">Member Since</span>
-              <span className="text-[#1A1A1A] font-medium text-lg mt-0.5 block capitalize">{userProfile.createdAt}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ProfileManager userProfile={userProfile} />
+      <SecurityManager />
 
       {userProfile.role === 'admin' && (
         <Link
