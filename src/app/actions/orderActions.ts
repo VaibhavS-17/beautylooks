@@ -104,7 +104,8 @@ export async function createRazorpayOrder(data: {
     }
 
     // 6. Create order in DB with pending status
-    const { data: order, error: orderError } = await supabase
+    const supabaseAdmin = createAdminClient();
+    const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
         user_id: user?.id || null,
@@ -132,7 +133,7 @@ export async function createRazorpayOrder(data: {
           unit_price: product?.sale_price ?? product?.price ?? 0,
         };
       });
-      await supabase.from('order_items').insert(orderItemsToInsert);
+      await supabaseAdmin.from('order_items').insert(orderItemsToInsert);
     }
 
     return { 
@@ -166,18 +167,6 @@ export async function verifyPayment(data: {
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) return { success: false, error: 'Not authenticated' };
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (profile?.role !== 'admin') {
-      return { success: false, error: 'Unauthorized. Admin access required.' };
-    }
 
     // Rate limit
     const rl = await rateLimit(`verifyPayment:${user?.id || 'anon'}`, 10, 60_000);
@@ -200,8 +189,10 @@ export async function verifyPayment(data: {
       return { success: false, error: 'Payment verification failed: Invalid signature.' };
     }
 
+    const adminClient = createAdminClient();
+
     // 2. Verify order exists in DB
-    const { data: existingOrder } = await supabase
+    const { data: existingOrder } = await adminClient
       .from('orders')
       .select('id, user_id, status')
       .eq('id', parsed.data.order_id)
@@ -211,8 +202,6 @@ export async function verifyPayment(data: {
     if (!existingOrder) {
       return { success: false, error: 'Order not found.' };
     }
-    
-    const adminClient = createAdminClient();
     
     // 3. Update order to confirmed
     const { error } = await adminClient
