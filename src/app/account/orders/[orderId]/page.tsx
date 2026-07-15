@@ -60,7 +60,7 @@ function OrderStepper({ status }: { status: string }) {
                   )}
                 </div>
                 <span
-                  className={`text-xs mt-2 text-center leading-tight whitespace-nowrap font-medium ${
+                  className={`text-[10px] sm:text-xs mt-2 text-center leading-tight max-w-[60px] sm:max-w-none break-words font-medium ${
                     isCompleted ? 'text-[#9A7B2F]' : 'text-[#BFBAB2]'
                   }`}
                 >
@@ -121,16 +121,16 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center space-x-4">
-            <Link href="/account/orders" className="w-10 h-10 bg-white border border-[#EFECE6] rounded-full flex items-center justify-center text-[#4E463F] hover:bg-[#F9F7F3] hover:text-[#C9A94E] transition-colors shadow-sm">
+            <Link href="/account/orders" className="w-10 h-10 shrink-0 bg-white border border-[#EFECE6] rounded-full flex items-center justify-center text-[#4E463F] hover:bg-[#F9F7F3] hover:text-[#C9A94E] transition-colors shadow-sm">
               <ChevronLeft size={20} />
             </Link>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-semibold font-display text-[#1A1A1A]">
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-semibold font-display text-[#1A1A1A] truncate">
                 Order Details
               </h1>
-              <p className="text-sm text-[#706A60] mt-1 font-mono">
+              <p className="text-xs sm:text-sm text-[#706A60] mt-1 font-mono break-all sm:break-normal">
                 #{order.id.toUpperCase()}
               </p>
             </div>
@@ -140,7 +140,7 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
               href={`https://wa.me/919876543210?text=${encodeURIComponent(`Hi, I would like to track my order: ${order.id}`)}`}
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center space-x-2 text-sm font-semibold text-[#25D366] border border-[#25D366]/30 px-4 py-2 rounded-lg hover:bg-[#25D366]/10 transition-colors shadow-sm bg-white"
+              className="flex items-center justify-center space-x-2 text-sm font-semibold text-[#25D366] border border-[#25D366]/30 px-4 py-2 rounded-lg hover:bg-[#25D366]/10 transition-colors shadow-sm bg-white flex-1 sm:flex-none"
             >
               <MessageCircle size={16} />
               <span className="hidden sm:inline">Track Support</span>
