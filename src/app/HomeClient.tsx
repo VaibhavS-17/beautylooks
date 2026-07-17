@@ -168,7 +168,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
 
       {/* ================= FEATURED PRODUCTS ================= */}
       <section className="py-16 md:py-24 bg-gradient-to-b from-[#FDFBF7] to-white relative">
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none mix-blend-multiply"></div>
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none"></div>
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col sm:flex-row justify-between items-end mb-16">
             <div>
