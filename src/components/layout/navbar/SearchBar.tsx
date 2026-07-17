@@ -41,10 +41,7 @@ export default function SearchBar({ isOpen, onClose }: SearchBarProps) {
     const fetchSearchResults = async () => {
       const supabase = createClient();
       const { data, error } = await supabase
-        .from('products')
-        .select('id, name, slug, price, sale_price, images, brand, categories(name)')
-        .eq('is_active', true)
-        .textSearch('name', debouncedSearchVal, { type: 'websearch' })
+        .rpc('search_products', { search_term: debouncedSearchVal })
         .limit(6);
 
       if (isMounted) {

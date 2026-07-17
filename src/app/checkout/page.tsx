@@ -188,6 +188,37 @@ function CheckoutContent() {
     if (selectedAddressId && name !== 'email') setSelectedAddressId(null);
   };
 
+  // Pincode Auto-fill
+  useEffect(() => {
+    const fetchPincodeDetails = async (pincode: string) => {
+      if (pincode.length !== 6 || !/^\d{6}$/.test(pincode)) return;
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+        const data = await res.json();
+        if (data && data[0] && data[0].Status === 'Success') {
+          const postOffice = data[0].PostOffice[0];
+          setFormData(prev => ({
+            ...prev,
+            city: postOffice.District,
+            state: postOffice.State
+          }));
+          setFormErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.city;
+            delete newErrors.state;
+            return newErrors;
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch pincode details', err);
+      }
+    };
+    
+    if (formData.pincode.length === 6) {
+      fetchPincodeDetails(formData.pincode);
+    }
+  }, [formData.pincode]);
+
   // Address CRUD Handlers
   const handleAddressSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
