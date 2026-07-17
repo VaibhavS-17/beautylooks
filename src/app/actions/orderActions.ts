@@ -22,6 +22,7 @@ const createOrderSchema = z.object({
   shippingAddress: z.any(),
   paymentMethod: z.enum(['upi', 'standard']),
   discountCode: z.string().optional(),
+  expectedTotal: z.number().min(0),
 });
 
 export async function createRazorpayOrder(data: {
@@ -29,6 +30,7 @@ export async function createRazorpayOrder(data: {
   shippingAddress: any;
   paymentMethod: 'upi' | 'standard';
   discountCode?: string;
+  expectedTotal: number;
 }) {
   const supabase = await createClient();
 
@@ -45,6 +47,7 @@ export async function createRazorpayOrder(data: {
       shippingAddress: data.shippingAddress,
       paymentMethod: data.paymentMethod,
       discountCode: data.discountCode,
+      expectedTotal: data.expectedTotal,
     };
     const parsed = createOrderSchema.safeParse(rawData);
     if (!parsed.success) {
@@ -87,6 +90,15 @@ export async function createRazorpayOrder(data: {
     if (parsed.data.paymentMethod === 'upi') {
       upiDiscount = finalAmount * 0.02; // 2% discount
       finalAmount = finalAmount - upiDiscount;
+    }
+
+    // Price Mismatch Guard
+    // Allow a small tolerance for floating point rounding issues (e.g., within 1 INR)
+    if (Math.abs(finalAmount - parsed.data.expectedTotal) > 1) {
+      return { 
+        success: false, 
+        error: 'Price mismatch detected. Prices may have been updated. Please refresh your cart.' 
+      };
     }
 
     // Razorpay expects amount in paise (multiply by 100)
@@ -213,6 +225,11 @@ export async function verifyPayment(data: {
       
     if (!existingOrder) {
       return { success: false, error: 'Order not found.' };
+    }
+    
+    // Check if already confirmed (e.g. by webhook)
+    if (existingOrder.status === 'confirmed') {
+      return { success: true };
     }
     
     // 3. Update order to confirmed

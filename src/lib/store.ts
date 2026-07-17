@@ -22,7 +22,10 @@ interface CartState {
   getTotalItems: () => number;
   getTotalPrice: () => number;
   getSubtotal: () => number;
+  syncWithDB: () => Promise<void>;
 }
+
+import { syncCartWithDB, updateCartInDB } from '@/app/actions/cartActions';
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -164,17 +167,23 @@ export const useCartStore = create<CartState>()(
           if (quantity > product.stockQuantity) {
             const noun = product.stockQuantity === 1 ? 'item' : 'items';
             toast.error(`Only ${product.stockQuantity} ${noun} available in stock`, { id: `stock-limit-${product.id}` });
-            return { items: [...state.items, { product, quantity: product.stockQuantity }] };
+            const newState = { items: [...state.items, { product, quantity: product.stockQuantity }] };
+            updateCartInDB(newState.items).catch(console.error);
+            return newState;
           }
           showAddedToast();
-          return { items: [...state.items, { product, quantity }] };
+          const newState = { items: [...state.items, { product, quantity }] };
+          updateCartInDB(newState.items).catch(console.error);
+          return newState;
         });
       },
 
       removeItem: (productId: string) => {
-        set((state) => ({
-          items: state.items.filter((item) => item.product.id !== productId),
-        }));
+        set((state) => {
+          const newState = { items: state.items.filter((item) => item.product.id !== productId) };
+          updateCartInDB(newState.items).catch(console.error);
+          return newState;
+        });
       },
 
       updateQuantity: (productId: string, quantity: number) => {
@@ -199,15 +208,20 @@ export const useCartStore = create<CartState>()(
             };
           }
 
-          return {
+          const newState = {
             items: state.items.map((item) =>
               item.product.id === productId ? { ...item, quantity } : item
             ),
           };
+          updateCartInDB(newState.items).catch(console.error);
+          return newState;
         });
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => {
+        set({ items: [] });
+        updateCartInDB([]).catch(console.error);
+      },
 
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
       openCart: () => set({ isOpen: true }),
@@ -228,6 +242,18 @@ export const useCartStore = create<CartState>()(
         return get().items.reduce((total, item) => {
           return total + item.product.price * item.quantity;
         }, 0);
+      },
+      
+      syncWithDB: async () => {
+        const localItems = get().items;
+        try {
+          const res = await syncCartWithDB(localItems);
+          if (res.success && res.items) {
+            set({ items: res.items });
+          }
+        } catch (err) {
+          console.error('Failed to sync cart with DB', err);
+        }
       },
     }),
     {

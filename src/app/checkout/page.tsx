@@ -10,8 +10,20 @@ import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
 import { createRazorpayOrder, verifyPayment, recordPaymentFailure } from '@/app/actions/orderActions';
 import { validateDiscountCode } from '@/app/actions/discountActions';
-import { createAddress, updateAddress, deleteAddress } from '@/app/actions/accountActions';
+import { createAddress, updateAddress, deleteAddress, upgradeGuestToAccount } from '@/app/actions/accountActions';
 import { createClient } from '@/lib/supabase/client';
+import { z } from 'zod';
+
+const shippingSchema = z.object({
+  fullName: z.string().min(2, 'Full name is required'),
+  phone: z.string().min(10, 'Valid 10-digit phone number is required'),
+  email: z.string().email('Valid email address is required'),
+  addressLine1: z.string().min(5, 'Street address is required'),
+  addressLine2: z.string().min(2, 'Area/Sector is required'),
+  city: z.string().min(2, 'City is required'),
+  state: z.string().min(2, 'State is required'),
+  pincode: z.string().min(6, 'Valid 6-digit pincode is required')
+});
 
 interface SavedAddress {
   id: string;
@@ -56,6 +68,16 @@ function CheckoutContent() {
   const [placedFinalTotal, setPlacedFinalTotal] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
+  
+  // Refs for auto-scrolling
+  const inputRefs = useRef<Record<string, HTMLInputElement | HTMLSelectElement | null>>({});
+
+  // Guest conversion state
+  const [conversionPassword, setConversionPassword] = useState('');
+  const [isConverting, setIsConverting] = useState(false);
+  const [conversionStatus, setConversionStatus] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   // Saved Addresses
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
@@ -233,6 +255,7 @@ function CheckoutContent() {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+    setFormErrors({});
     setIsProcessing(true);
 
     if (!window.Razorpay) {
@@ -241,12 +264,31 @@ function CheckoutContent() {
       return;
     }
 
-    if (!formData.fullName || !formData.phone || !formData.addressLine1 || !formData.addressLine2 || !formData.city || !formData.state || !formData.pincode || !formData.email) {
-      setErrorMessage('Please complete all required shipping and contact fields before proceeding.');
+    // Validate using Zod
+    const parsed = shippingSchema.safeParse(formData);
+    if (!parsed.success) {
+      const errors: Record<string, string> = {};
+      let firstErrorField: string | null = null;
+      
+      parsed.error.issues.forEach(issue => {
+        const field = issue.path[0] as string;
+        if (!errors[field]) {
+          errors[field] = issue.message;
+          if (!firstErrorField) firstErrorField = field;
+        }
+      });
+      
+      setFormErrors(errors);
+      setErrorMessage('Please complete all required shipping and contact fields correctly before proceeding.');
       setIsProcessing(false);
       
-      // Auto-scroll to the top so the user can see what's missing
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Auto-scroll to the first invalid field
+      if (firstErrorField && inputRefs.current[firstErrorField]) {
+        inputRefs.current[firstErrorField]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        inputRefs.current[firstErrorField]?.focus();
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       return;
     }
 
@@ -256,7 +298,8 @@ function CheckoutContent() {
         items: orderItems, 
         shippingAddress: formData,
         paymentMethod,
-        discountCode: appliedDiscount?.code
+        discountCode: appliedDiscount?.code,
+        expectedTotal: finalTotal // Pass expected total for server validation
       });
 
       if (!res.success || !res.razorpayOrderId) {
@@ -351,6 +394,22 @@ function CheckoutContent() {
     }
   };
 
+  const handleGuestConversion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!conversionPassword) return;
+    
+    setIsConverting(true);
+    setConversionStatus(null);
+    
+    const res = await upgradeGuestToAccount(formData.email, conversionPassword, formData.fullName, formData.phone);
+    if (res.success) {
+      setConversionStatus({ type: 'success', message: 'Account created successfully! Please check your email to verify your account.' });
+    } else {
+      setConversionStatus({ type: 'error', message: res.error || 'Failed to create account.' });
+    }
+    setIsConverting(false);
+  };
+
   // ── Success Screen ──
   if (checkoutStep === 'success') {
     return (
@@ -371,7 +430,50 @@ function CheckoutContent() {
               <span>Total Paid</span><span className="text-text-main">{formatPrice(placedFinalTotal)}</span>
             </div>
           </div>
-          <div className="pt-8 flex flex-col space-y-4 justify-center items-center">
+          
+          {!isLoggedIn && !conversionStatus?.type && (
+            <div className="bg-primary border border-[#C9A94E30] p-8 text-left space-y-4 rounded-2xl shadow-md relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#C9A94E] to-[#9A7B2F]" />
+              <div className="flex flex-col space-y-1">
+                <h3 className="font-display text-xl text-text-main">Save your details for next time?</h3>
+                <p className="text-xs text-text-muted">Set a password to create an account with <strong>{formData.email}</strong> to track orders and save time at checkout.</p>
+              </div>
+              <form onSubmit={handleGuestConversion} className="flex flex-col space-y-3 pt-2">
+                <input 
+                  type="password" 
+                  placeholder="Set a strong password" 
+                  value={conversionPassword}
+                  onChange={(e) => setConversionPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#C9A94E] transition-colors"
+                />
+                <button 
+                  type="submit" 
+                  disabled={isConverting || conversionPassword.length < 8}
+                  className="btn-primary w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed text-sm py-3"
+                >
+                  {isConverting ? 'Creating Account...' : 'Create Account'}
+                </button>
+              </form>
+            </div>
+          )}
+          
+          {conversionStatus?.type === 'success' && (
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-6 rounded-2xl text-sm flex items-start space-x-3 text-left">
+              <CheckCircle2 size={20} className="text-emerald-600 shrink-0 mt-0.5" />
+              <p>{conversionStatus.message}</p>
+            </div>
+          )}
+          
+          {conversionStatus?.type === 'error' && (
+            <div className="bg-red-50 border border-red-200 text-red-800 p-6 rounded-2xl text-sm flex items-start space-x-3 text-left">
+              <span className="text-red-600 shrink-0 mt-0.5 font-bold">!</span>
+              <p>{conversionStatus.message}</p>
+            </div>
+          )}
+
+          <div className="pt-4 flex flex-col space-y-4 justify-center items-center">
             <a 
               href={`https://wa.me/919876543210?text=${encodeURIComponent(`Hi, I would like to track my order: ${orderId}`)}`}
               target="_blank" 
@@ -392,7 +494,7 @@ function CheckoutContent() {
   // ── Checkout Form ──
   return (
     <div className="w-full min-h-screen bg-primary py-12">
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" onLoad={() => setIsRazorpayLoaded(true)} />
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Title */}
         <div className="border-b border-border pb-6 mb-12 flex items-center">
@@ -516,38 +618,46 @@ function CheckoutContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
                     <div className="flex flex-col">
                       <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Full Name *</label>
-                      <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                      <input ref={(el) => { inputRefs.current['fullName'] = el; }} type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} aria-invalid={!!formErrors.fullName} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.fullName ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
+                      {formErrors.fullName && <span className="text-red-500 text-[10px] mt-1">{formErrors.fullName}</span>}
                     </div>
                     <div className="flex flex-col">
                       <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Contact Phone *</label>
-                      <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                      <input ref={(el) => { inputRefs.current['phone'] = el; }} type="tel" name="phone" value={formData.phone} onChange={handleInputChange} aria-invalid={!!formErrors.phone} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.phone ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
+                      {formErrors.phone && <span className="text-red-500 text-[10px] mt-1">{formErrors.phone}</span>}
                     </div>
                     <div className="flex flex-col sm:col-span-2">
                       <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Email Address *</label>
-                      <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                      <input ref={(el) => { inputRefs.current['email'] = el; }} type="email" name="email" value={formData.email} onChange={handleInputChange} aria-invalid={!!formErrors.email} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.email ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
+                      {formErrors.email && <span className="text-red-500 text-[10px] mt-1">{formErrors.email}</span>}
                     </div>
                     <div className="flex flex-col sm:col-span-2">
                       <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Street Address *</label>
-                      <input type="text" name="addressLine1" value={formData.addressLine1} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                      <input ref={(el) => { inputRefs.current['addressLine1'] = el; }} type="text" name="addressLine1" value={formData.addressLine1} onChange={handleInputChange} aria-invalid={!!formErrors.addressLine1} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.addressLine1 ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
+                      {formErrors.addressLine1 && <span className="text-red-500 text-[10px] mt-1">{formErrors.addressLine1}</span>}
                     </div>
                     <div className="flex flex-col sm:col-span-2">
                       <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Area, Colony, Street, Sector *</label>
-                      <input type="text" name="addressLine2" value={formData.addressLine2} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                      <input ref={(el) => { inputRefs.current['addressLine2'] = el; }} type="text" name="addressLine2" value={formData.addressLine2} onChange={handleInputChange} aria-invalid={!!formErrors.addressLine2} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.addressLine2 ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
+                      {formErrors.addressLine2 && <span className="text-red-500 text-[10px] mt-1">{formErrors.addressLine2}</span>}
                     </div>
                     <div className="flex flex-col">
                       <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">City *</label>
-                      <input type="text" name="city" value={formData.city} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                      <input ref={(el) => { inputRefs.current['city'] = el; }} type="text" name="city" value={formData.city} onChange={handleInputChange} aria-invalid={!!formErrors.city} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.city ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
+                      {formErrors.city && <span className="text-red-500 text-[10px] mt-1">{formErrors.city}</span>}
                     </div>
                     <div className="flex flex-col">
                       <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">State *</label>
-                      <select name="state" value={formData.state} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors appearance-none shadow-sm">
+                      <select ref={(el) => { inputRefs.current['state'] = el; }} name="state" value={formData.state} onChange={handleInputChange} aria-invalid={!!formErrors.state} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none appearance-none transition-colors shadow-sm ${formErrors.state ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`}>
                         <option value="">Select State</option>
                         {indianStates.map((s) => (<option key={s} value={s}>{s}</option>))}
                       </select>
+                      {formErrors.state && <span className="text-red-500 text-[10px] mt-1">{formErrors.state}</span>}
                     </div>
                     <div className="flex flex-col">
                       <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Pincode *</label>
-                      <input type="text" name="pincode" value={formData.pincode} onChange={handleInputChange} required className="border border-border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                      <input ref={(el) => { inputRefs.current['pincode'] = el; }} type="text" name="pincode" value={formData.pincode} onChange={handleInputChange} aria-invalid={!!formErrors.pincode} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.pincode ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
+                      {formErrors.pincode && <span className="text-red-500 text-[10px] mt-1">{formErrors.pincode}</span>}
                     </div>
                   </div>
                 </div>
@@ -711,9 +821,15 @@ function CheckoutContent() {
                 <div className="border-t border-border pt-6 mt-6 mb-8 flex justify-between items-center text-base font-semibold text-text-main">
                   <span>Final Total</span><span>{formatPrice(finalTotal)}</span>
                 </div>
-                <button type="submit" disabled={isProcessing} className="btn-primary w-full justify-center flex items-center space-x-2 mb-6 text-base py-4">
-                  {isProcessing && <Loader2 size={18} className="animate-spin" />}
-                  <span>{isProcessing ? 'Processing...' : 'Place Order & Pay'}</span>
+                <button type="submit" disabled={isProcessing || !isRazorpayLoaded} className="btn-primary w-full justify-center flex items-center space-x-2 mb-6 text-base py-4 disabled:opacity-70 disabled:cursor-not-allowed transition-all relative overflow-hidden">
+                  {(!isRazorpayLoaded || isProcessing) && (
+                    <div className="absolute inset-0 bg-[#0C0A09] flex items-center justify-center">
+                      <Loader2 size={20} className="animate-spin text-[#C9A94E]" />
+                    </div>
+                  )}
+                  <span className={(!isRazorpayLoaded || isProcessing) ? 'opacity-0' : 'opacity-100'}>
+                    Place Order & Pay
+                  </span>
                 </button>
               </div>
               <div className="space-y-3 text-center px-4">

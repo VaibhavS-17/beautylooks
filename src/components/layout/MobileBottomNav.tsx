@@ -21,13 +21,17 @@ export default function MobileBottomNav() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       setIsLoggedIn(!!user);
-      if (user) useWishlistStore.getState().syncWithDB();
+      if (user) {
+        useWishlistStore.getState().syncWithDB();
+        useCartStore.getState().syncWithDB();
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session?.user);
       if (session?.user && _event === 'SIGNED_IN') {
         useWishlistStore.getState().syncWithDB();
+        useCartStore.getState().syncWithDB();
       }
     });
 

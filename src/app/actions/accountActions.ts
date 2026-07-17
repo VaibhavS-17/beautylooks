@@ -295,3 +295,29 @@ export async function updatePassword(formData: FormData) {
     return { error: 'An unexpected error occurred. Please try again.' };
   }
 }
+
+export async function upgradeGuestToAccount(email: string, password: string, fullName: string, phone: string) {
+  const supabase = await createClient();
+  
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          phone,
+        }
+      }
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    
+    // We do not save address here because the user is typically not logged in until they verify email
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: 'An unexpected error occurred.' };
+  }
+}

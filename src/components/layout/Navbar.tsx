@@ -32,7 +32,9 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
     supabase.auth.getUser().then(({ data: { user } }) => {
       setIsLoggedIn(!!user);
       if (user) {
+        setIsLoggedIn(true);
         useWishlistStore.getState().syncWithDB();
+        useCartStore.getState().syncWithDB();
       }
     });
 
@@ -41,6 +43,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
       setIsLoggedIn(!!session?.user);
       if (session?.user && _event === 'SIGNED_IN') {
         useWishlistStore.getState().syncWithDB();
+        useCartStore.getState().syncWithDB();
       }
     });
 

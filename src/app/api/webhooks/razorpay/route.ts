@@ -38,6 +38,46 @@ export async function POST(req: Request) {
           })
           .eq('razorpay_order_id', razorpayOrderId);
       }
+    } else if (event === 'payment.captured' || event === 'order.paid') {
+      const razorpayOrderId = payload.payload?.payment?.entity?.order_id || payload.payload?.order?.entity?.id;
+      const razorpayPaymentId = payload.payload?.payment?.entity?.id;
+      
+      if (razorpayOrderId) {
+        const supabase = createAdminClient();
+        
+        // 1. Verify order exists and is not already confirmed
+        const { data: existingOrder } = await supabase
+          .from('orders')
+          .select('id, status')
+          .eq('razorpay_order_id', razorpayOrderId)
+          .single();
+          
+        if (existingOrder && existingOrder.status !== 'confirmed') {
+          // 2. Update order to confirmed
+          await supabase
+            .from('orders')
+            .update({
+              status: 'confirmed',
+              razorpay_payment_id: razorpayPaymentId,
+            })
+            .eq('id', existingOrder.id);
+            
+          // 3. Decrement stock securely
+          const { data: orderItems } = await supabase
+            .from('order_items')
+            .select('product_id, quantity')
+            .eq('order_id', existingOrder.id);
+
+          if (orderItems && orderItems.length > 0) {
+            for (const item of orderItems) {
+              await supabase.rpc('decrement_stock', {
+                p_product_id: item.product_id,
+                p_quantity: item.quantity
+              });
+            }
+          }
+        }
+      }
     }
 
     return NextResponse.json({ status: 'ok' });
