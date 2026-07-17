@@ -887,8 +887,8 @@ function CheckoutContent() {
       
       {/* Address Modal */}
       {isAddressModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-primary rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative no-scrollbar">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-primary rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto relative no-scrollbar">
             <div className="sticky top-0 bg-primary/90 backdrop-blur-md z-10 px-6 py-5 border-b border-border flex justify-between items-center">
               <h3 className="font-display text-xl text-text-main">
                 {editingAddress ? 'Edit Address' : 'Add New Address'}

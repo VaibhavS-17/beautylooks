@@ -215,85 +215,98 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white border border-[#EFECE6] w-full max-w-lg rounded-2xl shadow-xl overflow-hidden text-left relative flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b border-[#EFECE6] flex justify-between items-center bg-[#FCFBF9]">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-primary rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto relative no-scrollbar">
+            <div className="sticky top-0 bg-primary/90 backdrop-blur-md z-10 px-6 py-5 border-b border-border flex justify-between items-center">
               <div>
-                <h3 className="font-display font-semibold text-lg text-[#9A7B2F] tracking-wide">{editingAddress ? 'Edit Address' : 'Add New Address'}</h3>
-                <p className="text-xs text-[#4E463F] mt-0.5">Please provide your valid shipping details</p>
+                <h3 className="font-display text-xl text-text-main">{editingAddress ? 'Edit Address' : 'Add New Address'}</h3>
+                <p className="text-xs text-text-muted mt-0.5">Please provide your valid shipping details</p>
               </div>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="text-[#4E463F] hover:text-[#1A1A1A] p-1.5 rounded-full hover:bg-[#EFECE6]"
+                className="text-text-muted hover:text-text-main transition-colors p-2 -mr-2"
               >
-                <X size={16} />
+                <X size={20} />
               </button>
             </div>
 
-            {error && (
-              <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
-                {error}
-              </div>
-            )}
+            <form onSubmit={handleAddOrUpdateAddress} className="p-6 space-y-6">
+              {error && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm border border-red-200">
+                  {error}
+                </div>
+              )}
 
-            <form onSubmit={handleAddOrUpdateAddress} className="flex-1 overflow-y-auto p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col col-span-2">
-                  <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">Address Label</label>
-                  <select name="label" defaultValue={editingAddress?.label || "Home"} className="w-full input-dark text-sm py-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="flex flex-col sm:col-span-2">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Address Label</label>
+                  <select name="label" defaultValue={editingAddress?.label || "Home"} className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors appearance-none shadow-sm">
                     <option value="Home">Home</option>
                     <option value="Office">Office / Work</option>
                     <option value="Other">Other</option>
                   </select>
                 </div>
 
-                <div className="flex flex-col col-span-2">
-                  <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">Full Name</label>
-                  <input type="text" name="fullName" defaultValue={editingAddress?.fullName} placeholder="e.g. Priya Sharma" required className="w-full input-dark text-sm py-2" />
+                <div className="flex flex-col">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Full Name *</label>
+                  <input type="text" name="fullName" defaultValue={editingAddress?.fullName} placeholder="e.g. Priya Sharma" required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
                 </div>
 
-                <div className="flex flex-col col-span-2">
-                  <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">Phone Number</label>
-                  <input type="tel" name="phone" defaultValue={editingAddress?.phone} placeholder="e.g. 9876543210" required className="w-full input-dark text-sm py-2" />
+                <div className="flex flex-col">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Phone Number *</label>
+                  <input type="tel" name="phone" defaultValue={editingAddress?.phone} placeholder="e.g. 9876543210" required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
                 </div>
 
-                <div className="flex flex-col col-span-2">
-                  <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">Street Address</label>
-                  <input type="text" name="line1" defaultValue={editingAddress?.line1} placeholder="Flat, House no., Building, Company" required className="w-full input-dark text-sm py-2 mb-2" />
-                  <input type="text" name="line2" defaultValue={editingAddress?.line2} placeholder="Area, Colony, Street, Sector" required className="w-full input-dark text-sm py-2" />
+                <div className="flex flex-col sm:col-span-2">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Street Address *</label>
+                  <input type="text" name="line1" defaultValue={editingAddress?.line1} placeholder="Flat, House no., Building, Company" required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
                 </div>
 
-                <div className="flex flex-col col-span-2 relative">
-                  <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">Pincode</label>
-                  <input type="text" name="pincode" placeholder="e.g. 400050" required className="w-full input-dark text-sm py-2" value={newAddressForm.pincode} onChange={handlePincodeChange} maxLength={6} />
+                <div className="flex flex-col sm:col-span-2">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Apartment, Suite, etc. (Optional)</label>
+                  <input type="text" name="line2" defaultValue={editingAddress?.line2} placeholder="Area, Colony, Street, Sector" required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
+                </div>
+                
+                <div className="flex flex-col">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">City *</label>
+                  <input type="text" name="city" required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" value={newAddressForm.city} onChange={(e) => setNewAddressForm({...newAddressForm, city: e.target.value})} />
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">State *</label>
+                  <input type="text" name="state" required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" value={newAddressForm.state} onChange={(e) => setNewAddressForm({...newAddressForm, state: e.target.value})} />
+                </div>
+
+                <div className="flex flex-col sm:col-span-2 relative">
+                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Pincode *</label>
+                  <input type="text" name="pincode" placeholder="e.g. 400050" required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" value={newAddressForm.pincode} onChange={handlePincodeChange} maxLength={6} />
                   {pincodeLoading && (
-                    <div className="absolute right-3 top-8">
+                    <div className="absolute right-4 top-10">
                       <div className="w-4 h-4 border-2 border-[#C9A94E] border-t-transparent rounded-full animate-spin"></div>
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col">
-                  <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">City</label>
-                  <input type="text" name="city" required className="w-full input-dark text-sm py-2" value={newAddressForm.city} onChange={(e) => setNewAddressForm({...newAddressForm, city: e.target.value})} />
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D] mb-1">State</label>
-                  <input type="text" name="state" required className="w-full input-dark text-sm py-2" value={newAddressForm.state} onChange={(e) => setNewAddressForm({...newAddressForm, state: e.target.value})} />
-                </div>
-
-                <div className="flex items-center space-x-2 col-span-2 mt-2">
-                  <input type="checkbox" name="isDefault" id="isDefault" defaultChecked={editingAddress?.isDefault} className="rounded border-[#EFECE6] text-[#C9A94E] focus:ring-[#C9A94E]" />
-                  <label htmlFor="isDefault" className="text-sm text-[#5C554D]">Set as default shipping address</label>
+                <div className="flex items-center space-x-3 sm:col-span-2 pt-2">
+                  <input type="checkbox" name="isDefault" id="isDefault" defaultChecked={editingAddress?.isDefault} className="w-4 h-4 text-[#9A7B2F] border-border rounded focus:ring-[#9A7B2F]" />
+                  <label htmlFor="isDefault" className="text-sm font-medium text-text-main">Set as default shipping address</label>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#EFECE6] mt-6 flex justify-end space-x-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-[#4E463F] hover:bg-[#F9F7F3] rounded-lg transition-colors">
+              <div className="pt-6 border-t border-border flex justify-end space-x-4">
+                <button 
+                  type="button" 
+                  onClick={() => setIsModalOpen(false)}
+                  disabled={modalLoading}
+                  className="px-6 py-3 text-sm font-medium text-text-muted hover:text-text-main transition-colors"
+                >
                   Cancel
                 </button>
-                <button type="submit" disabled={modalLoading} className="btn-gold py-2 px-6 shadow-sm flex items-center space-x-2">
+                <button 
+                  type="submit" 
+                  disabled={modalLoading} 
+                  className="btn-primary py-3 px-8 text-sm flex items-center space-x-2"
+                >
                   {modalLoading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
                   <span>{editingAddress ? 'Update Address' : 'Save Address'}</span>
                 </button>
