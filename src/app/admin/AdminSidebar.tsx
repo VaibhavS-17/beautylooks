@@ -149,7 +149,7 @@ export default function AdminSidebar({ counts }: AdminSidebarProps) {
             <ExternalLink size={14} />
           </Link>
           <Link
-            href="/account"
+            href="/account/orders"
             className="flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-[#9CA3AF] hover:bg-[#2A2725] hover:text-white transition-colors"
           >
             <LogOut size={16} />

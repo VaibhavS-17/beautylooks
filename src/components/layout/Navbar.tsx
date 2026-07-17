@@ -197,7 +197,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
 
                 {/* Account */}
                 <Link
-                  href={isLoggedIn ? '/account' : '/login'}
+                  href={isLoggedIn ? '/account/orders' : '/login'}
                   className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2"
                   title={isLoggedIn ? 'My Account' : 'Sign In'}
                   aria-label={isLoggedIn ? 'My Account' : 'Sign In'}

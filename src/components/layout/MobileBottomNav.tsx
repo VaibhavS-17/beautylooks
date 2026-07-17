@@ -57,7 +57,7 @@ export default function MobileBottomNav() {
     },
     {
       name: 'Account',
-      href: isLoggedIn ? '/account' : '/login',
+      href: isLoggedIn ? '/account/orders' : '/login',
       icon: User,
     },
   ];
@@ -104,7 +104,10 @@ export default function MobileBottomNav() {
         </button>
 
         {navItems.slice(2).map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+          const isAccountTab = item.name === 'Account';
+          const isActive = pathname === item.href || 
+                           (item.href !== '/' && pathname.startsWith(item.href)) || 
+                           (isAccountTab && pathname.startsWith('/account'));
           return (
             <Link
               key={item.name}
