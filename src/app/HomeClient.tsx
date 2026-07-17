@@ -55,7 +55,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
               alt={siteSettings.hero_title}
               fill
               sizes="100vw"
-              className="object-cover opacity-90"
+              className="object-cover"
               priority
             />
           </div>
@@ -66,19 +66,19 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
               alt={siteSettings.hero_title}
               fill
               sizes="100vw"
-              className="object-cover opacity-90"
+              className="object-cover"
               priority
             />
           </div>
-          <div className="absolute inset-0 bg-black/30" />
+          <div className="absolute inset-0 bg-black/40" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
         </div>
 
         <div className="relative z-10 px-6 py-16 md:px-12 text-center max-w-4xl mx-4 animate-slide-up">
-          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-white/90 mb-6 block drop-shadow-sm">
+          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-white/90 mb-6 block">
             {siteSettings.hero_subtitle}
           </span>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-display text-white leading-[1.1] mb-8 drop-shadow-md">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-display text-white leading-[1.1] mb-8">
             {siteSettings.hero_title}
           </h1>
           <p className="text-sm md:text-base text-white/80 mb-10 font-light max-w-xl mx-auto">
