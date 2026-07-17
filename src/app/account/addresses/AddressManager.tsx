@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { MapPin, Plus, Trash2, MapPinned, X } from 'lucide-react';
 import { createAddress, deleteAddress } from '@/app/actions/accountActions';
+import { AddressModal } from '@/components/account/AddressModal';
 
 interface AddressItem {
   id?: string;

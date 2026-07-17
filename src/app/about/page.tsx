@@ -12,7 +12,7 @@ export default function AboutPage() {
         
         {/* Header */}
         <div className="border-b border-[#EFECE6] pb-6 mb-12">
-          <h1 className="text-3xl sm:text-4xl font-semibold font-display text-gold-gradient">
+          <h1 className="text-3xl sm:text-3xl md:text-4xl font-semibold font-display text-gold-gradient">
             About Us
           </h1>
           <p className="text-xs text-[#8A8177] mt-2 font-light">
@@ -24,7 +24,7 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
           <div className="relative h-64 sm:h-96 w-full rounded-2xl overflow-hidden bg-neutral-900 border border-[#EFECE6] shadow-sm">
             <div className="absolute inset-0 bg-gradient-to-tr from-[#722F37] to-[#C9A94E] opacity-35" />
-            <div className="absolute inset-0 flex items-center justify-center text-6xl font-bold font-display text-white/5 select-none uppercase tracking-widest">
+            <div className="absolute inset-0 flex items-center justify-center text-4xl md:text-4xl md:text-6xl font-bold font-display text-white/5 select-none uppercase tracking-widest">
               Glow
             </div>
           </div>
@@ -32,7 +32,7 @@ export default function AboutPage() {
             <span className="text-xs text-[#9A7B2F] font-semibold tracking-widest uppercase">
               Beauty Looks Mumbai
             </span>
-            <h2 className="font-display text-2xl sm:text-4xl font-semibold text-[#1A1A1A] leading-tight">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-[#1A1A1A] leading-tight">
               Simple • Genuine • Affordable <br />
               <span className="text-gold-gradient">Skincare Curated For You</span>
             </h2>

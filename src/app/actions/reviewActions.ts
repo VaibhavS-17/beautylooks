@@ -85,7 +85,8 @@ export async function createReview(data: {
 
     revalidatePath(`/products`);
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Create review exception:', err);
     return { error: 'An unexpected error occurred. Please try again.' };
   }
@@ -121,7 +122,8 @@ export async function deleteReview(reviewId: string) {
 
     revalidatePath(`/products`);
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Delete review exception:', err);
     return { error: 'An unexpected error occurred. Please try again.' };
   }

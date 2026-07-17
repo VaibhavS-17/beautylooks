@@ -211,9 +211,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   return (
     <ProductDetailClient
-      product={mappedProduct}
-      relatedProducts={mappedRelatedProducts}
-      reviews={reviews}
+      product={mappedProduct as any}
+      relatedProducts={mappedRelatedProducts as any}
+      reviews={reviews as any}
       averageRating={Math.round(averageRating * 10) / 10}
       reviewCount={reviewCount}
       canReview={canReview}

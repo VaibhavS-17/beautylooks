@@ -84,7 +84,8 @@ export async function createAddress(formData: FormData) {
 
     revalidatePath('/account');
     return { success: true, data: newAddress };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Create address exception:', err);
     return { error: 'An unexpected error occurred. Please try again.' };
   }
@@ -117,7 +118,8 @@ export async function deleteAddress(addressId: string) {
 
     revalidatePath('/account');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Delete address exception:', err);
     return { error: 'An unexpected error occurred. Please try again.' };
   }
@@ -187,7 +189,8 @@ export async function updateAddress(addressId: string, formData: FormData) {
 
     revalidatePath('/account');
     return { success: true, data: updatedAddress };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Update address exception:', err);
     return { error: 'An unexpected error occurred. Please try again.' };
   }
@@ -238,7 +241,8 @@ export async function updateProfile(formData: FormData) {
 
     revalidatePath('/account/profile');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Update profile exception:', err);
     return { error: 'An unexpected error occurred. Please try again.' };
   }
@@ -290,7 +294,8 @@ export async function updatePassword(formData: FormData) {
     }
 
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Update password exception:', err);
     return { error: 'An unexpected error occurred. Please try again.' };
   }
@@ -317,7 +322,8 @@ export async function upgradeGuestToAccount(email: string, password: string, ful
     
     // We do not save address here because the user is typically not logged in until they verify email
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     return { success: false, error: 'An unexpected error occurred.' };
   }
 }

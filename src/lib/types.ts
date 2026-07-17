@@ -19,6 +19,11 @@ export interface Product {
   rating: number;
   reviewCount: number;
   badge?: 'new' | 'bestseller' | 'sale';
+  ingredients?: string;
+  features?: string[];
+  benefits?: string[];
+  howToUse?: string;
+  faqs?: any;
 }
 
 export interface Category {
@@ -56,6 +61,8 @@ export interface Review {
   rating: number;
   comment: string;
   createdAt: string;
+  avatarUrl?: string | null;
+  helpfulCount?: number;
 }
 
 export interface Order {
@@ -71,12 +78,15 @@ export interface Order {
 }
 
 export interface OrderItem {
-  id: string;
-  productId: string;
-  productName: string;
-  productImage: string;
+  id?: string;
+  product_id?: string;
   quantity: number;
-  unitPrice: number;
+  unit_price: number;
+  products?: {
+    id: string;
+    name: string;
+    images?: string[];
+  };
 }
 
 export interface Address {

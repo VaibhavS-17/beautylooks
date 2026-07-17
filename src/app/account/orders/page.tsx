@@ -9,6 +9,7 @@ import { Package, ChevronLeft } from 'lucide-react';
 import { OrderFilter } from '@/components/shared/InvoicePrintView';
 import ReorderButton from './ReorderButton';
 import { ScrollToTopOnMount } from '@/components/layout/ScrollToTop';
+import { OrderItem } from '@/lib/types';
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ status?: string, range?: string }> }) {
   const resolvedSearchParams = await searchParams;
@@ -101,7 +102,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
               {/* Items preview */}
               <div className="space-y-2">
-                {order.order_items.map((item: any, idx: number) => (
+                {(order.order_items as unknown as OrderItem[]).map((item: OrderItem, idx: number) => (
                   <div key={idx} className="flex justify-between items-center text-sm text-[#5C554D]">
                     <div className="flex items-center space-x-3">
                       {item.products?.images?.[0] ? (
@@ -124,7 +125,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                   <span className="text-sm font-bold text-[#9A7B2F]">{formatPrice(order.total_amount)}</span>
                 </div>
                 <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-4">
-                  <ReorderButton orderItems={order.order_items} />
+                  <ReorderButton orderItems={order.order_items as unknown as OrderItem[]} />
                   <span className="text-[#9A7B2F] font-medium text-xs group-hover:underline whitespace-nowrap">View Details →</span>
                 </div>
               </div>

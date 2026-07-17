@@ -16,7 +16,7 @@ export default function BlogClient({ blogPosts }: BlogClientProps) {
         
         {/* Header */}
         <div className="border-b border-border/50 pb-6 mb-10">
-          <h1 className="text-3xl sm:text-4xl font-semibold font-display text-text-main">
+          <h1 className="text-3xl sm:text-3xl md:text-4xl font-semibold font-display text-text-main">
             Skincare Blog & Guides
           </h1>
           <p className="text-xs text-text-muted mt-2 font-light">
@@ -39,7 +39,7 @@ export default function BlogClient({ blogPosts }: BlogClientProps) {
                     sizes="(max-width: 1024px) 100vw, 50vw"
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-5xl font-bold font-display text-white/5 select-none uppercase z-0">
+                  <div className="absolute inset-0 flex items-center justify-center text-3xl md:text-3xl md:text-5xl font-bold font-display text-white/5 select-none uppercase z-0">
                     Featured Guide
                   </div>
                 )}

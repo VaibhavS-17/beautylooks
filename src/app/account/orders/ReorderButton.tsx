@@ -1,10 +1,11 @@
 'use client';
 
 import React from 'react';
+import { OrderItem } from '@/lib/types';
 import { useCartStore } from '@/lib/store';
 import { ShoppingBag } from 'lucide-react';
 
-export default function ReorderButton({ orderItems }: { orderItems: any[] }) {
+export default function ReorderButton({ orderItems }: { orderItems: OrderItem[] }) {
   const addItem = useCartStore((state) => state.addItem);
   const openCart = useCartStore((state) => state.openCart);
 

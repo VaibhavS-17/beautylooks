@@ -98,9 +98,9 @@ export default async function Homepage() {
 
   return (
     <HomeClient 
-      featuredProducts={mappedFeaturedProducts} 
-      categories={mappedCategories} 
-      blogPosts={mappedBlogPosts}
+      featuredProducts={mappedFeaturedProducts as any} 
+      categories={mappedCategories as any} 
+      blogPosts={mappedBlogPosts as any}
       siteSettings={siteSettings || {
         hero_title: 'Unveil Your Radiance',
         hero_subtitle: 'The Autumn Collection',

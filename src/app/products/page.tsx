@@ -87,9 +87,9 @@ export default async function ProductsPage() {
 
   return (
     <ProductsClient 
-      products={mappedProducts} 
-      allCategories={mappedCategories} 
-      allBrands={mappedBrands} 
+      products={mappedProducts as any} 
+      allCategories={mappedCategories as any} 
+      allBrands={mappedBrands as any} 
     />
   );
 }

@@ -50,7 +50,7 @@ export default function BlogDetailClient({ post, relatedPosts }: BlogDetailClien
 
         {/* Article Header */}
         <div className="space-y-4 mb-8">
-          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-[#1A1A1A] leading-tight">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-3xl md:text-5xl font-semibold text-[#1A1A1A] leading-tight">
             {post.title}
           </h1>
 
@@ -74,7 +74,7 @@ export default function BlogDetailClient({ post, relatedPosts }: BlogDetailClien
         {/* Visual Header / Cover Image Placeholder */}
         <div className="relative h-64 sm:h-96 w-full rounded-2xl overflow-hidden bg-neutral-900 border border-[#EFECE6] mb-10 shadow-sm">
           <div className="absolute inset-0 bg-gradient-to-tr from-[#722F37] to-[#C9A94E] opacity-30" />
-          <div className="absolute inset-0 flex items-center justify-center text-6xl font-bold font-display text-white/5 select-none uppercase tracking-widest">
+          <div className="absolute inset-0 flex items-center justify-center text-4xl md:text-4xl md:text-6xl font-bold font-display text-white/5 select-none uppercase tracking-widest">
             skincare
           </div>
         </div>

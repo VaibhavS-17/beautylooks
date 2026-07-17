@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/data';
 import { Package, MessageCircle, ChevronLeft, CheckCircle2, Circle, X } from 'lucide-react';
 import { InvoicePrintView, BuyItAgainButton, PrintInvoiceButton } from '@/components/shared/InvoicePrintView';
 import { ScrollToTopOnMount } from '@/components/layout/ScrollToTop';
+import { OrderItem } from '@/lib/types';
 
 const ORDER_STEPS = ['Order Placed', 'Confirmed', 'Shipped', 'Delivered'] as const;
 
@@ -158,7 +159,9 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
     }
   }
 
-  const subtotal = order.order_items.reduce((sum: number, item: any) => sum + item.unit_price * item.quantity, 0);
+  const orderItems = order.order_items as unknown as OrderItem[];
+  
+  const subtotal = orderItems.reduce((sum: number, item: OrderItem) => sum + item.unit_price * item.quantity, 0);
   const shipping = subtotal >= 499 ? 0 : 49;
 
   return (
@@ -168,7 +171,7 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center gap-4">
             <Link href="/account/orders" className="w-10 h-10 shrink-0 bg-white border border-[#EFECE6] rounded-full flex items-center justify-center text-[#4E463F] hover:bg-[#F9F7F3] hover:text-[#C9A94E] transition-colors shadow-sm">
               <ChevronLeft size={20} />
             </Link>
@@ -206,9 +209,9 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
             <div className="glass-card bg-white border border-[#EFECE6] p-6 rounded-2xl shadow-sm">
               <h2 className="text-lg font-display font-semibold text-[#9A7B2F] border-b border-[#EFECE6] pb-4 mb-4">Items Included</h2>
               <div className="space-y-4">
-                {order.order_items.map((item: any, idx: number) => (
+                {orderItems.map((item: OrderItem, idx: number) => (
                   <div key={idx} className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 p-4 border border-[#EFECE6] rounded-xl hover:border-[#C9A94E] transition-colors">
-                    <div className="flex items-center space-x-4">
+                    <div className="flex flex-wrap items-center gap-4">
                       {item.products?.images?.[0] ? (
                         <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-[#EFECE6] flex-shrink-0 shadow-sm">
                           <Image src={item.products.images[0]} alt={item.products.name} fill sizes="64px" className="object-cover" />
@@ -223,7 +226,7 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
                         <p className="text-sm text-[#706A60] mt-1">Qty: {item.quantity} × {formatPrice(item.unit_price)}</p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 sm:flex-col sm:items-end gap-2">
                       <span className="font-bold text-[#1A1A1A] text-lg">{formatPrice(item.unit_price * item.quantity)}</span>
                       <BuyItAgainButton item={item} />
                     </div>

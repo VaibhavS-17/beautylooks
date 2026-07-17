@@ -78,7 +78,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
           <span className="text-xs font-semibold tracking-[0.2em] uppercase text-white/90 mb-6 block">
             {siteSettings.hero_subtitle}
           </span>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-display text-white leading-[1.1] mb-8">
+          <h1 className="text-4xl md:text-5xl lg:text-7xl font-display text-white leading-[1.1] mb-8">
             {siteSettings.hero_title}
           </h1>
           <p className="text-sm md:text-base text-white/80 mb-10 font-light max-w-xl mx-auto">
@@ -170,7 +170,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
       <section className="py-16 md:py-24 bg-gradient-to-b from-[#FDFBF7] to-white relative">
         <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none"></div>
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col sm:flex-row justify-between items-end mb-16">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-16 gap-4">
             <div>
               <h2 className="font-display text-3xl text-text-main mb-4">Cult Favorites</h2>
               <p className="text-sm text-text-muted font-light">
@@ -300,10 +300,10 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
           <span className="subtitle block mb-6">
             Our Philosophy
           </span>
-          <h2 className="font-display text-3xl md:text-5xl text-text-main leading-tight mb-8">
-            Authenticity in every detail. <br />
-            Beauty without compromise.
-          </h2>
+          <h1 className="text-4xl md:text-5xl lg:text-7xl font-display font-light mb-6 tracking-tight leading-tight">
+            Discover Your True
+            <span className="block mt-2 font-medium italic text-primary">Beauty Essence</span>
+          </h1>
           <p className="text-sm md:text-base text-text-muted font-light leading-relaxed max-w-2xl mx-auto">
             Founded with a vision to redefine the beauty landscape in Mumbai, we curate authentic skincare products from the most celebrated global and local cosmetics brands. Every product is rigorously vetted to ensure it meets our standard of excellence.
           </p>

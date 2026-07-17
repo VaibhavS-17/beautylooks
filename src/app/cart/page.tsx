@@ -25,7 +25,7 @@ export default function CartPage() {
         
         {/* Title */}
         <div className="border-b border-border pb-6 mb-12">
-          <h1 className="text-4xl font-display text-text-main">
+          <h1 className="text-2xl md:text-3xl md:text-4xl font-display text-text-main">
             Shopping Bag
           </h1>
           <p className="text-xs text-text-muted mt-2 tracking-widest uppercase font-semibold">

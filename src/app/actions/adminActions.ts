@@ -1,4 +1,5 @@
 'use server';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
@@ -6,7 +7,7 @@ import { z } from 'zod';
 import { processRestockNotifications } from '@/lib/emailService';
 
 // Helper to verify admin role
-async function verifyAdmin(supabase: any) {
+async function verifyAdmin(supabase: SupabaseClient) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not authenticated', verified: false };
 
@@ -95,7 +96,7 @@ export async function createProduct(formData: FormData) {
     try {
       const parsedFaqs = JSON.parse(data.faqsInput);
       if (Array.isArray(parsedFaqs)) {
-        faqs = parsedFaqs.filter((f: any) => f.question && f.answer);
+        faqs = parsedFaqs.filter((f: Record<string, unknown>) => f.question && f.answer);
       }
     } catch {
       // Ignore invalid JSON, default to empty array
@@ -131,7 +132,8 @@ export async function createProduct(formData: FormData) {
     revalidatePath(`/products/${slug}`);
     revalidatePath('/');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Create product exception:', err);
     return { error: 'An unexpected error occurred. Please try again.' };
   }
@@ -178,7 +180,7 @@ export async function updateProduct(formData: FormData) {
       .eq('id', idParsed.data)
       .single();
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       name: data.name,
       slug,
       description: data.description,
@@ -208,7 +210,7 @@ export async function updateProduct(formData: FormData) {
       try {
         const parsedFaqs = JSON.parse(data.faqsInput);
         if (Array.isArray(parsedFaqs)) {
-          updateData.faqs = parsedFaqs.filter((f: any) => f.question && f.answer);
+          updateData.faqs = parsedFaqs.filter((f: Record<string, unknown>) => f.question && f.answer);
         }
       } catch {
         // Ignore invalid JSON
@@ -248,7 +250,8 @@ export async function updateProduct(formData: FormData) {
     revalidatePath(`/products/${slug}`);
     revalidatePath('/');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Update product exception:', err);
     return { error: 'An unexpected error occurred. Please try again.' };
   }
@@ -273,7 +276,8 @@ export async function deleteProductAdmin(productId: string) {
     revalidatePath('/products');
     revalidatePath('/');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Delete product exception:', err);
     return { error: 'An unexpected error occurred. Please try again.' };
   }
@@ -315,7 +319,8 @@ export async function createBrand(formData: FormData) {
     revalidatePath('/products');
     revalidatePath('/');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Create brand exception:', err);
     return { error: 'An unexpected error occurred.' };
   }
@@ -341,7 +346,7 @@ export async function updateBrand(formData: FormData) {
   const slug = name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   try {
-    const updateData: any = { name, slug };
+    const updateData: Record<string, unknown> = { name, slug };
     if (logoUrl !== undefined) updateData.logo_url = logoUrl || null;
 
     const { error } = await supabase.from('brands').update(updateData).eq('id', idParsed.data);
@@ -355,7 +360,8 @@ export async function updateBrand(formData: FormData) {
     revalidatePath('/products');
     revalidatePath('/');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Update brand exception:', err);
     return { error: 'An unexpected error occurred.' };
   }
@@ -384,7 +390,8 @@ export async function deleteBrand(brandId: string) {
     revalidatePath('/');
     revalidatePath('/', 'layout');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Delete brand exception:', err);
     return { error: 'An unexpected error occurred.' };
   }
@@ -429,7 +436,8 @@ export async function createCategory(formData: FormData) {
     revalidatePath('/');
     revalidatePath('/', 'layout');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Create category exception:', err);
     return { error: 'An unexpected error occurred.' };
   }
@@ -456,7 +464,7 @@ export async function updateCategory(formData: FormData) {
   const slug = name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   try {
-    const updateData: any = { name, slug, description };
+    const updateData: Record<string, unknown> = { name, slug, description };
     if (imageUrl !== undefined) updateData.image_url = imageUrl || null;
 
     const { error } = await supabase.from('categories').update(updateData).eq('id', idParsed.data);
@@ -471,7 +479,8 @@ export async function updateCategory(formData: FormData) {
     revalidatePath('/');
     revalidatePath('/', 'layout');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Update category exception:', err);
     return { error: 'An unexpected error occurred.' };
   }
@@ -500,7 +509,8 @@ export async function deleteCategory(categoryId: string) {
     revalidatePath('/');
     revalidatePath('/', 'layout');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Delete category exception:', err);
     return { error: 'An unexpected error occurred.' };
   }
@@ -557,7 +567,8 @@ export async function createBlog(formData: FormData) {
     revalidatePath('/admin/blogs');
     revalidatePath('/blog');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Create blog exception:', err);
     return { error: 'An unexpected error occurred.' };
   }
@@ -586,7 +597,7 @@ export async function updateBlog(formData: FormData) {
   const slug = data.title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   try {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       title: data.title,
       slug,
       content: data.content,
@@ -608,7 +619,8 @@ export async function updateBlog(formData: FormData) {
     revalidatePath('/blog');
     revalidatePath(`/blog/${slug}`);
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Update blog exception:', err);
     return { error: 'An unexpected error occurred.' };
   }
@@ -633,7 +645,8 @@ export async function deleteBlog(blogId: string) {
     revalidatePath('/admin/blogs');
     revalidatePath('/blog');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Delete blog exception:', err);
     return { error: 'An unexpected error occurred.' };
   }
@@ -673,7 +686,7 @@ export async function updateSiteSettings(formData: FormData) {
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
   const data = parsed.data;
 
-  let commonFaqsParsed: any[] | undefined = undefined;
+  let commonFaqsParsed: Record<string, unknown>[] | undefined = undefined;
   if (data.commonFaqs) {
     try {
       commonFaqsParsed = JSON.parse(data.commonFaqs);
@@ -683,7 +696,7 @@ export async function updateSiteSettings(formData: FormData) {
   }
 
   try {
-    const updatePayload: any = {
+    const updatePayload: Record<string, unknown> = {
       hero_title: data.heroTitle,
       hero_subtitle: data.heroSubtitle,
       hero_description: data.heroDescription,
@@ -711,7 +724,8 @@ export async function updateSiteSettings(formData: FormData) {
     revalidatePath('/admin/settings');
     revalidatePath('/admin/faqs');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Update settings exception:', err);
     return { error: 'An unexpected error occurred.' };
   }
@@ -770,7 +784,8 @@ export async function updateOrderStatusAdmin(orderId: string, status: string) {
     revalidatePath('/admin/orders');
     revalidatePath('/account');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Update order status exception:', err);
     return { error: 'An unexpected error occurred.' };
   }
@@ -812,7 +827,8 @@ export async function syncMockData() {
 
     revalidatePath('/admin');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Seed exception:', err);
     return { error: 'Seeding failed.' };
   }
@@ -840,7 +856,8 @@ export async function deleteReviewAdmin(reviewId: string) {
     revalidatePath('/admin');
     revalidatePath('/products/[slug]', 'page');
     return { success: true };
-  } catch (err: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Delete review exception:', err);
     return { error: 'An unexpected error occurred.' };
   }

@@ -11,6 +11,7 @@ import { formatPrice } from '@/lib/data';
 import { createRazorpayOrder, verifyPayment, recordPaymentFailure } from '@/app/actions/orderActions';
 import { validateDiscountCode } from '@/app/actions/discountActions';
 import { createAddress, updateAddress, deleteAddress, upgradeGuestToAccount } from '@/app/actions/accountActions';
+import { AddressModal } from '@/components/account/AddressModal';
 import { createClient } from '@/lib/supabase/client';
 import { z } from 'zod';
 
@@ -449,7 +450,7 @@ function CheckoutContent() {
           <div className="flex justify-center">
             <CheckCircle2 size={64} strokeWidth={1} className="text-accent" />
           </div>
-          <h2 className="font-display text-4xl text-text-main">Order Placed Successfully</h2>
+          <h2 className="font-display text-3xl md:text-3xl md:text-4xl text-text-main">Order Placed Successfully</h2>
           <p className="text-sm text-text-muted font-light max-w-md mx-auto leading-relaxed">
             Your payment has been successfully processed and your order is confirmed! A receipt will be sent to <strong>{formData.email}</strong>.
           </p>
@@ -538,7 +539,7 @@ function CheckoutContent() {
             <ArrowLeft size={24} strokeWidth={1.5} />
           </Link>
           <div>
-            <h1 className="text-4xl font-display text-text-main">Checkout</h1>
+            <h1 className="text-3xl md:text-3xl md:text-4xl font-display text-text-main">Checkout</h1>
             <p className="text-xs text-text-muted mt-2 tracking-widest uppercase font-semibold">Secure your order</p>
           </div>
         </div>
