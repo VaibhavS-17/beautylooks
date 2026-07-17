@@ -46,7 +46,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
   return (
     <div className="w-full bg-primary overflow-hidden">
       {/* ================= HERO SECTION ================= */}
-      <section className="relative w-full h-[85vh] sm:h-auto sm:aspect-video flex items-center justify-center bg-[#111]">
+      <section className="relative w-full h-[80vh] sm:h-auto sm:aspect-video sm:max-h-[85vh] xl:max-h-[800px] flex items-center justify-center bg-[#111]">
         <div className="absolute inset-0 z-0">
           {/* Desktop Image */}
           <div className="hidden sm:block absolute inset-0">
@@ -55,7 +55,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
               alt={siteSettings.hero_title}
               fill
               sizes="100vw"
-              className="object-cover opacity-80"
+              className="object-cover opacity-90"
               priority
             />
           </div>
@@ -66,11 +66,12 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
               alt={siteSettings.hero_title}
               fill
               sizes="100vw"
-              className="object-cover opacity-80"
+              className="object-cover opacity-90"
               priority
             />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+          <div className="absolute inset-0 bg-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
         </div>
 
         <div className="relative z-10 px-6 py-16 md:px-12 text-center max-w-4xl mx-4 animate-slide-up">
