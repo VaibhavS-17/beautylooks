@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Plus, Image as ImageIcon, Edit, Trash2, Loader2, X } from 'lucide-react';
+import { Search, Plus, Image as ImageIcon, Edit, Trash2, Loader2, X, Download } from 'lucide-react';
 import ImageUploader from '@/components/admin/ImageUploader';
+import AdminConfirmationModal from '../components/AdminConfirmationModal';
+import { exportToCsv } from '../utils/exportToCsv';
 
 interface BlogItem {
   id: string;
@@ -35,18 +37,70 @@ export default function BlogsTab({
   const [editBlogItem, setEditBlogItem] = useState<BlogItem | null>(null);
   const [uploadedBlogImg, setUploadedBlogImg] = useState('');
 
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    action: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    action: async () => {},
+  });
+  const [isModalLoading, setIsModalLoading] = useState(false);
+
+  const requestDeleteBlog = (id: string, title: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Journal Post',
+      message: `Are you sure you want to permanently delete post "${title}"? This action cannot be undone.`,
+      action: async () => {
+        setIsModalLoading(true);
+        await handleDeleteBlog(id);
+        setIsModalLoading(false);
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  const handleExportCsv = () => {
+    const headers = ['Post ID', 'Title', 'Slug', 'Excerpt', 'Published Status', 'Published At', 'Cover Image'];
+    const rows = blogPosts.map(b => [
+      b.id,
+      b.title,
+      b.slug,
+      b.excerpt || '',
+      b.is_published ? 'Published' : 'Draft',
+      b.published_at || '',
+      b.cover_image || ''
+    ]);
+    exportToCsv('beautylooks_blogs', headers, rows);
+  };
+
   const filteredBlogs = blogPosts.filter(b => 
     b.title.toLowerCase().includes(blogSearch.toLowerCase())
   );
 
   return (
-    <div className="space-y-6 animate-fade-in text-left">
+    <div className="space-y-6 animate-fade-in text-left" suppressHydrationWarning>
+      <AdminConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        isDanger={true}
+        isLoading={isModalLoading}
+        onConfirm={confirmModal.action}
+        onClose={() => !isModalLoading && setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold font-display">Journal Blogs</h2>
           <p className="text-sm text-[#8A8177]">Create and edit educational guides and skincare journals.</p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8177]" />
             <input
@@ -54,9 +108,17 @@ export default function BlogsTab({
               placeholder="Search blogs..."
               value={blogSearch}
               onChange={e => setBlogSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 border border-[#EFECE6] rounded-xl text-xs focus:outline-none focus:border-[#CA8A04] bg-white w-full sm:w-64 shadow-sm"
+              className="pl-9 pr-4 py-2 border border-[#EFECE6] rounded-xl text-xs focus:outline-none focus:border-[#CA8A04] bg-white w-full sm:w-56 shadow-sm"
             />
           </div>
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="px-4 py-2 bg-white border border-[#EFECE6] hover:bg-stone-50 rounded-xl text-xs font-semibold text-[#1C1917] flex items-center gap-2 shadow-2xs transition-colors"
+          >
+            <Download size={14} />
+            <span>Export CSV ({blogPosts.length})</span>
+          </button>
           <button
             onClick={() => {
               setUploadedBlogImg('');
@@ -119,12 +181,14 @@ export default function BlogsTab({
                         setEditBlogItem(blog);
                       }}
                       className="p-1.5 border border-[#EFECE6] hover:border-[#CA8A04] hover:text-[#CA8A04] rounded-lg transition-colors inline-block bg-white"
+                      title="Edit Post"
                     >
                       <Edit size={14} />
                     </button>
                     <button
-                      onClick={() => handleDeleteBlog(blog.id)}
+                      onClick={() => requestDeleteBlog(blog.id, blog.title)}
                       className="p-1.5 border border-red-100 hover:border-red-600 hover:text-red-600 text-red-400 rounded-lg transition-colors inline-block bg-white"
+                      title="Delete Post"
                     >
                       {deletingBlogId === blog.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                     </button>

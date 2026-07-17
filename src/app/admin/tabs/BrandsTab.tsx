@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Award, Edit, Trash2, Loader2, X } from 'lucide-react';
+import { Plus, Award, Edit, Trash2, Loader2, X, Download } from 'lucide-react';
 import ImageUploader from '@/components/admin/ImageUploader';
+import AdminConfirmationModal from '../components/AdminConfirmationModal';
+import { exportToCsv } from '../utils/exportToCsv';
 
 interface BrandItem {
   id: string;
@@ -30,23 +32,82 @@ export default function BrandsTab({
   const [editBrandItem, setEditBrandItem] = useState<BrandItem | null>(null);
   const [uploadedBrandLogo, setUploadedBrandLogo] = useState('');
 
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    action: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    action: async () => {},
+  });
+  const [isModalLoading, setIsModalLoading] = useState(false);
+
+  const requestDeleteBrand = (id: string, name: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Brand',
+      message: `Are you sure you want to permanently delete "${name}"? Products under this brand will lose their brand association.`,
+      action: async () => {
+        setIsModalLoading(true);
+        await handleDeleteBrand(id);
+        setIsModalLoading(false);
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  const handleExportCsv = () => {
+    const headers = ['Brand ID', 'Name', 'Slug', 'Logo URL'];
+    const rows = brands.map(b => [
+      b.id,
+      b.name,
+      b.slug,
+      b.logo_url || ''
+    ]);
+    exportToCsv('beautylooks_brands', headers, rows);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in text-left">
+      <AdminConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        isDanger={true}
+        isLoading={isModalLoading}
+        onConfirm={confirmModal.action}
+        onClose={() => !isModalLoading && setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold font-display">Brands Portfolio</h2>
-          <p className="text-sm text-[#8A8177]">Control brand logo representations.</p>
+          <p className="text-sm text-[#8A8177]">Control brand logo representations across the store.</p>
         </div>
-        <button
-          onClick={() => {
-            setUploadedBrandLogo('');
-            setIsAddBrandOpen(true);
-          }}
-          className="px-4 py-2 bg-[#CA8A04] text-white rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-[#1C1917] transition-all flex items-center space-x-1.5 shadow-sm"
-        >
-          <Plus size={14} />
-          <span>Add Brand</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="px-4 py-2 bg-white border border-[#EFECE6] hover:bg-stone-50 rounded-xl text-xs font-semibold text-[#1C1917] flex items-center gap-2 shadow-2xs transition-colors"
+          >
+            <Download size={14} />
+            <span>Export CSV ({brands.length})</span>
+          </button>
+          <button
+            onClick={() => {
+              setUploadedBrandLogo('');
+              setIsAddBrandOpen(true);
+            }}
+            className="px-4 py-2 bg-[#CA8A04] text-white rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-[#1C1917] transition-all flex items-center space-x-1.5 shadow-sm"
+          >
+            <Plus size={14} />
+            <span>Add Brand</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
@@ -70,12 +131,14 @@ export default function BrandsTab({
                   setEditBrandItem(b);
                 }}
                 className="p-1 border border-[#EFECE6] hover:border-[#CA8A04] hover:text-[#CA8A04] rounded-lg transition-colors"
+                title="Edit Brand"
               >
                 <Edit size={12} />
               </button>
               <button
-                onClick={() => handleDeleteBrand(b.id)}
+                onClick={() => requestDeleteBrand(b.id, b.name)}
                 className="p-1 border border-red-100 hover:border-red-650 hover:text-red-650 text-red-400 rounded-lg transition-colors"
+                title="Delete Brand"
               >
                 {deletingBrandId === b.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
               </button>
@@ -123,6 +186,7 @@ export default function BrandsTab({
         </div>
       )}
 
+      {/* EDIT BRAND MODAL */}
       {editBrandItem && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-[#EFECE6] w-[calc(100%-2rem)] max-w-md rounded-2xl shadow-2xl overflow-hidden text-left flex flex-col max-h-[90vh] overflow-y-auto animate-fade-in">

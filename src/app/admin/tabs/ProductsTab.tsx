@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, Plus, Image as ImageIcon, Edit, Trash2, Loader2, X } from 'lucide-react';
+import { Search, Plus, Image as ImageIcon, Edit, Trash2, Loader2, X, Download, Filter } from 'lucide-react';
 import { formatPrice } from '@/lib/data';
 import MultiMediaUploader from '@/components/admin/MultiMediaUploader';
+import AdminConfirmationModal from '../components/AdminConfirmationModal';
+import { exportToCsv } from '../utils/exportToCsv';
 
 interface AdminProduct {
   id: string;
@@ -58,12 +60,33 @@ export default function ProductsTab({
   const searchParams = useSearchParams();
   const [productSearch, setProductSearch] = useState('');
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [brandFilter, setBrandFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [editProductItem, setEditProductItem] = useState<AdminProduct | null>(null);
   const [productMediaUrls, setProductMediaUrls] = useState<string[]>([]);
   const [faqsList, setFaqsList] = useState<Array<{ question: string; answer: string }>>([]);
   const [modalTab, setModalTab] = useState<'general' | 'media' | 'faqs'>('general');
-  const fallbackProductImage = '/images/products/facial-kit-1.png';
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
+
+  // Confirmation Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    action: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    action: async () => {},
+  });
+  const [isModalLoading, setIsModalLoading] = useState(false);
 
   useEffect(() => {
     setShowLowStockOnly(searchParams.get('filter') === 'low-stock');
@@ -75,45 +98,74 @@ export default function ProductsTab({
       p.brand.toLowerCase().includes(productSearch.toLowerCase()) ||
       p.category.toLowerCase().includes(productSearch.toLowerCase());
     const matchesStock = showLowStockOnly ? p.stockQuantity < 5 : true;
-    return matchesSearch && matchesStock;
+    const matchesCategory = categoryFilter === 'all' || p.categoryId === categoryFilter;
+    const matchesBrand = brandFilter === 'all' || p.brandId === brandFilter;
+    const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? p.isActive : !p.isActive);
+
+    return matchesSearch && matchesStock && matchesCategory && matchesBrand && matchesStatus;
   });
+
+  const totalPages = Math.ceil(filteredProducts.length / pageSize) || 1;
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const requestDeleteProduct = (id: string, name: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Product',
+      message: `Are you sure you want to permanently delete "${name}"? This action cannot be undone.`,
+      action: async () => {
+        setIsModalLoading(true);
+        await handleDeleteProduct(id);
+        setIsModalLoading(false);
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  const handleExportCsv = () => {
+    const headers = ['Product ID', 'Name', 'Slug', 'Brand', 'Category', 'Price (INR)', 'Sale Price (INR)', 'Stock Quantity', 'Status', 'Featured', 'Skin Type'];
+    const rows = filteredProducts.map(p => [
+      p.id,
+      p.name,
+      p.slug,
+      p.brand,
+      p.category,
+      p.price,
+      p.salePrice || '',
+      p.stockQuantity,
+      p.isActive ? 'Active' : 'Draft',
+      p.isFeatured ? 'Yes' : 'No',
+      p.skinType
+    ]);
+    exportToCsv('beautylooks_products', headers, rows);
+  };
 
   return (
     <div className="space-y-6 animate-fade-in text-left">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <AdminConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        isDanger={true}
+        isLoading={isModalLoading}
+        onConfirm={confirmModal.action}
+        onClose={() => !isModalLoading && setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
+
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold font-display">Products Catalog</h2>
-          <p className="text-sm text-[#8A8177]">Manage product details, multi-image galleries, and stock.</p>
+          <p className="text-sm text-[#8A8177]">Manage product details, multi-image galleries, categories, and inventory.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {showLowStockOnly && (
-            <div className="flex items-center gap-1.5 bg-red-100 text-red-700 px-3 py-1.5 rounded-xl text-xs font-semibold border border-red-200 shadow-xs animate-fade-in">
-              <span>⚠️ Low Stock (&lt;5 units)</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowLowStockOnly(false);
-                  const url = new URL(window.location.href);
-                  url.searchParams.delete('filter');
-                  window.history.pushState({}, '', url.toString());
-                }}
-                className="hover:bg-red-200 rounded-full p-0.5 transition-colors cursor-pointer"
-                aria-label="Clear low stock filter"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          )}
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8177]" />
-            <input
-              type="text"
-              placeholder="Search catalog..."
-              value={productSearch}
-              onChange={e => setProductSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 border border-[#EFECE6] rounded-xl text-xs focus:outline-none focus:border-[#CA8A04] bg-white w-full sm:w-64 shadow-sm"
-            />
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="px-4 py-2 bg-white border border-[#EFECE6] hover:bg-stone-50 rounded-xl text-xs font-semibold text-[#1C1917] flex items-center gap-2 shadow-2xs transition-colors"
+          >
+            <Download size={14} />
+            <span>Export CSV ({filteredProducts.length})</span>
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -127,6 +179,93 @@ export default function ProductsTab({
             <Plus size={14} />
             <span>Add Product</span>
           </button>
+        </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-[#EFECE6] shadow-2xs flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8177]" />
+          <input
+            type="text"
+            placeholder="Search by Name, Brand, or Category..."
+            value={productSearch}
+            onChange={e => { setProductSearch(e.target.value); setCurrentPage(1); }}
+            className="pl-9 pr-4 py-2 border border-[#EFECE6] rounded-xl text-xs focus:outline-none focus:border-[#CA8A04] bg-white w-full shadow-2xs"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {showLowStockOnly && (
+            <div className="flex items-center gap-1.5 bg-red-100 text-red-700 px-3 py-1.5 rounded-xl text-xs font-semibold border border-red-200">
+              <span>⚠️ Low Stock</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLowStockOnly(false);
+                  setCurrentPage(1);
+                  const url = new URL(window.location.href);
+                  url.searchParams.delete('filter');
+                  window.history.pushState({}, '', url.toString());
+                }}
+                className="hover:bg-red-200 rounded-full p-0.5 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1.5 bg-[#FBF9F6] px-3 py-1.5 rounded-xl border border-[#EFECE6]">
+            <Filter size={13} className="text-[#8A8177]" />
+            <select
+              value={categoryFilter}
+              onChange={e => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-transparent text-xs font-semibold outline-none cursor-pointer text-[#1C1917]"
+            >
+              <option value="all">All Categories</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-[#FBF9F6] px-3 py-1.5 rounded-xl border border-[#EFECE6]">
+            <select
+              value={brandFilter}
+              onChange={e => { setBrandFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-transparent text-xs font-semibold outline-none cursor-pointer text-[#1C1917]"
+            >
+              <option value="all">All Brands</option>
+              {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-[#FBF9F6] px-3 py-1.5 rounded-xl border border-[#EFECE6]">
+            <select
+              value={statusFilter}
+              onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+              className="bg-transparent text-xs font-semibold outline-none cursor-pointer text-[#1C1917]"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+
+          {(productSearch || categoryFilter !== 'all' || brandFilter !== 'all' || statusFilter !== 'all' || showLowStockOnly) && (
+            <button
+              type="button"
+              onClick={() => {
+                setProductSearch('');
+                setCategoryFilter('all');
+                setBrandFilter('all');
+                setStatusFilter('all');
+                setShowLowStockOnly(false);
+                setCurrentPage(1);
+              }}
+              className="text-xs text-[#CA8A04] font-semibold px-2 hover:underline"
+            >
+              Reset
+            </button>
+          )}
         </div>
       </div>
 
@@ -144,12 +283,12 @@ export default function ProductsTab({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#EFECE6]">
-            {filteredProducts.length === 0 ? (
+            {paginatedProducts.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-[#8C8885]">No products match search criteria.</td>
+                <td colSpan={6} className="p-8 text-center text-[#8C8885]">No products match search filter.</td>
               </tr>
             ) : (
-              filteredProducts.map(product => (
+              paginatedProducts.map(product => (
                 <tr key={product.id} className="hover:bg-[#FBF9F6]/50">
                   <td className="p-4 flex items-center space-x-3">
                     <div className="w-12 h-12 bg-[#FBF9F6] border border-[#EFECE6] rounded-xl overflow-hidden relative shrink-0 flex items-center justify-center">
@@ -208,8 +347,8 @@ export default function ProductsTab({
                       <Edit size={14} />
                     </button>
                     <button
-                      onClick={() => handleDeleteProduct(product.id)}
-                      className="p-1.5 border border-red-100 hover:border-red-660 hover:text-red-660 text-red-400 rounded-lg transition-colors inline-block bg-white"
+                      onClick={() => requestDeleteProduct(product.id, product.name)}
+                      className="p-1.5 border border-red-100 hover:border-red-600 hover:text-red-600 text-red-400 rounded-lg transition-colors inline-block bg-white"
                       title="Delete Product"
                     >
                       {deletingProductId === product.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
@@ -220,6 +359,34 @@ export default function ProductsTab({
             )}
           </tbody>
         </table>
+        </div>
+
+        {/* Pagination Footer */}
+        <div className="p-4 bg-[#FBF9F6] border-t border-[#EFECE6] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <span className="text-[#8A8177]">
+            Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filteredProducts.length)} of {filteredProducts.length} products
+          </span>
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              className="px-3 py-1.5 rounded-lg border border-[#EFECE6] bg-white hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors"
+            >
+              Previous
+            </button>
+            <span className="px-3 font-semibold text-[#1C1917]">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              className="px-3 py-1.5 rounded-lg border border-[#EFECE6] bg-white hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition-colors"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 

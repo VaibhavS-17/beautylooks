@@ -34,6 +34,7 @@ export async function createDiscountCode(data: any) {
   }
 
   revalidatePath('/admin');
+  revalidatePath('/admin/discounts');
   return { success: true };
 }
 
@@ -70,6 +71,7 @@ export async function updateDiscountCode(id: string, data: any) {
   }
 
   revalidatePath('/admin');
+  revalidatePath('/admin/discounts');
   return { success: true };
 }
 
@@ -92,5 +94,6 @@ export async function deleteDiscountCode(id: string) {
   if (error) return { error: error.message };
 
   revalidatePath('/admin');
+  revalidatePath('/admin/discounts');
   return { success: true };
 }

@@ -311,6 +311,7 @@ export async function createBrand(formData: FormData) {
     }
 
     revalidatePath('/admin');
+    revalidatePath('/admin/brands');
     revalidatePath('/products');
     revalidatePath('/');
     return { success: true };
@@ -350,6 +351,7 @@ export async function updateBrand(formData: FormData) {
     }
 
     revalidatePath('/admin');
+    revalidatePath('/admin/brands');
     revalidatePath('/products');
     revalidatePath('/');
     return { success: true };
@@ -377,6 +379,7 @@ export async function deleteBrand(brandId: string) {
     }
 
     revalidatePath('/admin');
+    revalidatePath('/admin/brands');
     revalidatePath('/products');
     revalidatePath('/');
     revalidatePath('/', 'layout');
@@ -421,6 +424,7 @@ export async function createCategory(formData: FormData) {
     }
 
     revalidatePath('/admin');
+    revalidatePath('/admin/categories');
     revalidatePath('/products');
     revalidatePath('/');
     revalidatePath('/', 'layout');
@@ -462,6 +466,7 @@ export async function updateCategory(formData: FormData) {
     }
 
     revalidatePath('/admin');
+    revalidatePath('/admin/categories');
     revalidatePath('/products');
     revalidatePath('/');
     revalidatePath('/', 'layout');
@@ -490,6 +495,7 @@ export async function deleteCategory(categoryId: string) {
     }
 
     revalidatePath('/admin');
+    revalidatePath('/admin/categories');
     revalidatePath('/products');
     revalidatePath('/');
     revalidatePath('/', 'layout');
@@ -548,6 +554,7 @@ export async function createBlog(formData: FormData) {
     }
 
     revalidatePath('/admin');
+    revalidatePath('/admin/blogs');
     revalidatePath('/blog');
     return { success: true };
   } catch (err: any) {
@@ -597,6 +604,7 @@ export async function updateBlog(formData: FormData) {
     }
 
     revalidatePath('/admin');
+    revalidatePath('/admin/blogs');
     revalidatePath('/blog');
     revalidatePath(`/blog/${slug}`);
     return { success: true };
@@ -622,6 +630,7 @@ export async function deleteBlog(blogId: string) {
     }
 
     revalidatePath('/admin');
+    revalidatePath('/admin/blogs');
     revalidatePath('/blog');
     return { success: true };
   } catch (err: any) {
@@ -696,6 +705,8 @@ export async function updateSiteSettings(formData: FormData) {
     revalidatePath('/');
     revalidatePath('/products');
     revalidatePath('/admin');
+    revalidatePath('/admin/settings');
+    revalidatePath('/admin/faqs');
     return { success: true };
   } catch (err: any) {
     console.error('Update settings exception:', err);
@@ -753,10 +764,45 @@ export async function updateOrderStatusAdmin(orderId: string, status: string) {
     }
 
     revalidatePath('/admin');
+    revalidatePath('/admin/orders');
     revalidatePath('/account');
     return { success: true };
   } catch (err: any) {
     console.error('Update order status exception:', err);
+    return { error: 'An unexpected error occurred.' };
+  }
+}
+
+export async function verifyUtrAdmin(orderId: string, action: 'approve' | 'reject') {
+  const supabase = await createClient();
+  const authCheck = await verifyAdmin(supabase);
+  if (!authCheck.verified) return { error: authCheck.error };
+
+  const idParsed = uuidSchema.safeParse(orderId);
+  if (!idParsed.success) return { error: 'Invalid Order ID' };
+
+  try {
+    const nextUtrStatus = action === 'approve' ? 'approved' : 'rejected';
+    const nextOrderStatus = action === 'approve' ? 'confirmed' : 'failed';
+
+    const { error } = await supabase.from('orders').update({
+      utr_status: nextUtrStatus,
+      utr_verified_at: new Date().toISOString(),
+      status: nextOrderStatus,
+      updated_at: new Date().toISOString(),
+    }).eq('id', idParsed.data);
+
+    if (error) {
+      console.error('Verify UTR error:', error);
+      return { error: 'Failed to update UTR verification status.' };
+    }
+
+    revalidatePath('/admin');
+    revalidatePath('/admin/orders');
+    revalidatePath('/account');
+    return { success: true };
+  } catch (err: any) {
+    console.error('Verify UTR exception:', err);
     return { error: 'An unexpected error occurred.' };
   }
 }

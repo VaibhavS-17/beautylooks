@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Image as ImageIcon, Edit, Trash2, Loader2, X } from 'lucide-react';
+import { Plus, Image as ImageIcon, Edit, Trash2, Loader2, X, Download } from 'lucide-react';
 import ImageUploader from '@/components/admin/ImageUploader';
+import AdminConfirmationModal from '../components/AdminConfirmationModal';
+import { exportToCsv } from '../utils/exportToCsv';
 
 interface CategoryItem {
   id: string;
@@ -31,23 +33,83 @@ export default function CategoriesTab({
   const [editCategoryItem, setEditCategoryItem] = useState<CategoryItem | null>(null);
   const [uploadedCategoryImg, setUploadedCategoryImg] = useState('');
 
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    action: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    action: async () => {},
+  });
+  const [isModalLoading, setIsModalLoading] = useState(false);
+
+  const requestDeleteCategory = (id: string, name: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Category',
+      message: `Are you sure you want to permanently delete category "${name}"? Products under this category will become uncategorized.`,
+      action: async () => {
+        setIsModalLoading(true);
+        await handleDeleteCategory(id);
+        setIsModalLoading(false);
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  const handleExportCsv = () => {
+    const headers = ['Category ID', 'Name', 'Slug', 'Description', 'Image URL'];
+    const rows = categories.map(c => [
+      c.id,
+      c.name,
+      c.slug,
+      c.description || '',
+      c.image_url || ''
+    ]);
+    exportToCsv('beautylooks_categories', headers, rows);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in text-left">
+      <AdminConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        isDanger={true}
+        isLoading={isModalLoading}
+        onConfirm={confirmModal.action}
+        onClose={() => !isModalLoading && setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold font-display">Categories Management</h2>
           <p className="text-sm text-[#8A8177]">Control core departments & category image tiles.</p>
         </div>
-        <button
-          onClick={() => {
-            setUploadedCategoryImg('');
-            setIsAddCategoryOpen(true);
-          }}
-          className="px-4 py-2 bg-[#CA8A04] text-white rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-[#1C1917] transition-all flex items-center space-x-1.5 shadow-sm"
-        >
-          <Plus size={14} />
-          <span>Add Category</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="px-4 py-2 bg-white border border-[#EFECE6] hover:bg-stone-50 rounded-xl text-xs font-semibold text-[#1C1917] flex items-center gap-2 shadow-2xs transition-colors"
+          >
+            <Download size={14} />
+            <span>Export CSV ({categories.length})</span>
+          </button>
+          <button
+            onClick={() => {
+              setUploadedCategoryImg('');
+              setIsAddCategoryOpen(true);
+            }}
+            className="px-4 py-2 bg-[#CA8A04] text-white rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-[#1C1917] transition-all flex items-center space-x-1.5 shadow-sm"
+          >
+            <Plus size={14} />
+            <span>Add Category</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -72,12 +134,14 @@ export default function CategoriesTab({
                       setEditCategoryItem(c);
                     }}
                     className="p-1.5 border border-[#EFECE6] hover:border-[#CA8A04] hover:text-[#CA8A04] rounded-lg transition-colors bg-white"
+                    title="Edit Category"
                   >
                     <Edit size={12} />
                   </button>
                   <button
-                    onClick={() => handleDeleteCategory(c.id)}
+                    onClick={() => requestDeleteCategory(c.id, c.name)}
                     className="p-1.5 border border-red-100 hover:border-red-650 hover:text-red-650 text-red-400 rounded-lg transition-colors bg-white"
+                    title="Delete Category"
                   >
                     {deletingCategoryId === c.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                   </button>

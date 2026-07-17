@@ -10,8 +10,8 @@ import Razorpay from 'razorpay';
 import crypto from 'crypto';
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_secret',
+  key_id: (process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy').trim(),
+  key_secret: (process.env.RAZORPAY_KEY_SECRET || 'dummy_secret').trim(),
 });
 
 const createOrderSchema = z.object({
@@ -104,8 +104,9 @@ export async function createRazorpayOrder(data: {
     }
 
     // 6. Create order in DB with pending status
-    const supabaseAdmin = createAdminClient();
-    const { data: order, error: orderError } = await supabaseAdmin
+    // Use authenticated user session client when logged in so auth.uid() matches user.id cleanly
+    const dbClient = user?.id ? supabase : createAdminClient();
+    const { data: order, error: orderError } = await dbClient
       .from('orders')
       .insert({
         user_id: user?.id || null,
@@ -119,7 +120,10 @@ export async function createRazorpayOrder(data: {
 
     if (orderError || !order) {
       console.error('Create Order DB Error:', orderError);
-      return { success: false, error: 'Failed to save order' };
+      return { 
+        success: false, 
+        error: orderError?.message || orderError?.details || 'Failed to save order to database.' 
+      };
     }
 
     // 7. Insert order items
@@ -133,7 +137,14 @@ export async function createRazorpayOrder(data: {
           unit_price: product?.sale_price ?? product?.price ?? 0,
         };
       });
-      await supabaseAdmin.from('order_items').insert(orderItemsToInsert);
+      const { error: itemsError } = await dbClient.from('order_items').insert(orderItemsToInsert);
+      if (itemsError) {
+        console.error('Insert Order Items Error:', itemsError);
+        return {
+          success: false,
+          error: itemsError?.message || itemsError?.details || 'Failed to save order items.'
+        };
+      }
     }
 
     return { 
@@ -142,11 +153,12 @@ export async function createRazorpayOrder(data: {
       razorpayOrderId: rpOrder.id, 
       amount: amountInPaise,
       discountApplied: parsed.data.paymentMethod === 'upi',
-      keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy'
+      keyId: (process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy').trim()
     };
   } catch (error: any) {
     console.error('Create Order Error:', error);
-    return { success: false, error: 'An unexpected error occurred. Please try again.' };
+    const errorMessage = error?.error?.description || error?.description || error?.message || 'An unexpected error occurred. Please try again.';
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -178,7 +190,7 @@ export async function verifyPayment(data: {
     }
 
     // 1. Verify Signature
-    const secret = process.env.RAZORPAY_KEY_SECRET || 'dummy_secret';
+    const secret = (process.env.RAZORPAY_KEY_SECRET || 'dummy_secret').trim();
     const body = parsed.data.razorpay_order_id + '|' + parsed.data.razorpay_payment_id;
     const expectedSignature = crypto
       .createHmac('sha256', secret)

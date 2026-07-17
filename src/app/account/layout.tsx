@@ -49,14 +49,14 @@ export default async function AccountLayout({ children }: { children: React.Reac
           <h1 className="font-display text-2xl font-bold text-[#1A1A1A]">My Account</h1>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-[#EFECE6] overflow-hidden flex flex-col md:flex-row">
+        <div className="bg-white rounded-2xl shadow-sm border border-[#EFECE6] flex flex-col md:flex-row">
           {/* Sidebar */}
-          <div className="md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-[#EFECE6] bg-white">
+          <div className="md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-[#EFECE6] bg-white rounded-t-2xl md:rounded-tr-none md:rounded-l-2xl">
              <AccountSidebar user={userProfile} />
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1 overflow-x-hidden">
+          <div className="flex-1 overflow-x-hidden rounded-b-2xl md:rounded-bl-none md:rounded-r-2xl">
             <div className="p-4 sm:p-6 md:p-8">
               {children}
             </div>

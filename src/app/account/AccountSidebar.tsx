@@ -27,7 +27,7 @@ export default function AccountSidebar({
   return (
     <>
       {/* --- DESKTOP SIDEBAR --- */}
-      <div className="hidden md:flex flex-col h-full w-full">
+      <div className="hidden md:flex flex-col w-full sticky top-[120px] sm:top-[128px] max-h-[calc(100vh-140px)] overflow-y-auto no-scrollbar">
         {/* User Profile Summary */}
         <div className="p-6 border-b border-[#EFECE6] bg-[#FCFBF9]">
           <div className="w-16 h-16 rounded-full bg-[#EFECE6] flex items-center justify-center text-[#706A60] font-display text-2xl font-medium mb-4">
@@ -46,7 +46,7 @@ export default function AccountSidebar({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4">
+        <nav className="flex-1 py-4">
           <ul className="space-y-1 px-3">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
