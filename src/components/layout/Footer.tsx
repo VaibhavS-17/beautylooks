@@ -8,8 +8,8 @@ export default function Footer({ categories = [] }: { categories?: { id: string,
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           
           <div className="space-y-4">
-            <Link href="/" className="inline-flex items-center gap-3.5 group focus:outline-none">
-              <div className="relative h-12 w-12 rounded-full overflow-hidden border border-[#CA8A04]/40 shadow-md shrink-0 bg-black transition-transform duration-300 group-hover:scale-105">
+            <Link href="/" className="inline-flex items-center gap-3.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm">
+              <div className="relative h-12 w-12 rounded-full overflow-hidden border border-accent/40 shadow-md shrink-0 bg-black transition-transform duration-300 group-hover:scale-105">
                 <Image
                   src="/images/brand/logo.png"
                   alt="Beauty Looks Mumbai"
@@ -19,10 +19,10 @@ export default function Footer({ categories = [] }: { categories?: { id: string,
                 />
               </div>
               <div className="flex flex-col">
-                <span className="font-display text-xl font-semibold tracking-wide text-white group-hover:text-[#CA8A04] transition-colors">
+                <span className="font-display text-xl font-semibold tracking-wide text-white group-hover:text-accent transition-colors">
                   Beauty Looks
                 </span>
-                <span className="text-[10px] uppercase tracking-[0.25em] text-[#CA8A04] font-bold">
+                <span className="text-[10px] uppercase tracking-[0.25em] text-accent font-bold">
                   Mumbai
                 </span>
               </div>
@@ -59,12 +59,12 @@ export default function Footer({ categories = [] }: { categories?: { id: string,
               <input 
                 type="email" 
                 placeholder="Enter your email" 
-                className="flex-1 bg-brand-dark border border-primary/20 px-4 py-2 text-sm focus:outline-none focus:border-accent text-primary placeholder:text-primary/50"
+                className="flex-1 bg-brand-dark border border-primary/20 px-4 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent text-primary placeholder:text-primary/50"
                 required
               />
               <button 
                 type="submit" 
-                className="bg-accent text-brand-dark px-4 py-2 text-xs font-semibold uppercase tracking-widest hover:bg-accent-light transition-colors"
+                className="bg-accent text-brand-dark px-4 py-2 text-xs font-semibold uppercase tracking-widest hover:bg-accent-light transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-brand-dark"
               >
                 Join
               </button>

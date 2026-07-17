@@ -20,11 +20,14 @@ export default function RootLayoutClient({ children, categories = [] }: { childr
 
   return (
     <>
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-[9999] bg-text-main text-white p-4 rounded-md shadow-lg font-bold">
+        Skip to content
+      </a>
       <Toaster position="top-center" toastOptions={{ duration: 3500 }} />
       <Suspense fallback={<div className="h-20 bg-[var(--color-primary)]" />}>
         <Navbar categories={categories} />
       </Suspense>
-      <main className="flex-grow pb-24 md:pb-0">{children}</main>
+      <main id="main-content" className="flex-grow pb-24 md:pb-0">{children}</main>
       <Footer categories={categories} />
       <MobileBottomNav />
       <CartDrawer />

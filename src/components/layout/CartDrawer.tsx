@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { X, Plus, Minus, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
@@ -10,6 +10,59 @@ import { formatPrice } from '@/lib/data';
 export default function CartDrawer() {
   const { items, isOpen, closeCart, updateQuantity, removeItem, getTotalPrice, getTotalItems } = useCartStore();
   const fallbackProductImage = '/images/products/facial-kit-1.png';
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        closeCart();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+      // Focus close button on open
+      setTimeout(() => {
+        const closeBtn = document.getElementById('cart-close-btn');
+        if (closeBtn) closeBtn.focus();
+      }, 100);
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, closeCart]);
+
+  const handleTabKey = (e: React.KeyboardEvent) => {
+    if (!drawerRef.current) return;
+    
+    const focusableElements = drawerRef.current.querySelectorAll(
+      'a[href], button:not([disabled]), textarea, input, select'
+    );
+    
+    if (focusableElements.length === 0) return;
+    
+    const firstElement = focusableElements[0] as HTMLElement;
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+    if (e.key === 'Tab') {
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -18,11 +71,19 @@ export default function CartDrawer() {
   const grandTotal = subtotal + shipping;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div 
+      className="fixed inset-0 z-50 overflow-hidden" 
+      role="dialog" 
+      aria-modal="true" 
+      aria-label="Shopping Cart"
+      onKeyDown={handleTabKey}
+      ref={drawerRef}
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-[2px] transition-opacity"
         onClick={closeCart}
+        aria-hidden="true"
       />
 
       {/* Responsive Drawer Container - Wider on PC so rows fit horizontally without wrapping */}
@@ -46,8 +107,9 @@ export default function CartDrawer() {
                 </span>
               </div>
               <button
+                id="cart-close-btn"
                 onClick={closeCart}
-                className="text-text-muted hover:text-text-main hover:bg-stone-100 p-1.5 rounded-lg transition-colors"
+                className="text-text-muted hover:text-text-main hover:bg-stone-100 p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 aria-label="Close cart"
               >
                 <X size={18} strokeWidth={2} />

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Bell, Check, Mail, Loader2 } from 'lucide-react';
 import { subscribeRestockNotification } from '@/app/actions/notificationActions';
 import { useNotificationStore } from '@/lib/store';
@@ -22,6 +22,7 @@ export default function NotifyMeModal({ isOpen, onClose, productId, productName 
 
   const addRequest = useNotificationStore((s) => s.addRequest);
   const isSubscribed = useNotificationStore((s) => s.isSubscribed);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Auto-fill email from active session
   useEffect(() => {
@@ -57,6 +58,49 @@ export default function NotifyMeModal({ isOpen, onClose, productId, productName 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      // Focus email input or close button
+      setTimeout(() => {
+        const input = document.getElementById('notify-email');
+        if (input) input.focus();
+      }, 100);
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  const handleTabKey = (e: React.KeyboardEvent) => {
+    if (!modalRef.current) return;
+    
+    const focusableElements = modalRef.current.querySelectorAll(
+      'a[href], button:not([disabled]), textarea, input, select'
+    );
+    
+    if (focusableElements.length === 0) return;
+    
+    const firstElement = focusableElements[0] as HTMLElement;
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+    if (e.key === 'Tab') {
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    }
+  };
 
   // Auto-close after success
   useEffect(() => {
@@ -120,16 +164,25 @@ export default function NotifyMeModal({ isOpen, onClose, productId, productName 
   return (
     <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4"
-      onClick={handleClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Notify me when available"
+      onKeyDown={handleTabKey}
+      ref={modalRef}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-auto relative animate-scale-in"
+        className="absolute inset-0"
+        onClick={handleClose}
+        aria-hidden="true"
+      />
+      <div
+        className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-auto relative animate-scale-in z-10"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-secondary transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           aria-label="Close modal"
         >
           <X className="w-5 h-5 text-text-muted" />
@@ -202,7 +255,7 @@ export default function NotifyMeModal({ isOpen, onClose, productId, productName 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-12 bg-accent text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full h-12 bg-accent text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
               >
                 {isSubmitting && <Loader2 size={14} className="animate-spin" />}
                 {isSubmitting ? 'Subscribing...' : 'Notify Me'}

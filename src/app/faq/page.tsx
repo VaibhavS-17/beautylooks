@@ -112,35 +112,34 @@ export default function FaqPage() {
           {filteredFaqs.map((faq, idx) => {
             const isOpen = openIndex === idx;
             return (
-              <div
+              <details
                 key={idx}
-                className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group"
+                open={isOpen}
+                onToggle={(e) => {
+                  if ((e.target as HTMLDetailsElement).open) {
+                    setOpenIndex(idx);
+                  } else if (openIndex === idx) {
+                    setOpenIndex(null);
+                  }
+                }}
               >
-                <button
-                  onClick={() => setOpenIndex(isOpen ? null : idx)}
-                  className="w-full flex items-center justify-between p-6 text-left gap-4"
+                <summary
+                  className="w-full flex items-center justify-between p-6 text-left gap-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent list-none [&::-webkit-details-marker]:hidden"
                 >
                   <span className="text-sm sm:text-base font-semibold text-text-main">
                     {faq.question}
                   </span>
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ${
-                      isOpen ? 'bg-text-main text-white rotate-180' : 'bg-secondary text-text-muted'
-                    }`}
+                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 group-open:bg-text-main group-open:text-white group-open:rotate-180 bg-secondary text-text-muted"
                   >
                     <ChevronDown size={16} />
                   </div>
-                </button>
-                <div
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    isOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'
-                  }`}
-                >
-                  <div className="px-6 pb-6 pt-1 border-t border-border/40 text-sm text-text-muted font-light leading-relaxed">
-                    {faq.answer}
-                  </div>
+                </summary>
+                <div className="px-6 pb-6 pt-1 border-t border-border/40 text-sm text-text-muted font-light leading-relaxed">
+                  {faq.answer}
                 </div>
-              </div>
+              </details>
             );
           })}
         </div>
