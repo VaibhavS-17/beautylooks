@@ -118,14 +118,14 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 ))}
               </div>
 
-              <div className="flex justify-between items-center border-t border-[#EFECE6] pt-3 text-sm">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-t border-[#EFECE6] pt-3 text-sm gap-3">
                 <div className="flex items-center space-x-2">
                   <span className="text-[#706A60]">Total amount</span>
                   <span className="text-sm font-bold text-[#9A7B2F]">{formatPrice(order.total_amount)}</span>
                 </div>
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-4">
                   <ReorderButton orderItems={order.order_items} />
-                  <span className="text-[#9A7B2F] font-medium text-xs group-hover:underline">View Details →</span>
+                  <span className="text-[#9A7B2F] font-medium text-xs group-hover:underline whitespace-nowrap">View Details →</span>
                 </div>
               </div>
             </Link>
