@@ -494,7 +494,12 @@ function CheckoutContent() {
   // ── Checkout Form ──
   return (
     <div className="w-full min-h-screen bg-primary py-12">
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" onLoad={() => setIsRazorpayLoaded(true)} />
+      <Script 
+        src="https://checkout.razorpay.com/v1/checkout.js" 
+        strategy="afterInteractive" 
+        onLoad={() => setIsRazorpayLoaded(true)} 
+        onError={() => setErrorMessage('Failed to load payment gateway. If you are using an ad-blocker, please disable it and refresh.')}
+      />
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Title */}
         <div className="border-b border-border pb-6 mb-12 flex items-center">
@@ -821,13 +826,13 @@ function CheckoutContent() {
                 <div className="border-t border-border pt-6 mt-6 mb-8 flex justify-between items-center text-base font-semibold text-text-main">
                   <span>Final Total</span><span>{formatPrice(finalTotal)}</span>
                 </div>
-                <button type="submit" disabled={isProcessing || !isRazorpayLoaded} className="btn-primary w-full justify-center flex items-center space-x-2 mb-6 text-base py-4 disabled:opacity-70 disabled:cursor-not-allowed transition-all relative overflow-hidden">
-                  {(!isRazorpayLoaded || isProcessing) && (
+                <button type="submit" disabled={isProcessing} className="btn-primary w-full justify-center flex items-center space-x-2 mb-6 text-base py-4 disabled:opacity-70 disabled:cursor-not-allowed transition-all relative overflow-hidden">
+                  {isProcessing && (
                     <div className="absolute inset-0 bg-[#0C0A09] flex items-center justify-center">
                       <Loader2 size={20} className="animate-spin text-[#C9A94E]" />
                     </div>
                   )}
-                  <span className={(!isRazorpayLoaded || isProcessing) ? 'opacity-0' : 'opacity-100'}>
+                  <span className={isProcessing ? 'opacity-0' : 'opacity-100'}>
                     Place Order & Pay
                   </span>
                 </button>
