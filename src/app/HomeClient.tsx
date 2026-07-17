@@ -17,6 +17,7 @@ interface HomeClientProps {
     hero_subtitle: string;
     hero_description: string;
     hero_image_url: string;
+    hero_mobile_image_url?: string;
     hero_button_text: string;
     hero_button_link: string;
   };
@@ -26,6 +27,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const heroImageUrl = siteSettings.hero_image_url || '/images/hero-beauty.png';
+  const heroMobileImageUrl = siteSettings.hero_mobile_image_url || heroImageUrl;
   const fallbackProductImage = '/images/products/facial-kit-1.png';
 
   const addItem = useCartStore((state) => state.addItem);
@@ -44,16 +46,30 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
   return (
     <div className="w-full bg-primary overflow-hidden">
       {/* ================= HERO SECTION ================= */}
-      <section className="relative w-full h-[65vh] sm:h-[80vh] flex items-center justify-center bg-[#111]">
+      <section className="relative w-full h-[85vh] sm:h-[80vh] flex items-center justify-center bg-[#111]">
         <div className="absolute inset-0 z-0">
-          <Image
-            src={heroImageUrl}
-            alt={siteSettings.hero_title}
-            fill
-            sizes="100vw"
-            className="object-cover opacity-80"
-            priority
-          />
+          {/* Desktop Image */}
+          <div className="hidden sm:block absolute inset-0">
+            <Image
+              src={heroImageUrl}
+              alt={siteSettings.hero_title}
+              fill
+              sizes="100vw"
+              className="object-cover opacity-80"
+              priority
+            />
+          </div>
+          {/* Mobile Image */}
+          <div className="block sm:hidden absolute inset-0">
+            <Image
+              src={heroMobileImageUrl}
+              alt={siteSettings.hero_title}
+              fill
+              sizes="100vw"
+              className="object-cover opacity-80"
+              priority
+            />
+          </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
         </div>
 

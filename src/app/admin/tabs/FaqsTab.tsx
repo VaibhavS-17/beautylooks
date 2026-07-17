@@ -10,6 +10,7 @@ interface FaqsTabProps {
     hero_subtitle: string;
     hero_description: string;
     hero_image_url: string;
+    hero_mobile_image_url?: string;
     hero_button_text: string;
     hero_button_link: string;
     common_faqs?: Array<{ question: string; answer: string }>;
@@ -51,6 +52,7 @@ export default function FaqsTab({
     formData.append('heroSubtitle', siteSettings.hero_subtitle || 'GENUINE • SIMPLE • AFFORDABLE');
     formData.append('heroDescription', siteSettings.hero_description || 'Curated luxury skincare and cosmetics.');
     formData.append('heroImageUrl', siteSettings.hero_image_url || '');
+    formData.append('heroMobileImageUrl', siteSettings.hero_mobile_image_url || '');
     formData.append('heroButtonText', siteSettings.hero_button_text || 'SHOP NOW');
     formData.append('heroButtonLink', siteSettings.hero_button_link || '/products');
     formData.append(

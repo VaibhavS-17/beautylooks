@@ -106,6 +106,7 @@ export default async function Homepage() {
         hero_subtitle: 'The Autumn Collection',
         hero_description: 'Simple. Genuine. Affordable. Experience professional results at home with Mumbai\'s most trusted curated beauty sets.',
         hero_image_url: '/images/hero-beauty.png',
+        hero_mobile_image_url: '/images/hero-beauty.png',
         hero_button_text: 'Shop Collection',
         hero_button_link: '/products'
       }}

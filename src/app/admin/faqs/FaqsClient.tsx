@@ -8,9 +8,10 @@ interface SiteSettings {
   hero_title: string;
   hero_subtitle: string;
   hero_description: string;
-  hero_image_url: string;
-  hero_button_text: string;
-  hero_button_link: string;
+    hero_image_url: string;
+    hero_mobile_image_url?: string;
+    hero_button_text: string;
+    hero_button_link: string;
   common_faqs?: Array<{ question: string; answer: string }>;
 }
 
