@@ -27,11 +27,11 @@ These are the items where a single exploit or race condition costs real money or
 - [ ] **Confirm `profiles.is_admin` self-escalation is actually closed.** Migration `001` allowed users to update their own `is_admin` via the permissive `auth.uid() = id` UPDATE policy; `003_security_fixes.sql` adds an explicit deny. Don't assume — run a test as a non-admin user attempting `UPDATE profiles SET is_admin = true WHERE id = auth.uid()` against production/staging and confirm it's rejected.
 - [ ] **Webhook signature verification** (`src/app/api/webhooks/route.ts`). Currently accepts any POST with no HMAC check, no IP allowlist, no replay protection. Add signature verification against whatever provider is calling it before processing any payload.
 - [ ] **Stock race condition** (`src/app/actions/orderActions.ts`, `createOrder`). Read-then-write pattern (`SELECT stock` → check → separate `UPDATE`) allows overselling under concurrent orders. Replace with a single atomic Postgres function: `UPDATE products SET stock = stock - $1 WHERE id = $2 AND stock >= $1 RETURNING stock`, and treat 0 rows returned as "out of stock."
-- [ ] **UTR uniqueness race condition** (same file, `submitUTR`). Same read-then-write flaw lets two users submit the same UTR simultaneously. Add a DB-level `UNIQUE` constraint on `orders.utr_number` and handle the constraint-violation error path, rather than relying on an app-level pre-check.
+
 - [ ] **`verifyPayment` doesn't actually check admin status** — only calls `auth.getUser()`, not the `profiles.is_admin` flag. If RLS is ever misconfigured, any logged-in user could verify payments. Add the explicit `is_admin` check (and extract it into one shared helper — it's currently copy-pasted across every admin action).
 - [ ] **In-memory rate limiting is a no-op in production** (`src/lib/rate-limit.ts`). The `Map`-based limiter resets on every cold start and isn't shared across serverless instances — it's not actually limiting anything. Replace with Upstash Redis (or a Supabase table-based counter) for: login, password reset, back-in-stock subscribe, and order creation.
 - [ ] **No route-level auth protection.** `middleware.ts` refreshes the session but never redirects unauthenticated users away from `/admin`, `/account`, `/checkout` — protection is entirely page-level, meaning the URL itself is reachable. Add matcher-based redirects in middleware for these path prefixes.
-- [ ] **HTML injection in transactional emails** (`src/lib/emailService.ts`). `UTR` (line ~85–100) and `product.name` (line ~140–160) are interpolated directly into email HTML with no escaping — a crafted UTR/product name becomes stored XSS in the admin's inbox. Sanitize/escape both before interpolation.
+- [ ] **HTML injection in transactional emails** (`src/lib/emailService.ts`). `product.name` (line ~140–160) is interpolated directly into email HTML with no escaping — a crafted product name becomes stored XSS in the admin's inbox. Sanitize/escape before interpolation.
 - [ ] **Missing DB-level `CHECK` constraints** that currently only exist (partially) in app code:
   - `products.stock >= 0` — direct SQL updates can currently push stock negative.
   - `reviews.rating BETWEEN 1 AND 5`.
@@ -50,9 +50,7 @@ These aren't security issues, but they're either broken features customers will 
 - [ ] **`InvoicePrintView.tsx` is fully built and completely unused.** No page links to it. Add a "Download Invoice" action on the account order history and/or admin order detail view.
 - [ ] **Wishlist is localStorage-only despite a `wishlist_items` table existing in the DB.** Wishlist is lost on logout/device change. Sync `useWishlistStore` to Supabase for logged-in users (keep localStorage as the guest fallback, merge on login).
 - [ ] **Review "purchased" check is case-sensitive** (`reviewActions.ts`, `submitReview`): compares against `'delivered'` but a stored status of `'Delivered'` fails the check silently, blocking legitimate reviews. Normalize case in the query or fix status casing at the source once the ENUM (Phase 0) lands.
-- [ ] **UPI payment has no fallback on mobile.** `window.location.href = upiLink` navigates away with no handling if no UPI app is installed — user is stranded on a blank page. Detect the failure (visibility/blur timeout pattern) and show a fallback with the QR code / manual UPI ID.
-- [ ] **QR code has no expiry**, so a payment intent could theoretically be paid against indefinitely. Add a TTL and regenerate on expiry.
-- [ ] **UTR max length of 12 is too strict** — some banks use 16-digit UTRs. Widen validation to accept 12–16 digits.
+
 - [ ] **Broken breadcrumb → filter link.** Product detail breadcrumbs link to `/products?category={slug}`, but the products page doesn't read that query param to pre-filter. Fix `/products/page.tsx` to hydrate filter state from the URL (this also fixes "filters reset on refresh," a separate reported issue).
 - [ ] **No stock check before "Move to Cart" from wishlist** — can add an out-of-stock item straight to cart.
 - [ ] **No stock check / debounce on cart quantity changes**, and no loading state on "Add to Cart" — both allow double-submits / adding negative or absurd quantities. Add `quantity > 0` and an upper bound tied to actual stock in `useCartStore`.
@@ -68,14 +66,14 @@ The admin panel works for a tiny catalog but won't scale, and several built feat
 - [ ] **Split the single `src/app/admin/page.tsx` monolith** into route-based sub-pages/components (Dashboard, Orders, Products, Discounts, Blog, Customers) — it's currently one very large file covering everything.
 - [ ] **Add pagination everywhere in admin**: orders list, products list, reviews. All currently fetch every row.
 - [ ] **Combine the 4 separate dashboard-stat queries into one RPC/view** instead of 4 round trips per page load.
-- [ ] **Add confirmation dialogs** before: order status changes, UTR approve/reject, product/category delete. Right now these are one accidental click away from irreversible state changes.
+- [ ] **Add confirmation dialogs** before: order status changes, product/category delete. Right now these are one accidental click away from irreversible state changes.
 - [ ] **Add search/filter/date-range** to the orders and products admin tables.
 - [ ] **Build the discount code management UI** — codes can be created via the action but there's no admin screen to view/edit/deactivate them.
 - [ ] **Build blog post admin CRUD** — `blog_posts` table exists, posts are queried on the storefront, but there's no way to create/edit one short of raw SQL.
 - [ ] **Wire up `admin_activity_log`** — the table was added in `002_admin_features.sql` but nothing ever writes to it. Either use it (log admin mutations) or drop it.
 - [ ] **Surface the low-stock materialized view** (added in `008_performance_and_inventory.sql`) somewhere in the admin UI — it exists in the DB but isn't shown anywhere.
 - [ ] **Add CSV/Excel export** for orders and products.
-- [ ] **Add an order detail view** in admin (line items, shipping address, payment/UTR history) — currently only a flat status-update row per order.
+- [ ] **Add an order detail view** in admin (line items, shipping address, payment history) — currently only a flat status-update row per order.
 - [ ] **Add analytics charts** using `recharts`, which is already a dependency but unused — sales over time, top products.
 
 ---
@@ -114,7 +112,7 @@ Mostly mechanical fixes, but they compound (a modal with no focus trap is both a
 
 Two things need a decision before anyone spends time on them:
 
-- [ ] **Razorpay**: migrations `004`/`005` show it being removed then restored, the npm package is still installed, but the app is UPI-only in practice. **Decide:** is multi-gateway support actually planned, or should the columns/dependency be removed for good? Don't leave this ambiguous — it's actively confusing to whoever touches payments next.
+- [x] **Razorpay vs Manual UTR**: The app previously had mixed UTR/manual tracking. **Decision Made:** We are exclusively using Razorpay for all payments (including UPI via Razorpay). Manual UTR verification has been stripped out to keep operations clean and rely on webhook/HMAC verification.
 - [ ] **Hard delete vs. soft delete** for products/categories — several bugs above (orphaned order_items, orphaned products on category delete) trace back to hard deletes. Standardizing on `is_active = false` soft-deletes (the column already exists) fixes multiple issues at once rather than patching each one individually.
 
 Smaller cleanup, do opportunistically:
