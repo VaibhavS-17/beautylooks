@@ -61,9 +61,9 @@ export default async function AdminLayout({
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#FBF9F6] text-[#1C1917] flex flex-col md:flex-row font-sans overflow-x-hidden">
+    <div className="w-full h-screen bg-[#FBF9F6] text-[#1C1917] flex flex-col md:flex-row font-sans overflow-hidden">
       <AdminSidebar counts={counts} />
-      <main className="flex-1 min-h-screen bg-[#FBF9F6] overflow-y-auto flex flex-col justify-between">
+      <main className="flex-1 overflow-y-auto flex flex-col justify-between">
         <div className="p-4 sm:p-6 lg:p-8 flex-1">
           {children}
         </div>
