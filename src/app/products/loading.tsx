@@ -102,7 +102,7 @@ export default function ProductsLoading() {
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 sm:gap-x-8 gap-y-6 sm:gap-y-12">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="product-card flex flex-col h-full bg-white rounded-2xl p-2 sm:p-3 border border-border/50">
-                  <div className="h-[180px] sm:h-[350px] w-full rounded-xl bg-secondary animate-pulse mb-2 sm:mb-4" />
+                  <div className="h-[200px] sm:h-[400px] w-full rounded-xl bg-secondary animate-pulse mb-2 sm:mb-4" />
                   
                   <div className="px-1 flex flex-col flex-grow">
                     <div className="h-3 w-16 bg-secondary rounded animate-pulse mb-2" />

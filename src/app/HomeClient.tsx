@@ -170,7 +170,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8 lg:gap-12">
-            {featuredProducts.map((product) => {
+            {featuredProducts.map((product, index) => {
               const isOnSale = product.salePrice !== null;
               const currentPrice = product.salePrice || product.price;
 
@@ -184,6 +184,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                           fill
                           sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 25vw"
                           className="object-cover product-image"
+                          priority={index < 4}
                         />
                         <div className="absolute top-4 left-4 flex flex-col space-y-2 z-10">
                           {product.badge === 'bestseller' && (

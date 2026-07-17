@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Search, Plus, Image as ImageIcon, Edit, Trash2, Loader2, X, Download } from 'lucide-react';
 import ImageUploader from '@/components/admin/ImageUploader';
 import AdminConfirmationModal from '../components/AdminConfirmationModal';
@@ -155,7 +156,7 @@ export default function BlogsTab({
                   <td className="p-4 flex items-center space-x-3 max-w-sm">
                     <div className="w-10 h-10 bg-[#FBF9F6] border border-[#EFECE6] rounded-lg overflow-hidden relative shrink-0 flex items-center justify-center">
                       {blog.cover_image ? (
-                        <img src={blog.cover_image} alt={blog.title} className="w-full h-full object-cover" />
+                        <Image src={blog.cover_image} alt={blog.title} fill sizes="100px" className="object-cover" />
                       ) : (
                         <ImageIcon size={16} className="text-[#8C8885]" />
                       )}

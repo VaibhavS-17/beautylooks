@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { Metadata } from 'next';
 import ProductDetailClient from './ProductDetailClient';
 import { notFound } from 'next/navigation';
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 // ── Dynamic SEO & Open Graph ──
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

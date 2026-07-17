@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Search, Plus, Image as ImageIcon, Edit, Trash2, Loader2, X, Download, Filter } from 'lucide-react';
 import { formatPrice } from '@/lib/data';
@@ -293,7 +294,7 @@ export default function ProductsTab({
                   <td className="p-4 flex items-center space-x-3">
                     <div className="w-12 h-12 bg-[#FBF9F6] border border-[#EFECE6] rounded-xl overflow-hidden relative shrink-0 flex items-center justify-center">
                       {product.images && product.images[0] ? (
-                        <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                        <Image src={product.images[0]} alt={product.name} fill sizes="100px" className="object-cover" />
                       ) : (
                         <ImageIcon size={16} className="text-[#8C8885]" />
                       )}

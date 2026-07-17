@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Plus, Award, Edit, Trash2, Loader2, X, Download } from 'lucide-react';
 import ImageUploader from '@/components/admin/ImageUploader';
 import AdminConfirmationModal from '../components/AdminConfirmationModal';
@@ -115,7 +116,7 @@ export default function BrandsTab({
           <div key={b.id} className="bg-white border border-[#EFECE6] p-4 rounded-2xl shadow-sm flex flex-col justify-between items-center text-center space-y-4">
             <div className="w-16 h-16 bg-[#FBF9F6] rounded-full border border-[#EFECE6] overflow-hidden flex items-center justify-center relative shrink-0">
               {b.logo_url ? (
-                <img src={b.logo_url} alt={b.name} className="w-full h-full object-cover scale-110" />
+                <Image src={b.logo_url} alt={b.name} fill sizes="100px" className="object-cover scale-110" />
               ) : (
                 <Award size={24} className="text-[#8C8885]" />
               )}

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Plus, Image as ImageIcon, Edit, Trash2, Loader2, X, Download } from 'lucide-react';
 import ImageUploader from '@/components/admin/ImageUploader';
 import AdminConfirmationModal from '../components/AdminConfirmationModal';
@@ -117,7 +118,7 @@ export default function CategoriesTab({
           <div key={c.id} className="bg-white border border-[#EFECE6] rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
             <div className="h-36 bg-[#FBF9F6] relative overflow-hidden flex items-center justify-center">
               {c.image_url ? (
-                <img src={c.image_url} alt={c.name} className="w-full h-full object-cover" />
+                <Image src={c.image_url} alt={c.name} fill sizes="200px" className="object-cover" />
               ) : (
                 <ImageIcon size={24} className="text-[#8C8885]" />
               )}
