@@ -205,18 +205,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
             </div>
           </div>
 
-          {/* Mobile Search Bar */}
-          <div className="md:hidden px-4 pb-3">
-            <button 
-              onClick={() => setIsSearchOpen(true)}
-              className="w-full relative flex items-center bg-[var(--color-primary)] border border-[var(--color-border)] rounded-lg pl-3 pr-4 py-2.5 text-sm text-[var(--color-text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent shadow-sm"
-              aria-label="Search products"
-            >
-              <Search size={16} className="text-[var(--color-text-muted)] mr-2" />
-              <span className="font-light">Search products, brands...</span>
-            </button>
-          </div>
-          
+
           {/* Perks Bar */}
           <div className="hidden lg:block border-t border-[var(--color-border)] bg-[var(--color-secondary)]/50 rounded-b-2xl">
             <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
