@@ -18,9 +18,7 @@ interface AdminOrder {
   shippingAddress?: any;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
-  upiUtr?: string | null;
-  utrStatus?: 'pending' | 'approved' | 'rejected' | null;
-  utrVerifiedAt?: string | null;
+
   items?: Array<{ name: string; quantity: number; unitPrice: number; image?: string }>;
 }
 
@@ -28,14 +26,14 @@ interface OrdersTabProps {
   orders: AdminOrder[];
   updatingOrderId: string | null;
   handleOrderStatus: (id: string, status: any) => Promise<void>;
-  handleVerifyUtr?: (id: string, action: 'approve' | 'reject') => Promise<void>;
+
 }
 
 export default function OrdersTab({
   orders,
   updatingOrderId,
   handleOrderStatus,
-  handleVerifyUtr
+
 }: OrdersTabProps) {
   const [orderSearch, setOrderSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -72,8 +70,7 @@ export default function OrdersTab({
     const matchesSearch = 
       o.customerName.toLowerCase().includes(orderSearch.toLowerCase()) ||
       o.id.toLowerCase().includes(orderSearch.toLowerCase()) ||
-      o.customerEmail.toLowerCase().includes(orderSearch.toLowerCase()) ||
-      (o.upiUtr && o.upiUtr.toLowerCase().includes(orderSearch.toLowerCase()));
+      o.customerEmail.toLowerCase().includes(orderSearch.toLowerCase());
       
     const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
     
@@ -161,26 +158,9 @@ export default function OrdersTab({
     });
   };
 
-  const requestVerifyUtr = (orderId: string, action: 'approve' | 'reject') => {
-    if (!handleVerifyUtr) return;
-    setConfirmModal({
-      isOpen: true,
-      title: action === 'approve' ? 'Approve UPI Payment (UTR)' : 'Reject UPI Payment (UTR)',
-      message: action === 'approve'
-        ? `Are you sure you want to approve this UTR payment for order #${orderId.slice(0, 8)}? The order will be marked as Confirmed.`
-        : `Are you sure you want to reject this UTR payment? The order will be marked as Failed.`,
-      isDanger: action === 'reject',
-      action: async () => {
-        setIsModalLoading(true);
-        await handleVerifyUtr(orderId, action);
-        setIsModalLoading(false);
-        setConfirmModal(prev => ({ ...prev, isOpen: false }));
-      }
-    });
-  };
 
   const handleExportCsv = () => {
-    const headers = ['Order ID', 'Customer Name', 'Customer Phone/Email', 'Amount', 'Status', 'Order Date', 'UPI UTR', 'UTR Status', 'Razorpay Order ID', 'Razorpay Payment ID'];
+    const headers = ['Order ID', 'Customer Name', 'Customer Phone/Email', 'Amount', 'Status', 'Order Date', 'Razorpay Order ID', 'Razorpay Payment ID'];
     const rows = filteredOrders.map(o => [
       o.id,
       o.customerName,
@@ -188,8 +168,6 @@ export default function OrdersTab({
       o.amount,
       o.status,
       o.date,
-      o.upiUtr || '',
-      o.utrStatus || '',
       o.razorpayOrderId || '',
       o.razorpayPaymentId || ''
     ]);
@@ -211,7 +189,7 @@ export default function OrdersTab({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold font-display">Orders Portal</h2>
-          <p className="text-sm text-[#8A8177]">Monitor client transactions, manage UPI UTR verification, and fulfillments.</p>
+          <p className="text-sm text-[#8A8177]">Monitor client transactions and fulfillments.</p>
         </div>
         <button
           type="button"
@@ -229,7 +207,7 @@ export default function OrdersTab({
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8A8177]" />
           <input
             type="text"
-            placeholder="Search by Order ID, Customer, Phone, or UPI UTR..."
+            placeholder="Search by Order ID, Customer, or Phone..."
             value={orderSearch}
             onChange={e => { setOrderSearch(e.target.value); setCurrentPage(1); }}
             className="pl-9 pr-4 py-2 border border-[#EFECE6] rounded-xl text-xs focus:outline-none focus:border-[#CA8A04] bg-white w-full shadow-2xs"
@@ -447,14 +425,14 @@ export default function OrdersTab({
                                 )}
                               </div>
 
-                              {/* Payment & UTR Info */}
+                                {/* Payment Info */}
                               <div className="space-y-2 md:col-span-2">
                                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#8A8177] flex items-center gap-1.5">
                                   <CreditCard size={12} />
-                                  Payment & UTR Verification
+                                  Payment Details
                                 </h4>
                                 <div className="text-xs text-[#1C1917] space-y-3 bg-white rounded-xl p-4 border border-[#EFECE6] shadow-2xs">
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <div className="grid grid-cols-1 gap-4">
                                     <div>
                                       <span className="text-[10px] text-[#8C8885] font-semibold uppercase tracking-wider block">Gateway Reference</span>
                                       {order.razorpayOrderId ? (
@@ -463,50 +441,7 @@ export default function OrdersTab({
                                           <p><span className="text-stone-500">Payment ID:</span> <span className="font-mono">{order.razorpayPaymentId || 'Pending'}</span></p>
                                         </div>
                                       ) : (
-                                        <p className="mt-1 text-stone-500 italic">Manual / UPI Direct Payment</p>
-                                      )}
-                                    </div>
-
-                                    <div className="border-t sm:border-t-0 sm:border-l border-[#EFECE6] pt-3 sm:pt-0 sm:pl-4">
-                                      <span className="text-[10px] text-[#8C8885] font-semibold uppercase tracking-wider block">UPI UTR Status</span>
-                                      {order.upiUtr ? (
-                                        <div className="mt-1 space-y-2">
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-mono font-bold text-sm bg-stone-100 px-2 py-1 rounded border border-stone-200">
-                                              {order.upiUtr}
-                                            </span>
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                              order.utrStatus === 'approved' ? 'bg-emerald-100 text-emerald-800' :
-                                              order.utrStatus === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
-                                            }`}>
-                                              {order.utrStatus || 'Pending'}
-                                            </span>
-                                          </div>
-
-                                          {/* UTR Verification Action Buttons */}
-                                          {(!order.utrStatus || order.utrStatus === 'pending') && handleVerifyUtr && (
-                                            <div className="flex items-center gap-2 pt-1">
-                                              <button
-                                                type="button"
-                                                onClick={() => requestVerifyUtr(order.id, 'approve')}
-                                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-all shadow-xs"
-                                              >
-                                                <CheckCircle2 size={13} />
-                                                <span>Approve UTR</span>
-                                              </button>
-                                              <button
-                                                type="button"
-                                                onClick={() => requestVerifyUtr(order.id, 'reject')}
-                                                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-all shadow-xs"
-                                              >
-                                                <XCircle size={13} />
-                                                <span>Reject UTR</span>
-                                              </button>
-                                            </div>
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <p className="mt-1 text-stone-500 italic">No UPI UTR submitted for this order.</p>
+                                        <p className="mt-1 text-stone-500 italic">No gateway reference found.</p>
                                       )}
                                     </div>
                                   </div>

@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import OrdersTab from '../tabs/OrdersTab';
-import { updateOrderStatusAdmin, verifyUtrAdmin } from '@/app/actions/adminActions';
-
+import { updateOrderStatusAdmin } from '@/app/actions/adminActions';
 interface AdminOrder {
   id: string;
   customerName: string;
@@ -42,29 +41,6 @@ export default function OrdersClient({ initialOrders }: { initialOrders: AdminOr
     }
   };
 
-  const handleVerifyUtr = async (orderId: string, action: 'approve' | 'reject') => {
-    setUpdatingOrderId(orderId);
-    try {
-      const res = await verifyUtrAdmin(orderId, action);
-      if (res.error) {
-        alert(`Failed to verify UTR: ${res.error}`);
-      } else {
-        const nextUtrStatus = action === 'approve' ? 'approved' : 'rejected';
-        const nextOrderStatus = action === 'approve' ? 'confirmed' : 'failed';
-        setOrders(prev => prev.map(o => o.id === orderId ? {
-          ...o,
-          utrStatus: nextUtrStatus,
-          status: nextOrderStatus,
-          utrVerifiedAt: new Date().toISOString()
-        } : o));
-      }
-    } catch (err) {
-      console.error('Error verifying UTR:', err);
-      alert('An error occurred while verifying UTR.');
-    } finally {
-      setUpdatingOrderId(null);
-    }
-  };
 
   return (
     <div suppressHydrationWarning>
@@ -72,7 +48,6 @@ export default function OrdersClient({ initialOrders }: { initialOrders: AdminOr
         orders={orders}
         updatingOrderId={updatingOrderId}
         handleOrderStatus={handleOrderStatus}
-        handleVerifyUtr={handleVerifyUtr}
       />
     </div>
   );

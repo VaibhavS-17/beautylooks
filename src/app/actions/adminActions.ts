@@ -773,39 +773,7 @@ export async function updateOrderStatusAdmin(orderId: string, status: string) {
   }
 }
 
-export async function verifyUtrAdmin(orderId: string, action: 'approve' | 'reject') {
-  const supabase = await createClient();
-  const authCheck = await verifyAdmin(supabase);
-  if (!authCheck.verified) return { error: authCheck.error };
 
-  const idParsed = uuidSchema.safeParse(orderId);
-  if (!idParsed.success) return { error: 'Invalid Order ID' };
-
-  try {
-    const nextUtrStatus = action === 'approve' ? 'approved' : 'rejected';
-    const nextOrderStatus = action === 'approve' ? 'confirmed' : 'failed';
-
-    const { error } = await supabase.from('orders').update({
-      utr_status: nextUtrStatus,
-      utr_verified_at: new Date().toISOString(),
-      status: nextOrderStatus,
-      updated_at: new Date().toISOString(),
-    }).eq('id', idParsed.data);
-
-    if (error) {
-      console.error('Verify UTR error:', error);
-      return { error: 'Failed to update UTR verification status.' };
-    }
-
-    revalidatePath('/admin');
-    revalidatePath('/admin/orders');
-    revalidatePath('/account');
-    return { success: true };
-  } catch (err: any) {
-    console.error('Verify UTR exception:', err);
-    return { error: 'An unexpected error occurred.' };
-  }
-}
 
 export async function syncMockData() {
   const supabase = await createClient();

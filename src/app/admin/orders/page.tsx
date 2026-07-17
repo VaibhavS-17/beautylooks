@@ -18,9 +18,7 @@ export default async function AdminOrdersPage() {
       shipping_address,
       razorpay_order_id,
       razorpay_payment_id,
-      upi_utr,
-      utr_status,
-      utr_verified_at,
+
       profiles (
         full_name,
         phone
@@ -97,9 +95,7 @@ export default async function AdminOrdersPage() {
     shippingAddress: ord.shipping_address,
     razorpayOrderId: ord.razorpay_order_id,
     razorpayPaymentId: ord.razorpay_payment_id,
-    upiUtr: ord.upi_utr,
-    utrStatus: ord.utr_status,
-    utrVerifiedAt: ord.utr_verified_at,
+
     items: (ord.order_items || []).map((item: any) => ({
       name: item.products?.name || 'Product',
       quantity: item.quantity,
