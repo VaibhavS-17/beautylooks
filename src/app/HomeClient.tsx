@@ -46,7 +46,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
   return (
     <div className="w-full bg-primary overflow-hidden">
       {/* ================= HERO SECTION ================= */}
-      <section className="relative w-full h-[85vh] sm:h-[80vh] flex items-center justify-center bg-[#111]">
+      <section className="relative w-full h-[85vh] sm:h-auto sm:aspect-video flex items-center justify-center bg-[#111]">
         <div className="absolute inset-0 z-0">
           {/* Desktop Image */}
           <div className="hidden sm:block absolute inset-0">
