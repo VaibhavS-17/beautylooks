@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { formatPrice } from '@/lib/data';
 import { useRouter } from 'next/navigation';
@@ -8,33 +9,85 @@ import { useCartStore } from '@/lib/store';
 import { Printer } from 'lucide-react';
 
 export function InvoicePrintView({ order }: { order: any }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isConfirmed = ['confirmed', 'shipped', 'out_for_delivery', 'delivered'].includes((order?.status || '').toLowerCase());
+  if (!isConfirmed || !mounted || typeof document === 'undefined') return null;
+
   const subtotal = order.order_items?.reduce((sum: number, item: any) => sum + item.unit_price * item.quantity, 0) || 0;
   const shipping = subtotal >= 499 ? 0 : 49;
   const total = order.total_amount;
-  const addr = order.shipping_address;
+  const addr = order.shipping_address || order.shippingAddress || {};
 
-  return (
+  const fullName = addr?.fullName || addr?.full_name || addr?.name || order?.customerName || order?.profiles?.full_name || order?.user?.full_name || '';
+  const line1 = addr?.line1 || addr?.addressLine1 || addr?.address_line1 || '';
+  const line2 = addr?.line2 || addr?.addressLine2 || addr?.address_line2 || '';
+  const city = addr?.city || '';
+  const state = addr?.state || '';
+  const pincode = addr?.pincode || addr?.zip || addr?.postalCode || '';
+  const phone = addr?.phone || addr?.phoneNumber || addr?.contactNumber || addr?.mobile || order?.profiles?.phone || '';
+  const email = addr?.email || order?.customerEmail || order?.user?.email || '';
+
+  return createPortal(
     <>
       <style>{`
         @media print {
+          @page {
+            size: A4;
+            margin: 15mm;
+          }
+          html, body {
+            background: white !important;
+            color: #1A1A1A !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+          }
+          body > *:not(.invoice-container) {
+            display: none !important;
+          }
           body * {
             visibility: hidden !important;
           }
-          #invoice-print-content, #invoice-print-content * {
+          .invoice-container, .invoice-container * {
             visibility: visible !important;
           }
+          .invoice-container {
+            display: block !important;
+            position: relative !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+          }
           #invoice-print-content {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
             background: white !important;
-            color: black !important;
+            color: #1A1A1A !important;
+            padding: 0 !important;
+            margin: 0 !important;
             border: none !important;
             box-shadow: none !important;
-            border-radius: 0 !important;
-            padding: 40px !important;
+          }
+          table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            page-break-inside: auto;
+          }
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+          thead {
+            display: table-header-group;
           }
           .no-print {
             display: none !important;
@@ -42,11 +95,6 @@ export function InvoicePrintView({ order }: { order: any }) {
         }
         .invoice-container {
           display: none;
-        }
-        @media print {
-          .invoice-container {
-            display: block;
-          }
         }
       `}</style>
 
@@ -70,13 +118,14 @@ export function InvoicePrintView({ order }: { order: any }) {
               <div className="bg-[#FCFBF9] border border-[#EFECE6] rounded-xl p-4">
                 <h4 className="text-xs font-semibold text-[#9A7B2F] uppercase tracking-wider mb-2">Ship To</h4>
                 <div className="text-sm text-[#5C554D] space-y-0.5">
-                  {addr.full_name && <p className="font-semibold text-[#1A1A1A]">{addr.full_name}</p>}
-                  {addr.line1 && <p>{addr.line1}</p>}
-                  {addr.line2 && <p>{addr.line2}</p>}
-                  {(addr.city || addr.state || addr.pincode) && (
-                    <p>{[addr.city, addr.state, addr.pincode].filter(Boolean).join(', ')}</p>
+                  {fullName && <p className="font-semibold text-[#1A1A1A]">{fullName}</p>}
+                  {line1 && <p>{line1}</p>}
+                  {line2 && <p>{line2}</p>}
+                  {(city || state || pincode) && (
+                    <p>{[city, state, pincode].filter(Boolean).join(', ')}</p>
                   )}
-                  {addr.phone && <p>📞 +91 {addr.phone}</p>}
+                  {phone && <p>📞 +91 {phone}</p>}
+                  {email && <p className="text-xs text-[#706A60]">✉️ {email}</p>}
                 </div>
               </div>
             )}
@@ -135,7 +184,8 @@ export function InvoicePrintView({ order }: { order: any }) {
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -222,7 +272,10 @@ export function BuyItAgainButton({ item }: { item: any }) {
   );
 }
 
-export function PrintInvoiceButton() {
+export function PrintInvoiceButton({ status }: { status?: string }) {
+  const isConfirmed = !status || ['confirmed', 'shipped', 'out_for_delivery', 'delivered'].includes(status.toLowerCase());
+  if (!isConfirmed) return null;
+
   return (
     <button
       onClick={() => window.print()}

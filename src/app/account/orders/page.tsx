@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/data';
 import { Package, ChevronLeft } from 'lucide-react';
 import { OrderFilter } from '@/components/shared/InvoicePrintView';
 import ReorderButton from './ReorderButton';
+import { ScrollToTopOnMount } from '@/components/layout/ScrollToTop';
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ status?: string, range?: string }> }) {
   const resolvedSearchParams = await searchParams;
@@ -51,6 +52,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="w-full text-left relative animate-in fade-in duration-500">
+      <ScrollToTopOnMount />
       <div className="flex items-center space-x-4 mb-6">
         <Link href="/account/profile" className="w-10 h-10 bg-white border border-[#EFECE6] rounded-full flex items-center justify-center text-[#4E463F] hover:bg-[#F9F7F3] hover:text-[#C9A94E] transition-colors shadow-sm">
           <ChevronLeft size={20} />

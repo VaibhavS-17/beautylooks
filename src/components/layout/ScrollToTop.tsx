@@ -1,10 +1,36 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useLayoutEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { ChevronUp } from 'lucide-react'
 
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+export function ScrollToTopOnMount() {
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual';
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, []);
+
+  return null;
+}
+
 export default function ScrollToTop() {
+  const pathname = usePathname()
   const [visible, setVisible] = useState(false)
+
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual';
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,3 +61,4 @@ export default function ScrollToTop() {
     </button>
   )
 }
+

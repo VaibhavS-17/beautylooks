@@ -7,6 +7,7 @@ import { notFound, redirect } from 'next/navigation';
 import { formatPrice } from '@/lib/data';
 import { Package, MessageCircle, ChevronLeft, CheckCircle2, Circle, X } from 'lucide-react';
 import { InvoicePrintView, BuyItAgainButton, PrintInvoiceButton } from '@/components/shared/InvoicePrintView';
+import { ScrollToTopOnMount } from '@/components/layout/ScrollToTop';
 
 const ORDER_STEPS = ['Order Placed', 'Confirmed', 'Shipped', 'Delivered'] as const;
 
@@ -112,12 +113,57 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
     notFound();
   }
 
-  const addr = order.shipping_address as any;
+  let addr = (order.shipping_address as any) || {};
+  const hasName = Boolean(addr.fullName || addr.full_name || addr.name);
+  const hasLine1 = Boolean(addr.line1 || addr.addressLine1 || addr.address_line1);
+  const hasPhone = Boolean(addr.phone || addr.phoneNumber || addr.contactNumber || addr.mobile);
+
+  if (!hasName || !hasLine1 || !hasPhone) {
+    const { data: userAddresses } = await supabase
+      .from('addresses')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('is_default', { ascending: false })
+      .limit(1);
+
+    const defaultAddr = userAddresses?.[0];
+    if (defaultAddr) {
+      addr = {
+        fullName: (addr.fullName || addr.full_name || addr.name) || defaultAddr.full_name || '',
+        phone: (addr.phone || addr.phoneNumber || addr.contactNumber || addr.mobile) || defaultAddr.phone || '',
+        addressLine1: (addr.line1 || addr.addressLine1 || addr.address_line1) || defaultAddr.line1 || '',
+        addressLine2: (addr.line2 || addr.addressLine2 || addr.address_line2) || defaultAddr.line2 || '',
+        city: addr.city || defaultAddr.city || '',
+        state: addr.state || defaultAddr.state || '',
+        pincode: (addr.pincode || addr.zip || addr.postalCode) || defaultAddr.pincode || '',
+        email: addr.email || user.email || '',
+      };
+      order.shipping_address = addr;
+    } else {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, phone')
+        .eq('id', user.id)
+        .single();
+
+      if (profile) {
+        addr = {
+          ...addr,
+          fullName: (addr.fullName || addr.full_name || addr.name) || profile.full_name || user.email?.split('@')[0] || '',
+          phone: (addr.phone || addr.phoneNumber || addr.contactNumber || addr.mobile) || profile.phone || '',
+          email: addr.email || user.email || '',
+        };
+        order.shipping_address = addr;
+      }
+    }
+  }
+
   const subtotal = order.order_items.reduce((sum: number, item: any) => sum + item.unit_price * item.quantity, 0);
   const shipping = subtotal >= 499 ? 0 : 49;
 
   return (
     <div className="w-full min-h-screen bg-[#FCFBF9] py-12 text-left relative">
+      <ScrollToTopOnMount />
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
@@ -145,7 +191,7 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
               <MessageCircle size={16} />
               <span className="hidden sm:inline">Track Support</span>
             </a>
-            <PrintInvoiceButton />
+            <PrintInvoiceButton status={order.status} />
           </div>
         </div>
 
@@ -211,13 +257,21 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ o
               <div className="glass-card bg-white border border-[#EFECE6] p-6 rounded-2xl shadow-sm">
                 <h2 className="text-lg font-display font-semibold text-[#9A7B2F] border-b border-[#EFECE6] pb-4 mb-4">Shipping Address</h2>
                 <div className="text-sm text-[#5C554D] space-y-1">
-                  {addr.full_name && <p className="font-semibold text-[#1A1A1A] mb-2">{addr.full_name}</p>}
-                  {addr.line1 && <p>{addr.line1}</p>}
-                  {addr.line2 && <p>{addr.line2}</p>}
-                  {(addr.city || addr.state || addr.pincode) && (
-                    <p>{[addr.city, addr.state, addr.pincode].filter(Boolean).join(', ')}</p>
+                  {(addr.fullName || addr.full_name || addr.name) && (
+                    <p className="font-semibold text-[#1A1A1A] mb-2">{addr.fullName || addr.full_name || addr.name}</p>
                   )}
-                  {addr.phone && <p className="pt-2">📞 +91 {addr.phone}</p>}
+                  {(addr.line1 || addr.addressLine1 || addr.address_line1) && (
+                    <p>{addr.line1 || addr.addressLine1 || addr.address_line1}</p>
+                  )}
+                  {(addr.line2 || addr.addressLine2 || addr.address_line2) && (
+                    <p>{addr.line2 || addr.addressLine2 || addr.address_line2}</p>
+                  )}
+                  {(addr.city || addr.state || addr.pincode || addr.zip) && (
+                    <p>{[addr.city, addr.state, addr.pincode || addr.zip].filter(Boolean).join(', ')}</p>
+                  )}
+                  {(addr.phone || addr.phoneNumber || addr.contactNumber || addr.mobile) && (
+                    <p className="pt-2">📞 +91 {addr.phone || addr.phoneNumber || addr.contactNumber || addr.mobile}</p>
+                  )}
                 </div>
               </div>
             )}

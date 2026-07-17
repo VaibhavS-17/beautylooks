@@ -19,7 +19,15 @@ const createOrderSchema = z.object({
     productId: z.string().uuid('Invalid product ID'),
     quantity: z.number().int().min(1)
   })).min(1, 'Order must contain at least one item'),
-  shippingAddress: z.any(),
+  shippingAddress: z.object({
+    fullName: z.string().min(1, 'Full name is required'),
+    phone: z.string().min(10, 'Contact number is required'),
+    email: z.string().email('Valid email is required'),
+    addressLine1: z.string().min(1, 'Address Line 1 is required'),
+    city: z.string().min(1, 'City is required'),
+    state: z.string().min(1, 'State is required'),
+    pincode: z.string().min(6, 'Pincode is required'),
+  }).passthrough(),
   paymentMethod: z.enum(['upi', 'standard']),
   discountCode: z.string().optional(),
   expectedTotal: z.number().min(0),
