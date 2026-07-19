@@ -34,9 +34,12 @@ export async function syncWishlistWithDB(localProductIds: string[]) {
     // 3. Return the unified list of IDs
     const allIds = Array.from(new Set([...Array.from(dbProductIds), ...localProductIds]));
     return { success: true, items: allIds };
-  } catch (error: any) {
-    console.error('Failed to sync wishlist:', error);
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    console.error('Toggle Wishlist Error:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'An unexpected error occurred while updating your wishlist.'
+    };
   }
 }
 

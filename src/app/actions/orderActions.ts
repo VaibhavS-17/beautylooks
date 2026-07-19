@@ -35,7 +35,7 @@ const createOrderSchema = z.object({
 
 export async function createRazorpayOrder(data: {
   items: Array<{ productId: string; quantity: string | number }>;
-  shippingAddress: any;
+  shippingAddress: Record<string, unknown>;
   paymentMethod: 'upi' | 'standard';
   discountCode?: string;
   expectedTotal: number;
@@ -190,11 +190,12 @@ export async function createRazorpayOrder(data: {
       discountApplied: parsed.data.paymentMethod === 'upi',
       keyId: (process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy').trim()
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Create Order Error:', error);
     // Note: We can't easily restore stock here unless we have itemsForReserve in scope,
     // but the specific failure points above handle the common cases.
-    const errorMessage = error?.error?.description || error?.description || error?.message || 'An unexpected error occurred. Please try again.';
+    const err = error as Record<string, any>;
+    const errorMessage = err?.error?.description || err?.description || err?.message || 'An unexpected error occurred. Please try again.';
     return { success: false, error: errorMessage };
   }
 }
@@ -276,7 +277,7 @@ export async function verifyPayment(data: {
 
     revalidatePath('/', 'layout');
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Verify Payment Exception:', error);
     return { success: false, error: 'An unexpected error occurred during verification.' };
   }
@@ -315,7 +316,7 @@ export async function recordPaymentFailure(data: { order_id: string; reason?: st
 
     revalidatePath('/', 'layout');
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Record Payment Failure Exception:', error);
     return { success: false, error: 'An unexpected error occurred while recording failure.' };
   }

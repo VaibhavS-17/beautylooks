@@ -46,9 +46,12 @@ export async function syncCartWithDB(localItems: CartItem[]) {
     if (upsertError) throw upsertError;
 
     return { success: true, items: mergedItems };
-  } catch (error: any) {
-    console.error('Failed to sync cart:', error);
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    console.error('Add to Cart Error:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'An unexpected error occurred while adding the item to your cart.'
+    };
   }
 }
 

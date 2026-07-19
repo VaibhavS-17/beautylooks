@@ -3,7 +3,15 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export async function createDiscountCode(data: any) {
+interface DiscountData {
+  code: string;
+  discount_percent: number;
+  valid_until?: string | null;
+  usage_limit?: number | null;
+  is_active: boolean;
+}
+
+export async function createDiscountCode(data: DiscountData) {
   const supabase = await createClient();
 
   // Validate admin
@@ -38,7 +46,7 @@ export async function createDiscountCode(data: any) {
   return { success: true };
 }
 
-export async function updateDiscountCode(id: string, data: any) {
+export async function updateDiscountCode(id: string, data: DiscountData) {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
