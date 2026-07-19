@@ -1,4 +1,7 @@
-'use client';
+const fs = require('fs');
+const path = 'c:/beautylooks/src/components/account/AddressModal.tsx';
+
+const newContent = `'use client';
 
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, AlertTriangle } from 'lucide-react';
@@ -62,10 +65,10 @@ export function AddressModal({ isOpen, onClose, editingAddress, onSubmit }: Addr
     const pin = e.target.value;
     setPincode(pin);
     
-    if (pin.length === 6 && /^\d+$/.test(pin)) {
+    if (pin.length === 6 && /^\\d+$/.test(pin)) {
       setPincodeLoading(true);
       try {
-        const response = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+        const response = await fetch(\`https://api.postalpincode.in/pincode/\${pin}\`);
         const data = await response.json();
         if (data && data[0] && data[0].Status === "Success") {
           const postOffice = data[0].PostOffice[0];
@@ -125,9 +128,9 @@ export function AddressModal({ isOpen, onClose, editingAddress, onSubmit }: Addr
     const showError = submitted && isRequired && !value.trim();
     
     return (
-      <div className="flex flex-col mb-4">
-        <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5 block">{labelName} {isRequired && '*'}</label>
-        <div className="relative">
+      <div className="flex flex-col">
+        <div className={\`bg-[#F3F4F6] rounded-xl px-4 py-2 relative transition-all \${showError ? 'border-b-2 border-red-600' : 'border border-transparent focus-within:border-border'}\`}>
+          <label className="text-[11px] font-medium text-gray-500 mb-0.5 block">{labelName}</label>
           {isTextArea ? (
             <textarea 
               name={name}
@@ -136,7 +139,7 @@ export function AddressModal({ isOpen, onClose, editingAddress, onSubmit }: Addr
               placeholder={placeholder}
               readOnly={readOnly}
               rows={2}
-              className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#C9A94E] shadow-sm transition-all resize-none ${showError ? 'border-red-600' : 'border-gray-200'} ${readOnly ? 'opacity-80' : ''}`}
+              className={\`w-full bg-transparent focus:outline-none text-gray-900 text-sm resize-none \${readOnly ? 'opacity-80' : ''}\`}
             />
           ) : (
             <input 
@@ -147,7 +150,7 @@ export function AddressModal({ isOpen, onClose, editingAddress, onSubmit }: Addr
               placeholder={placeholder}
               maxLength={maxLength}
               readOnly={readOnly}
-              className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#C9A94E] shadow-sm transition-all ${showError ? 'border-red-600' : 'border-gray-200'} ${readOnly ? 'opacity-80' : ''}`}
+              className={\`w-full bg-transparent focus:outline-none text-gray-900 text-sm \${readOnly ? 'opacity-80' : ''}\`}
             />
           )}
           {loading && (
@@ -155,13 +158,13 @@ export function AddressModal({ isOpen, onClose, editingAddress, onSubmit }: Addr
               <div className="w-4 h-4 border-2 border-[#C9A94E] border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
-          {showError && (
-            <div className="absolute right-0 -bottom-5 flex items-center text-red-600 mt-1">
-              <span className="text-[10px] mr-1">Required</span>
-              <AlertTriangle size={12} />
-            </div>
-          )}
         </div>
+        {showError && (
+          <div className="flex items-center justify-between text-red-600 mt-1.5 px-1">
+            <span className="text-xs">This is required</span>
+            <AlertTriangle size={14} />
+          </div>
+        )}
       </div>
     );
   };
@@ -187,26 +190,7 @@ export function AddressModal({ isOpen, onClose, editingAddress, onSubmit }: Addr
 
         {/* Scrollable Content */}
         <div className="overflow-y-auto no-scrollbar flex-1 p-6">
-          <form 
-            id="address-form" 
-            onSubmit={handleSubmit} 
-            className="space-y-4"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'BUTTON') {
-                e.preventDefault();
-                const form = e.currentTarget;
-                const focusableElements = Array.from(
-                  form.querySelectorAll<HTMLElement>(
-                    'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])'
-                  )
-                );
-                const index = focusableElements.indexOf(e.target as HTMLElement);
-                if (index > -1 && index < focusableElements.length - 1) {
-                  focusableElements[index + 1].focus();
-                }
-              }
-            }}
-          >
+          <form id="address-form" onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm border border-red-200">
                 {error}
@@ -214,31 +198,41 @@ export function AddressModal({ isOpen, onClose, editingAddress, onSubmit }: Addr
             )}
 
             {/* Address Label Select */}
-            <div className="flex flex-col mb-4">
-              <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5 block">Save Address As *</label>
-              <select 
-                name="label" 
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#C9A94E] shadow-sm transition-all appearance-none"
-              >
-                <option value="Home">Home</option>
-                <option value="Office">Office / Work</option>
-                <option value="Other">Other</option>
-              </select>
+            <div className="flex flex-col">
+              <div className="bg-[#F3F4F6] rounded-xl px-4 py-2 relative border border-transparent focus-within:border-border">
+                <label className="text-[11px] font-medium text-gray-500 mb-0.5 block">Save Address As</label>
+                <select 
+                  name="label" 
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  className="w-full bg-transparent focus:outline-none text-gray-900 text-sm appearance-none"
+                >
+                  <option value="Home">Home</option>
+                  <option value="Office">Office / Work</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-5">
+            {/* Basic Info */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {renderField("Full Name", "fullName", fullName, (e) => setFullName(e.target.value), true)}
-              {renderField("Contact Phone", "phone", phone, (e) => setPhone(e.target.value), true, "", "tel", 15)}
-              {renderField("Flat, House no., Building, Company, Apartment", "line1", line1, (e) => setLine1(e.target.value), true)}
-              {renderField("Area, Street, Sector, Village", "line2", line2, (e) => setLine2(e.target.value), true)}
-              {renderField("Pincode", "pincode", pincode, handlePincodeChange, true, "e.g. 400082", "text", 6, pincodeLoading)}
+              {renderField("Phone Number", "phone", phone, (e) => setPhone(e.target.value), true, "", "tel")}
+            </div>
+
+            {/* Pincode & City/State */}
+            {renderField("Pincode", "pincode", pincode, handlePincodeChange, true, "e.g. 400082", "text", 6, pincodeLoading)}
+            
+            <div className="grid grid-cols-2 gap-4">
               {renderField("City", "city", city, (e) => setCity(e.target.value), true, "", "text", undefined, false, false, true)}
               {renderField("State", "state", state, (e) => setState(e.target.value), true, "", "text", undefined, false, false, true)}
             </div>
 
-            <div className="flex items-center space-x-3 pt-2 pb-2 px-1 mt-4">
+            {/* Street Address */}
+            {renderField("House/ Flat/ Office No.", "line1", line1, (e) => setLine1(e.target.value), true)}
+            {renderField("Road Name/ Area /Colony", "line2", line2, (e) => setLine2(e.target.value), true, "", "text", undefined, false, true)}
+
+            <div className="flex items-center space-x-3 pt-2 pb-2 px-1">
               <input type="checkbox" name="isDefault" id="isDefault" value="true" defaultChecked={isDefault} className="w-4 h-4 text-[#9A7B2F] border-border rounded focus:ring-[#9A7B2F]" />
               <label htmlFor="isDefault" className="text-sm font-medium text-text-main">Set as default shipping address</label>
             </div>
@@ -269,3 +263,7 @@ export function AddressModal({ isOpen, onClose, editingAddress, onSubmit }: Addr
     </div>
   );
 }
+`;
+
+fs.writeFileSync(path, newContent);
+console.log("Updated AddressModal.tsx successfully!");

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Script from 'next/script';
-import { ArrowLeft, CheckCircle2, ShieldCheck, Loader2, MapPin, Smartphone, CreditCard, MessageCircle, Check, Plus, Trash2, Edit2, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ShieldCheck, Loader2, MapPin, Smartphone, CreditCard, MessageCircle, Check, Plus, Trash2, Edit2, X, AlertTriangle } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
 import { createRazorpayOrder, verifyPayment, recordPaymentFailure } from '@/app/actions/orderActions';
@@ -90,8 +90,6 @@ function CheckoutContent() {
   const paymentRef = useRef<HTMLDivElement>(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
-  const [modalLoading, setModalLoading] = useState(false);
-  const [modalError, setModalError] = useState<string | null>(null);
   const [showManualForm, setShowManualForm] = useState(false);
 
   // Discount Codes
@@ -149,21 +147,22 @@ function CheckoutContent() {
   ];
 
   // Load saved addresses
+  const loadSavedAddresses = async () => {
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setIsLoggedIn(false); setAddressesLoading(false); return; }
+      setIsLoggedIn(true);
+      if (user.email) setFormData(prev => ({ ...prev, email: user.email! }));
+      const { data: addresses } = await supabase
+        .from('addresses').select('*').eq('user_id', user.id)
+        .order('is_default', { ascending: false });
+      if (addresses && addresses.length > 0) setSavedAddresses(addresses);
+    } catch (err) { console.error('Failed to load addresses:', err); }
+    finally { setAddressesLoading(false); }
+  };
+
   useEffect(() => {
-    async function loadSavedAddresses() {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { setIsLoggedIn(false); setAddressesLoading(false); return; }
-        setIsLoggedIn(true);
-        if (user.email) setFormData(prev => ({ ...prev, email: user.email! }));
-        const { data: addresses } = await supabase
-          .from('addresses').select('*').eq('user_id', user.id)
-          .order('is_default', { ascending: false });
-        if (addresses && addresses.length > 0) setSavedAddresses(addresses);
-      } catch (err) { console.error('Failed to load addresses:', err); }
-      finally { setAddressesLoading(false); }
-    }
     loadSavedAddresses();
   }, []);
 
@@ -221,49 +220,6 @@ function CheckoutContent() {
   }, [formData.pincode]);
 
   // Address CRUD Handlers
-  const handleAddressSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setModalError(null);
-    setModalLoading(true);
-
-    const formDataObj = new FormData(e.currentTarget);
-    
-    let res;
-    if (editingAddress) {
-      res = await updateAddress(editingAddress.id, formDataObj);
-    } else {
-      res = await createAddress(formDataObj);
-    }
-
-    if (res.error) {
-      setModalError(res.error);
-    } else if (res.data) {
-      setIsAddressModalOpen(false);
-      
-      const newAddr: SavedAddress = {
-        id: res.data.id,
-        label: res.data.label,
-        full_name: res.data.full_name,
-        phone: res.data.phone,
-        line1: res.data.line1,
-        line2: res.data.line2,
-        city: res.data.city,
-        state: res.data.state,
-        pincode: res.data.pincode,
-        is_default: res.data.is_default
-      };
-
-      if (editingAddress) {
-        setSavedAddresses(prev => prev.map(a => a.id === editingAddress.id ? newAddr : (newAddr.is_default ? { ...a, is_default: false } : a)));
-      } else {
-        setSavedAddresses(prev => {
-          const updated = newAddr.is_default ? prev.map(a => ({ ...a, is_default: false })) : prev;
-          return [newAddr, ...updated];
-        });
-      }
-    }
-    setModalLoading(false);
-  };
 
   const handleDeleteAddress = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation(); // Prevent address selection
@@ -280,7 +236,6 @@ function CheckoutContent() {
 
   const openAddressModal = (address: SavedAddress | null = null) => {
     setEditingAddress(address);
-    setModalError(null);
     setIsAddressModalOpen(true);
   };
 
@@ -551,7 +506,25 @@ function CheckoutContent() {
             <Link href="/products" className="btn-primary inline-flex">Go Shopping</Link>
           </div>
         ) : (
-          <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          <form 
+            onSubmit={handlePlaceOrder} 
+            className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'BUTTON') {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const focusableElements = Array.from(
+                  form.querySelectorAll<HTMLElement>(
+                    'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])'
+                  )
+                );
+                const index = focusableElements.indexOf(e.target as HTMLElement);
+                if (index > -1 && index < focusableElements.length - 1) {
+                  focusableElements[index + 1].focus();
+                }
+              }
+            }}
+          >
             {/* Left Form Column */}
             <div className="lg:col-span-8 space-y-12">
 
@@ -652,49 +625,120 @@ function CheckoutContent() {
                       </button>
                     )}
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="grid grid-cols-1 gap-5">
+                    {/* Full Name */}
                     <div className="flex flex-col">
-                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Full Name *</label>
-                      <input ref={(el) => { inputRefs.current['fullName'] = el; }} type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} aria-invalid={!!formErrors.fullName} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.fullName ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
-                      {formErrors.fullName && <span className="text-red-500 text-[10px] mt-1">{formErrors.fullName}</span>}
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5 block">Full Name *</label>
+                      <div className="relative">
+                        <input ref={(el) => { inputRefs.current['fullName'] = el; }} type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#C9A94E] shadow-sm transition-all ${formErrors.fullName ? 'border-red-600' : 'border-gray-200'}`} />
+                        {formErrors.fullName && (
+                          <div className="absolute right-0 -bottom-5 flex items-center text-red-600 mt-1">
+                            <span className="text-[10px] mr-1">Required</span>
+                            <AlertTriangle size={12} />
+                          </div>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Phone Number */}
                     <div className="flex flex-col">
-                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Contact Phone *</label>
-                      <input ref={(el) => { inputRefs.current['phone'] = el; }} type="tel" name="phone" value={formData.phone} onChange={handleInputChange} aria-invalid={!!formErrors.phone} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.phone ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
-                      {formErrors.phone && <span className="text-red-500 text-[10px] mt-1">{formErrors.phone}</span>}
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5 block">Contact Phone *</label>
+                      <div className="relative">
+                        <input ref={(el) => { inputRefs.current['phone'] = el; }} type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#C9A94E] shadow-sm transition-all ${formErrors.phone ? 'border-red-600' : 'border-gray-200'}`} />
+                        {formErrors.phone && (
+                          <div className="absolute right-0 -bottom-5 flex items-center text-red-600 mt-1">
+                            <span className="text-[10px] mr-1">Required</span>
+                            <AlertTriangle size={12} />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex flex-col sm:col-span-2">
-                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Email Address *</label>
-                      <input ref={(el) => { inputRefs.current['email'] = el; }} type="email" name="email" value={formData.email} onChange={handleInputChange} aria-invalid={!!formErrors.email} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.email ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
-                      {formErrors.email && <span className="text-red-500 text-[10px] mt-1">{formErrors.email}</span>}
-                    </div>
-                    <div className="flex flex-col sm:col-span-2">
-                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Street Address *</label>
-                      <input ref={(el) => { inputRefs.current['addressLine1'] = el; }} type="text" name="addressLine1" value={formData.addressLine1} onChange={handleInputChange} aria-invalid={!!formErrors.addressLine1} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.addressLine1 ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
-                      {formErrors.addressLine1 && <span className="text-red-500 text-[10px] mt-1">{formErrors.addressLine1}</span>}
-                    </div>
-                    <div className="flex flex-col sm:col-span-2">
-                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Area, Colony, Street, Sector *</label>
-                      <input ref={(el) => { inputRefs.current['addressLine2'] = el; }} type="text" name="addressLine2" value={formData.addressLine2} onChange={handleInputChange} aria-invalid={!!formErrors.addressLine2} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.addressLine2 ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
-                      {formErrors.addressLine2 && <span className="text-red-500 text-[10px] mt-1">{formErrors.addressLine2}</span>}
-                    </div>
+
+                    {/* Email Address */}
                     <div className="flex flex-col">
-                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">City *</label>
-                      <input ref={(el) => { inputRefs.current['city'] = el; }} type="text" name="city" value={formData.city} onChange={handleInputChange} aria-invalid={!!formErrors.city} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.city ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
-                      {formErrors.city && <span className="text-red-500 text-[10px] mt-1">{formErrors.city}</span>}
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5 block">Email Address *</label>
+                      <div className="relative">
+                        <input ref={(el) => { inputRefs.current['email'] = el; }} type="email" name="email" value={formData.email} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#C9A94E] shadow-sm transition-all ${formErrors.email ? 'border-red-600' : 'border-gray-200'}`} />
+                        {formErrors.email && (
+                          <div className="absolute right-0 -bottom-5 flex items-center text-red-600 mt-1">
+                            <span className="text-[10px] mr-1">Required</span>
+                            <AlertTriangle size={12} />
+                          </div>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Street Address */}
                     <div className="flex flex-col">
-                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">State *</label>
-                      <select ref={(el) => { inputRefs.current['state'] = el; }} name="state" value={formData.state} onChange={handleInputChange} aria-invalid={!!formErrors.state} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none appearance-none transition-colors shadow-sm ${formErrors.state ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`}>
-                        <option value="">Select State</option>
-                        {indianStates.map((s) => (<option key={s} value={s}>{s}</option>))}
-                      </select>
-                      {formErrors.state && <span className="text-red-500 text-[10px] mt-1">{formErrors.state}</span>}
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5 block">Flat, House no., Building, Company, Apartment *</label>
+                      <div className="relative">
+                        <input ref={(el) => { inputRefs.current['addressLine1'] = el; }} type="text" name="addressLine1" value={formData.addressLine1} onChange={handleInputChange} placeholder="House no, Building, Company" className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#C9A94E] shadow-sm transition-all ${formErrors.addressLine1 ? 'border-red-600' : 'border-gray-200'}`} />
+                        {formErrors.addressLine1 && (
+                          <div className="absolute right-0 -bottom-5 flex items-center text-red-600 mt-1">
+                            <span className="text-[10px] mr-1">Required</span>
+                            <AlertTriangle size={12} />
+                          </div>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Area */}
                     <div className="flex flex-col">
-                      <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Pincode *</label>
-                      <input ref={(el) => { inputRefs.current['pincode'] = el; }} type="text" name="pincode" value={formData.pincode} onChange={handleInputChange} aria-invalid={!!formErrors.pincode} className={`border bg-primary rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors shadow-sm ${formErrors.pincode ? 'border-red-500 focus:border-red-600 bg-red-50/10' : 'border-border focus:border-text-main'}`} />
-                      {formErrors.pincode && <span className="text-red-500 text-[10px] mt-1">{formErrors.pincode}</span>}
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5 block">Area, Street, Sector, Village *</label>
+                      <div className="relative">
+                        <input ref={(el) => { inputRefs.current['addressLine2'] = el; }} type="text" name="addressLine2" value={formData.addressLine2} onChange={handleInputChange} placeholder="Area, Colony, Sector" className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#C9A94E] shadow-sm transition-all ${formErrors.addressLine2 ? 'border-red-600' : 'border-gray-200'}`} />
+                        {formErrors.addressLine2 && (
+                          <div className="absolute right-0 -bottom-5 flex items-center text-red-600 mt-1">
+                            <span className="text-[10px] mr-1">Required</span>
+                            <AlertTriangle size={12} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Pincode */}
+                    <div className="flex flex-col">
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5 block">Pincode *</label>
+                      <div className="relative">
+                        <input ref={(el) => { inputRefs.current['pincode'] = el; }} type="text" name="pincode" value={formData.pincode} onChange={handleInputChange} maxLength={6} placeholder="e.g. 400082" className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#C9A94E] shadow-sm transition-all ${formErrors.pincode ? 'border-red-600' : 'border-gray-200'}`} />
+                        {formErrors.pincode && (
+                          <div className="absolute right-0 -bottom-5 flex items-center text-red-600 mt-1">
+                            <span className="text-[10px] mr-1">Required</span>
+                            <AlertTriangle size={12} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* City */}
+                    <div className="flex flex-col">
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5 block">City *</label>
+                      <div className="relative">
+                        <input ref={(el) => { inputRefs.current['city'] = el; }} type="text" name="city" value={formData.city} onChange={handleInputChange} readOnly className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#C9A94E] shadow-sm transition-all opacity-80 ${formErrors.city ? 'border-red-600' : 'border-gray-200'}`} />
+                        {formErrors.city && (
+                          <div className="absolute right-0 -bottom-5 flex items-center text-red-600 mt-1">
+                            <span className="text-[10px] mr-1">Required</span>
+                            <AlertTriangle size={12} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* State */}
+                    <div className="flex flex-col">
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5 block">State *</label>
+                      <div className="relative">
+                        <select ref={(el) => { inputRefs.current['state'] = el; }} name="state" value={formData.state} onChange={handleInputChange} className={`w-full bg-white border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#C9A94E] shadow-sm transition-all appearance-none ${formErrors.state ? 'border-red-600' : 'border-gray-200'}`}>
+                          <option value="">Select State</option>
+                          {indianStates.map((s) => (<option key={s} value={s}>{s}</option>))}
+                        </select>
+                        {formErrors.state && (
+                          <div className="absolute right-0 -bottom-5 flex items-center text-red-600 mt-1">
+                            <span className="text-[10px] mr-1">Required</span>
+                            <AlertTriangle size={12} />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -887,98 +931,31 @@ function CheckoutContent() {
       </div>
       
       {/* Address Modal */}
-      {isAddressModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-primary rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto relative no-scrollbar">
-            <div className="sticky top-0 bg-primary/90 backdrop-blur-md z-10 px-6 py-5 border-b border-border flex justify-between items-center">
-              <h3 className="font-display text-xl text-text-main">
-                {editingAddress ? 'Edit Address' : 'Add New Address'}
-              </h3>
-              <button 
-                onClick={() => setIsAddressModalOpen(false)}
-                className="text-text-muted hover:text-text-main transition-colors p-2 -mr-2"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleAddressSubmit} className="p-6 space-y-6">
-              {modalError && (
-                <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm border border-red-200">
-                  {modalError}
-                </div>
-              )}
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div className="flex flex-col sm:col-span-2">
-                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Address Label</label>
-                  <select name="label" defaultValue={editingAddress?.label || 'Home'} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors appearance-none shadow-sm">
-                    <option value="Home">Home</option>
-                    <option value="Office">Office</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Full Name *</label>
-                  <input type="text" name="fullName" defaultValue={editingAddress?.full_name || ''} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Phone Number *</label>
-                  <input type="tel" name="phone" defaultValue={editingAddress?.phone || ''} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
-                </div>
-                <div className="flex flex-col sm:col-span-2">
-                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Street Address *</label>
-                  <input type="text" name="line1" defaultValue={editingAddress?.line1 || ''} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
-                </div>
-                <div className="flex flex-col sm:col-span-2">
-                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Apartment, Suite, etc. (Optional)</label>
-                  <input type="text" name="line2" defaultValue={editingAddress?.line2 || ''} className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">City *</label>
-                  <input type="text" name="city" defaultValue={editingAddress?.city || ''} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">State *</label>
-                  <select name="state" defaultValue={editingAddress?.state || ''} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors appearance-none shadow-sm">
-                    <option value="">Select State</option>
-                    {indianStates.map((s) => (<option key={s} value={s}>{s}</option>))}
-                  </select>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-2">Pincode *</label>
-                  <input type="text" name="pincode" defaultValue={editingAddress?.pincode || ''} required className="border border-border bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-text-main transition-colors shadow-sm" />
-                </div>
-                
-                <div className="flex items-center space-x-3 sm:col-span-2 pt-2">
-                  <input type="checkbox" id="isDefault" name="isDefault" value="true" defaultChecked={editingAddress?.is_default || false} className="w-4 h-4 text-[#9A7B2F] border-border rounded focus:ring-[#9A7B2F]" />
-                  <label htmlFor="isDefault" className="text-sm font-medium text-text-main">Set as default shipping address</label>
-                </div>
-              </div>
-              
-              <div className="pt-6 border-t border-border flex justify-end space-x-4">
-                <button 
-                  type="button" 
-                  onClick={() => setIsAddressModalOpen(false)}
-                  disabled={modalLoading}
-                  className="px-6 py-3 text-sm font-medium text-text-muted hover:text-text-main transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  disabled={modalLoading}
-                  className="btn-primary py-3 px-8 text-sm flex items-center space-x-2"
-                >
-                  {modalLoading && <Loader2 size={16} className="animate-spin" />}
-                  <span>{editingAddress ? 'Update Address' : 'Save Address'}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <AddressModal
+        isOpen={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        editingAddress={editingAddress}
+        onSubmit={async (formDataObj) => {
+          try {
+            let res;
+            if (editingAddress) {
+              res = await updateAddress(editingAddress.id, formDataObj);
+            } else {
+              res = await createAddress(formDataObj);
+            }
+            if (res?.error) {
+              return { error: res.error };
+            } else if (res.data) {
+              await loadSavedAddresses();
+              setIsAddressModalOpen(false);
+              return { success: true };
+            }
+            return { error: 'Unknown error occurred' };
+          } catch (err: any) {
+            return { error: err.message || 'Failed to save address' };
+          }
+        }}
+      />
     </div>
   );
 }
