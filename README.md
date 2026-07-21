@@ -312,9 +312,9 @@ For the Supabase database:
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contributin
 
-This project is maintained by the **Data Matrix Club (DMX)** at RGIT. Contributions are welcome!
+
 
 ### Guidelines
 - Use **TypeScript** strictly — avoid `any`.
