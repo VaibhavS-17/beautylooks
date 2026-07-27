@@ -66,7 +66,7 @@ export async function createRazorpayOrder(data: {
     const productIds = parsed.data.items.map(item => item.productId);
     const { data: products } = await supabase
       .from('products')
-      .select('id, price, sale_price, stock_quantity')
+      .select('id, name, price, sale_price, stock_quantity')
       .in('id', productIds);
 
     let calculatedTotal = 0;
@@ -89,7 +89,40 @@ export async function createRazorpayOrder(data: {
 
     if (reserveError || !reserveData?.success) {
       console.error('Stock Reservation Error:', reserveError || reserveData);
-      return { success: false, error: 'Insufficient stock for one or more items. Another customer may have just purchased it.' };
+      
+      // Build detailed out-of-stock items list from failed_items or by checking stock
+      const outOfStockItems: Array<{ productId: string; name: string; available: number }> = [];
+      
+      if (reserveData?.failed_items && Array.isArray(reserveData.failed_items)) {
+        for (const failed of reserveData.failed_items) {
+          const product = products?.find(p => p.id === failed.product_id);
+          outOfStockItems.push({
+            productId: failed.product_id,
+            name: product?.name || 'Unknown Product',
+            available: failed.available ?? 0,
+          });
+        }
+      } else {
+        // Fallback: re-check stock for all items
+        for (const item of parsed.data.items) {
+          const product = products?.find(p => p.id === item.productId);
+          if (product && product.stock_quantity < item.quantity) {
+            outOfStockItems.push({
+              productId: item.productId,
+              name: product.name || 'Unknown Product',
+              available: product.stock_quantity,
+            });
+          }
+        }
+      }
+
+      // Build user-friendly error message
+      const itemNames = outOfStockItems.map(i => i.available === 0 ? i.name : `${i.name} (only 1 left)`);
+      const errorMsg = outOfStockItems.length > 0
+        ? `The following items are out of stock: ${itemNames.join(', ')}. Please remove them to continue.`
+        : 'Insufficient stock for one or more items. Another customer may have just purchased it.';
+
+      return { success: false, error: errorMsg, outOfStockItems };
     }
 
     const shippingCharge = calculatedTotal >= 499 ? 0 : 49;

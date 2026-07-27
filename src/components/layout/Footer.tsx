@@ -61,10 +61,12 @@ export default function Footer({ categories = [] }: { categories?: { id: string,
                 placeholder="Enter your email" 
                 className="flex-1 bg-brand-dark border border-primary/20 px-4 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent text-primary placeholder:text-primary/50"
                 required
+                suppressHydrationWarning
               />
               <button 
                 type="submit" 
                 className="bg-accent text-brand-dark px-4 py-2 text-xs font-semibold uppercase tracking-widest hover:bg-accent-light transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-brand-dark"
+                suppressHydrationWarning
               >
                 Join
               </button>

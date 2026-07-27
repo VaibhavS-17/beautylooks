@@ -99,6 +99,7 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
             onClick={onClose}
             className="text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] transition-colors p-2 bg-[var(--color-primary)] rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             aria-label="Close menu"
+            suppressHydrationWarning
           >
             <X size={18} strokeWidth={1.5} />
           </button>

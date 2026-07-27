@@ -107,6 +107,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
                   className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors mr-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
                   aria-label="Open menu"
                   aria-expanded={isMobileMenuOpen}
+                  suppressHydrationWarning
                 >
                   <Menu size={22} strokeWidth={1.5} />
                 </button>

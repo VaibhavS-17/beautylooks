@@ -10,9 +10,12 @@ import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
 import { createRazorpayOrder, verifyPayment, recordPaymentFailure } from '@/app/actions/orderActions';
 import { validateDiscountCode } from '@/app/actions/discountActions';
+import { checkCartStock } from '@/app/actions/cartActions';
 import { createAddress, updateAddress, deleteAddress, upgradeGuestToAccount } from '@/app/actions/accountActions';
 import { AddressModal } from '@/components/account/AddressModal';
+import { NotifyMeButton } from '@/components/product/NotifyMeButton';
 import { createClient } from '@/lib/supabase/client';
+import { toast } from 'react-hot-toast';
 import { z } from 'zod';
 
 const shippingSchema = z.object({
@@ -49,7 +52,7 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const isBuyNow = searchParams.get('mode') === 'buynow';
   
-  const { items: cartItems, buyNowItem, getTotalPrice: getCartTotalPrice, clearCart, clearBuyNowItem } = useCartStore();
+  const { items: cartItems, buyNowItem, getTotalPrice: getCartTotalPrice, clearCart, clearBuyNowItem, removeItem } = useCartStore();
   const fallbackProductImage = '/images/products/facial-kit-1.png';
 
   const checkoutItems = isBuyNow ? (buyNowItem ? [buyNowItem] : []) : cartItems;
@@ -73,6 +76,10 @@ function CheckoutContent() {
   const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
   
   // Refs for auto-scrolling
+  const formRef = useRef<HTMLFormElement>(null);
+  const paymentRef = useRef<HTMLDivElement>(null);
+  const orderReviewRef = useRef<HTMLDivElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
   const inputRefs = useRef<Record<string, HTMLInputElement | HTMLSelectElement | null>>({});
 
   // Guest conversion state
@@ -87,7 +94,6 @@ function CheckoutContent() {
   const [addressesLoading, setAddressesLoading] = useState(true);
 
   // Modals & Scrolling
-  const paymentRef = useRef<HTMLDivElement>(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
   const [showManualForm, setShowManualForm] = useState(false);
@@ -97,6 +103,10 @@ function CheckoutContent() {
   const [appliedDiscount, setAppliedDiscount] = useState<{code: string, percent: number} | null>(null);
   const [discountError, setDiscountError] = useState('');
   const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
+
+  // Out-of-stock tracking
+  const [outOfStockIds, setOutOfStockIds] = useState<Set<string>>(new Set());
+  const [lowStockIds, setLowStockIds] = useState<Set<string>>(new Set());
 
   // Pricing Logic
   const totalPrice = isBuyNow 
@@ -164,6 +174,36 @@ function CheckoutContent() {
 
   useEffect(() => {
     loadSavedAddresses();
+  }, []);
+
+  // Check real-time stock for cart items on mount
+  useEffect(() => {
+    async function refreshStock() {
+      const productIds = checkoutItems.map(item => item.product.id);
+      if (productIds.length === 0) return;
+      try {
+        const res = await checkCartStock(productIds);
+        if (res.success && res.stockMap) {
+          const oos = new Set<string>();
+          const low = new Set<string>();
+          for (const item of checkoutItems) {
+            const currentStock = res.stockMap[item.product.id] ?? item.product.stockQuantity;
+            if (currentStock <= 0) {
+              oos.add(item.product.id);
+            } else if (currentStock < item.quantity) {
+              // Stock available but less than requested qty
+              low.add(item.product.id);
+            }
+          }
+          setOutOfStockIds(oos);
+          setLowStockIds(low);
+        }
+      } catch (err) {
+        console.error('Failed to check stock:', err);
+      }
+    }
+    refreshStock();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSelectAddress = (address: SavedAddress) => {
@@ -266,7 +306,9 @@ function CheckoutContent() {
       });
       
       setFormErrors(errors);
-      setErrorMessage('Please complete all required shipping and contact fields correctly before proceeding.');
+      const validationErrMsg = 'Please complete all required shipping and contact fields correctly before proceeding.';
+      setErrorMessage(validationErrMsg);
+      toast.error(validationErrMsg, { duration: 5000, id: 'checkout-validation-error' });
       setIsProcessing(false);
       
       // Auto-scroll to the first invalid field
@@ -290,8 +332,25 @@ function CheckoutContent() {
       });
 
       if (!res.success || !res.razorpayOrderId) {
+        // Handle out-of-stock items from server response
+        if (res.outOfStockItems && res.outOfStockItems.length > 0) {
+          const oos = new Set<string>();
+          const low = new Set<string>();
+          for (const item of res.outOfStockItems) {
+            if (item.available <= 0) {
+              oos.add(item.productId);
+            } else {
+              low.add(item.productId);
+            }
+          }
+          setOutOfStockIds(oos);
+          setLowStockIds(low);
+        }
         throw new Error(res.error || 'Failed to create order');
       }
+      // Clear any previous stock flags on successful order creation
+      setOutOfStockIds(new Set());
+      setLowStockIds(new Set());
 
       setOrderId(res.orderId!);
       setPlacedFinalTotal(finalTotal);
@@ -367,17 +426,31 @@ function CheckoutContent() {
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', async function (response: any) {
-        setErrorMessage(response.error?.description || 'Payment failed.');
+        const failMsg = response.error?.description || 'Payment failed.';
+        setErrorMessage(failMsg);
+        toast.error(failMsg, { duration: 5000, id: 'checkout-payment-failed' });
         setIsProcessing(false);
         if (res.orderId) {
           await recordPaymentFailure({ order_id: res.orderId, reason: response.error?.description || 'Payment failed' });
         }
+        setTimeout(() => {
+          errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
       });
       rzp.open();
 
     } catch (err: any) {
-      setErrorMessage(err.message || 'Something went wrong');
+      const errMsg = err.message || 'Something went wrong';
+      setErrorMessage(errMsg);
+      toast.error(errMsg, { duration: 6000, id: 'checkout-order-error' });
       setIsProcessing(false);
+      setTimeout(() => {
+        if (outOfStockIds.size > 0 || lowStockIds.size > 0) {
+          orderReviewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
     }
   };
 
@@ -826,24 +899,80 @@ function CheckoutContent() {
             </div>
 
             {/* Right Summary Column */}
-            <div className="lg:col-span-4 sticky top-32 space-y-6">
+            <div ref={orderReviewRef} className="lg:col-span-4 sticky top-32 space-y-6">
               <div className="bg-secondary/80 p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border backdrop-blur-md">
                 <h3 className="font-display text-xl text-text-main border-b border-border pb-4 mb-6">Order Review</h3>
                 <div className="divide-y divide-border max-h-96 overflow-y-auto no-scrollbar mb-8">
-                  {checkoutItems.map((item) => (
-                    <div key={item.product.id} className="py-4 flex items-start justify-between text-sm">
-                      <div className="flex items-start space-x-4">
-                        <div className="relative w-16 h-16 bg-primary rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-border">
+                  {checkoutItems.map((item) => {
+                    const isOOS = outOfStockIds.has(item.product.id);
+                    const isLow = lowStockIds.has(item.product.id);
+                    const hasStockIssue = isOOS || isLow;
+
+                    return (
+                    <div key={item.product.id} className={`py-4 flex items-start justify-between text-sm rounded-lg transition-colors ${
+                      hasStockIssue ? 'bg-red-50/80 border border-red-200 px-3 -mx-1 my-1' : ''
+                    }`}>
+                      <div className="flex items-start space-x-4 flex-1 min-w-0">
+                        <div className={`relative w-16 h-16 bg-primary rounded-xl overflow-hidden flex-shrink-0 shadow-sm border ${
+                          hasStockIssue ? 'border-red-300 opacity-60' : 'border-border'
+                        }`}>
                           <Image src={item.product.images?.[0] || fallbackProductImage} alt={item.product.name} fill sizes="64px" className="object-cover" />
                         </div>
-                        <div className="text-left">
-                          <span className="block font-medium text-text-main mb-1">{item.product.name}</span>
+                        <div className="text-left flex-1 min-w-0">
+                          <span className={`block font-medium mb-1 ${hasStockIssue ? 'text-red-800' : 'text-text-main'}`}>{item.product.name}</span>
                           <span className="block text-[10px] text-text-muted uppercase tracking-widest font-semibold">Qty: {item.quantity}</span>
+                          {isOOS && (
+                            <span className="inline-block mt-1.5 text-[10px] font-bold text-red-600 bg-red-100 border border-red-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Out of Stock
+                            </span>
+                          )}
+                          {isLow && !isOOS && (
+                            <span className="inline-block mt-1.5 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Insufficient Stock
+                            </span>
+                          )}
+                          {hasStockIssue && (
+                            <div className="mt-2 flex items-center space-x-3 flex-wrap">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (isBuyNow) {
+                                    clearBuyNowItem();
+                                  } else {
+                                    removeItem(item.product.id);
+                                  }
+                                  setOutOfStockIds(prev => {
+                                    const next = new Set(prev);
+                                    next.delete(item.product.id);
+                                    return next;
+                                  });
+                                  setLowStockIds(prev => {
+                                    const next = new Set(prev);
+                                    next.delete(item.product.id);
+                                    return next;
+                                  });
+                                  setErrorMessage('');
+                                }}
+                                className="flex items-center space-x-1 text-[11px] font-semibold text-red-600 hover:text-red-800 transition-colors"
+                              >
+                                <Trash2 size={12} />
+                                <span>Remove Item</span>
+                              </button>
+                              {isOOS && (
+                                <NotifyMeButton
+                                  productId={item.product.id}
+                                  defaultEmail={formData.email}
+                                  className="!mt-0"
+                                />
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <span className="font-medium text-text-main">{formatPrice((item.product.salePrice ?? item.product.price) * item.quantity)}</span>
+                      <span className={`font-medium shrink-0 ml-2 ${hasStockIssue ? 'text-red-400 line-through' : 'text-text-main'}`}>{formatPrice((item.product.salePrice ?? item.product.price) * item.quantity)}</span>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
                 <div className="border-t border-border pt-6 space-y-4 text-sm font-light text-text-muted">
                   <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(totalPrice)}</span></div>
@@ -899,9 +1028,20 @@ function CheckoutContent() {
                   )}
                 </div>
 
-                <div className="border-t border-border pt-6 mt-6 mb-8 flex justify-between items-center text-base font-semibold text-text-main">
+                <div className="border-t border-border pt-6 mt-6 mb-6 flex justify-between items-center text-base font-semibold text-text-main">
                   <span>Final Total</span><span>{formatPrice(finalTotal)}</span>
                 </div>
+
+                {errorMessage && (
+                  <div ref={errorRef} className="bg-red-50 text-red-600 p-4 rounded-xl text-xs border border-red-200 mb-6 text-left shadow-sm space-y-1 animate-fadeIn">
+                    <p className="font-semibold text-red-700">Unable to place order</p>
+                    <p>{errorMessage}</p>
+                    {(outOfStockIds.size > 0 || lowStockIds.size > 0) && (
+                      <p className="text-red-500 pt-1">Please remove the highlighted items above to continue.</p>
+                    )}
+                  </div>
+                )}
+
                 <button type="submit" disabled={isProcessing} className="btn-primary w-full justify-center flex items-center space-x-2 mb-6 text-base py-4 disabled:opacity-70 disabled:cursor-not-allowed transition-all relative overflow-hidden">
                   {isProcessing && (
                     <div className="absolute inset-0 bg-[#0C0A09] flex items-center justify-center">
@@ -921,9 +1061,6 @@ function CheckoutContent() {
                 <p className="text-[11px] text-text-muted font-light leading-relaxed">
                   Your payment information is processed securely by Razorpay. We do not store your card details.
                 </p>
-                {errorMessage && (
-                  <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs border border-red-200 mt-2 text-left shadow-sm">{errorMessage}</div>
-                )}
               </div>
             </div>
           </form>

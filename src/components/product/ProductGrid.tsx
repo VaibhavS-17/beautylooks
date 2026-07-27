@@ -117,6 +117,7 @@ export function ProductGrid({
                           <button 
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickViewProduct(product); }}
                             className="bg-white text-text-main text-xs font-bold uppercase tracking-widest px-8 py-4 hover:bg-black hover:text-white transition-colors"
+                            suppressHydrationWarning
                           >
                             Quick View
                           </button>
@@ -178,13 +179,14 @@ export function ProductGrid({
                           addItem(product, 1);
                         }}
                         disabled={product.stockQuantity === 0}
-                        className={`w-full mt-5 px-4 py-3 text-xs font-semibold uppercase tracking-widest transition-all ${
-                          product.stockQuantity > 0
-                            ? 'bg-accent text-white shadow-md rounded-lg hover:bg-black'
-                            : 'bg-border text-text-muted cursor-not-allowed rounded-lg'
+                        className={`w-full mt-5 px-4 py-3 text-xs font-semibold uppercase tracking-widest rounded-xl transition-all duration-300 shadow-xs cursor-pointer ${
+                          product.stockQuantity === 0
+                            ? 'bg-[#E8E2D9] text-[#6B5C52] cursor-not-allowed shadow-none'
+                            : 'btn-primary hover:shadow-md active:scale-95'
                         }`}
+                        suppressHydrationWarning
                       >
-                        {product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
+                        {product.stockQuantity === 0 ? 'Out of Stock' : 'Add to Cart'}
                       </button>
                     </div>
                   </div>

@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { X, Plus, Minus, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
+import { checkCartStock } from '@/app/actions/cartActions';
+import { NotifyMeButton } from '@/components/product/NotifyMeButton';
+import { createClient } from '@/lib/supabase/client';
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, updateQuantity, removeItem, getTotalPrice, getTotalItems } = useCartStore();
@@ -63,6 +66,36 @@ export default function CartDrawer() {
       }
     }
   };
+
+  // Real-time stock check
+  const [stockMap, setStockMap] = useState<Record<string, number>>({});
+  const [stockChecked, setStockChecked] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>('');
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) setUserEmail(data.user.email);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen || items.length === 0) return;
+    async function refreshStock() {
+      const productIds = items.map(item => item.product.id);
+      try {
+        const res = await checkCartStock(productIds);
+        if (res.success && res.stockMap) {
+          setStockMap(res.stockMap);
+        }
+      } catch (err) {
+        console.error('Failed to check cart stock:', err);
+      }
+      setStockChecked(true);
+    }
+    refreshStock();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, items.length]);
 
   if (!isOpen) return null;
 
@@ -163,11 +196,19 @@ export default function CartDrawer() {
                   const originalPrice = item.product.price;
                   const hasDiscount = item.product.salePrice !== null && item.product.salePrice < originalPrice;
                   const discountPercent = hasDiscount ? Math.round(((originalPrice - itemPrice) / originalPrice) * 100) : 0;
+                  
+                  // Use real-time stock if available
+                  const currentStock = stockChecked && stockMap[item.product.id] !== undefined
+                    ? stockMap[item.product.id]
+                    : item.product.stockQuantity;
+                  const isOutOfStock = currentStock <= 0;
 
                   return (
                     <div
                       key={item.product.id}
-                      className="p-4 sm:px-5 sm:py-3 bg-white sm:bg-transparent rounded-2xl sm:rounded-none border border-border sm:border-0 shadow-xs sm:shadow-none hover:bg-white/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"
+                      className={`p-4 sm:px-5 sm:py-3 bg-white sm:bg-transparent rounded-2xl sm:rounded-none border sm:border-0 shadow-xs sm:shadow-none hover:bg-white/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 ${
+                        isOutOfStock ? 'border-red-200 bg-red-50/50 sm:bg-red-50/30' : 'border-border'
+                      }`}
                     >
                       {/* Top / Left Section: Image + Info */}
                       <div className="flex items-start sm:items-center justify-between sm:justify-start gap-3.5 sm:gap-4 flex-1 min-w-0">
@@ -192,6 +233,11 @@ export default function CartDrawer() {
                               {item.product.stockQuantity === 1 && (
                                 <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded shrink-0">
                                   Only 1 left
+                                </span>
+                              )}
+                              {isOutOfStock && (
+                                <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-200 px-1.5 py-0.5 rounded shrink-0">
+                                  Out of Stock
                                 </span>
                               )}
                             </div>
@@ -230,25 +276,43 @@ export default function CartDrawer() {
                               </div>
 
                               {/* Desktop Remove Button */}
-                              <button
-                                onClick={() => removeItem(item.product.id)}
-                                className="hidden sm:flex text-[11px] text-text-muted hover:text-red-600 transition-colors items-center gap-1 font-medium"
-                                aria-label="Remove item"
-                              >
-                                <Trash2 size={12} /> Remove
-                              </button>
+                              <div className="hidden sm:flex items-center gap-3">
+                                <button
+                                  onClick={() => removeItem(item.product.id)}
+                                  className="text-[11px] text-text-muted hover:text-red-600 transition-colors flex items-center gap-1 font-medium"
+                                  aria-label="Remove item"
+                                >
+                                  <Trash2 size={12} /> Remove
+                                </button>
+                                {isOutOfStock && (
+                                  <NotifyMeButton
+                                    productId={item.product.id}
+                                    defaultEmail={userEmail}
+                                    className="!mt-0 font-medium"
+                                  />
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
 
-                        {/* Mobile Top-Right Trash Icon (Nykaa style) */}
-                        <button
-                          onClick={() => removeItem(item.product.id)}
-                          className="sm:hidden p-1.5 text-text-muted hover:text-red-600 transition-colors rounded-lg hover:bg-red-50/50 -mr-1 -mt-1 shrink-0"
-                          aria-label="Remove item"
-                        >
-                          <Trash2 size={17} />
-                        </button>
+                        {/* Mobile Top-Right Trash Icon + Notify Me */}
+                        <div className="sm:hidden flex flex-col items-end gap-1">
+                          <button
+                            onClick={() => removeItem(item.product.id)}
+                            className="p-1.5 text-text-muted hover:text-red-600 transition-colors rounded-lg hover:bg-red-50/50 -mr-1 -mt-1 shrink-0"
+                            aria-label="Remove item"
+                          >
+                            <Trash2 size={17} />
+                          </button>
+                          {isOutOfStock && (
+                            <NotifyMeButton
+                              productId={item.product.id}
+                              defaultEmail={userEmail}
+                              className="!mt-0 font-medium"
+                            />
+                          )}
+                        </div>
                       </div>
 
                       {/* Bottom / Right Section: Nykaa 'You Pay' on mobile, Price column on PC */}

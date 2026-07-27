@@ -92,6 +92,7 @@ export default function MobileBottomNav() {
         <button
           onClick={openCart}
           className="relative flex flex-col items-center justify-center -mt-6 transition-transform duration-200 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full"
+          suppressHydrationWarning
         >
           <div className="bg-brand-dark text-primary h-14 w-14 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(202,138,4,0.3)] border-4 border-white">
             <ShoppingBag size={22} strokeWidth={1.5} />

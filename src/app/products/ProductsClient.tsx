@@ -238,12 +238,14 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-transparent border-none text-base sm:text-lg text-[#2C1E16] placeholder:text-[#6B5C52]/40 focus:outline-none focus:ring-0 px-3 py-2 font-medium"
+            suppressHydrationWarning
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery('')}
               className="p-1.5 rounded-full hover:bg-[#FAF9F6] text-[#6B5C52] mr-2 transition-colors cursor-pointer"
               aria-label="Clear search"
+              suppressHydrationWarning
             >
               <X size={18} />
             </button>
@@ -251,6 +253,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
           <button
             type="button"
             className="bg-[#2C1E16] hover:bg-[#C88E75] text-white text-xs sm:text-sm uppercase tracking-widest font-bold px-7 py-3 rounded-xl transition-all duration-300 cursor-pointer shrink-0 hover:shadow-md active:scale-95"
+            suppressHydrationWarning
           >
             Search
           </button>
@@ -276,6 +279,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                     ? 'bg-[#2C1E16] text-white border-[#2C1E16] shadow-md -translate-y-0.5 scale-105' 
                     : 'bg-white text-[#2C1E16] border-[#E8E2D9] hover:border-accent hover:-translate-y-0.5 hover:shadow-sm'
                 }`}
+                suppressHydrationWarning
               >
                 <span className="text-lg">{icon}</span>
                 <span>{cat.name}</span>
@@ -306,6 +310,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                     : 'hover:scale-105 hover:-translate-y-1'
                 }`}
                 style={{ width: '80px' }}
+                suppressHydrationWarning
               >
                 {/* Logo Circle */}
                 <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 overflow-hidden shadow-sm transition-all bg-white ${

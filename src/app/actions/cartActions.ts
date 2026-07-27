@@ -69,3 +69,27 @@ export async function updateCartInDB(items: CartItem[]) {
 
   return { success: !error };
 }
+
+export async function checkCartStock(productIds: string[]): Promise<{ success: boolean; stockMap?: Record<string, number>; error?: string }> {
+  if (!productIds.length) return { success: true, stockMap: {} };
+  
+  try {
+    const supabase = await createClient();
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('id, stock_quantity')
+      .in('id', productIds);
+
+    if (error) throw error;
+
+    const stockMap: Record<string, number> = {};
+    products?.forEach(p => {
+      stockMap[p.id] = p.stock_quantity;
+    });
+
+    return { success: true, stockMap };
+  } catch (error: any) {
+    console.error('Failed to check cart stock:', error);
+    return { success: false, error: error.message };
+  }
+}

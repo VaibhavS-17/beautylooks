@@ -86,6 +86,7 @@ export function ProductFilters({
                   checked={selectedCategories.includes(category.slug)}
                   onChange={() => toggleCategory(category.slug)}
                   className="sr-only"
+                  suppressHydrationWarning
                 />
                 <div className={`w-4 h-4 border rounded-sm flex items-center justify-center transition-colors ${
                   selectedCategories.includes(category.slug) 
@@ -117,6 +118,7 @@ export function ProductFilters({
                   checked={selectedBrands.includes(b.name)}
                   onChange={() => toggleBrand(b.name)}
                   className="sr-only"
+                  suppressHydrationWarning
                 />
                 <div className={`w-4 h-4 border rounded-sm flex items-center justify-center transition-colors ${
                   selectedBrands.includes(b.name) 
@@ -153,6 +155,7 @@ export function ProductFilters({
                   checked={selectedSkinTypes.includes(st.value)}
                   onChange={() => toggleSkinType(st.value)}
                   className="sr-only"
+                  suppressHydrationWarning
                 />
                 <div className={`w-4 h-4 border rounded-sm flex items-center justify-center transition-colors ${
                   selectedSkinTypes.includes(st.value) 
@@ -189,6 +192,7 @@ export function ProductFilters({
                   checked={selectedPriceRanges.includes(pr.value)}
                   onChange={() => togglePriceRange(pr.value)}
                   className="sr-only"
+                  suppressHydrationWarning
                 />
                 <div className={`w-4 h-4 border rounded-sm flex items-center justify-center transition-colors ${
                   selectedPriceRanges.includes(pr.value) 
@@ -217,6 +221,7 @@ export function ProductFilters({
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="w-full border border-border rounded-xl py-3 px-4 text-sm appearance-none bg-white text-text-main cursor-pointer focus:outline-none focus:border-text-main transition-colors"
+              suppressHydrationWarning
             >
               <option value="newest">Newest Additions</option>
               <option value="price-low">Price: Low to High</option>
@@ -230,6 +235,7 @@ export function ProductFilters({
           <button 
             onClick={clearFilters}
             className="text-xs uppercase tracking-widest text-text-muted hover:text-text-main transition-colors border-b border-transparent hover:border-text-main"
+            suppressHydrationWarning
           >
             Clear All Filters
           </button>
