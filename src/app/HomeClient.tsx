@@ -93,31 +93,53 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
       </section>
 
       {/* ================= SHOP BY CONCERN ================= */}
-      <section className="py-12 md:py-16 bg-white overflow-hidden">
+      <section className="py-16 md:py-24 bg-white overflow-hidden">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="font-display text-2xl text-text-main mb-3">Shop by Concern</h2>
-            <div className="w-8 h-px bg-accent mx-auto" />
+          <div className="text-center mb-12 md:mb-16">
+            <span className="subtitle block mb-4">Targeted Solutions</span>
+            <h2 className="font-display text-3xl md:text-4xl text-text-main mb-4">Shop by Concern</h2>
+            <div className="w-12 h-px bg-accent mx-auto" />
           </div>
           
-          {/* Horizontal Scrolling Menu for Mobile */}
-          <div className="flex overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 gap-4 sm:gap-6 hide-scrollbar">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
             {[
-              { title: "Brightening & Glow", q: "glow" },
-              { title: "Tanning & Sun", q: "tan" },
-              { title: "Deep Hydration", q: "hydra" },
-              { title: "Frizz & Smoothing", q: "keratin" }
+              { title: "Brightening & Glow", q: "glow", img: "/images/concerns/brightening.jpg", desc: "Vitamin C · Turmeric · AHA" },
+              { title: "Tanning & Sun", q: "tan", img: "/images/concerns/tanning.jpg", desc: "SPF · Aloe Vera · After-Sun" },
+              { title: "Deep Hydration", q: "hydra", img: "/images/concerns/hydration.jpg", desc: "Hyaluronic · Rose · Ceramides" },
+              { title: "Frizz & Smoothing", q: "keratin", img: "/images/concerns/smoothing.jpg", desc: "Keratin · Argan · Silk Protein" }
             ].map((concern, idx) => (
               <Link 
                 key={idx} 
                 href={`/products?search=${concern.q}`}
-                className="min-w-[160px] sm:min-w-0 flex flex-col items-center justify-center p-8 transition-opacity duration-500 hover:opacity-60"
+                className="group relative block overflow-hidden rounded-2xl"
               >
-                <div className="w-16 h-16 rounded-full border border-text-main flex items-center justify-center mb-6">
-                  <span className="text-text-main text-lg font-serif italic">0{idx + 1}</span>
+                <div className="relative aspect-[3/4] w-full">
+                  <Image
+                    src={concern.img}
+                    alt={concern.title}
+                    fill
+                    sizes="(max-width: 640px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-500" />
+                  {/* Hover darkening */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-all duration-500" />
                 </div>
-                <h3 className="text-xs font-bold text-text-main text-center uppercase tracking-[0.1em]">{concern.title}</h3>
-                <span className="text-[10px] text-text-muted mt-2 tracking-[0.2em] uppercase">Explore</span>
+                
+                {/* Content overlay */}
+                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 flex flex-col items-start">
+                  <h3 className="text-sm sm:text-base font-semibold text-white uppercase tracking-[0.08em] mb-1 drop-shadow-sm">
+                    {concern.title}
+                  </h3>
+                  <p className="text-[10px] sm:text-xs text-white/70 tracking-wide font-light mb-3 sm:mb-4">
+                    {concern.desc}
+                  </p>
+                  <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs text-white/90 font-semibold uppercase tracking-[0.15em] group-hover:tracking-[0.2em] transition-all duration-500">
+                    Explore
+                    <ArrowRight size={12} className="transform group-hover:translate-x-1 transition-transform duration-300" />
+                  </span>
+                </div>
               </Link>
             ))}
           </div>
