@@ -19,6 +19,7 @@ const PUBLIC_ROUTES = [
   '/login',
   '/register',
   '/auth/callback',
+  '/api',
 ];
 
 // Routes that redirect authenticated users away (login/register)

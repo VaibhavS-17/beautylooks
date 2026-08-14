@@ -261,7 +261,10 @@ export async function verifyPayment(data: {
     }
 
     // 1. Verify Signature
-    const secret = (process.env.RAZORPAY_KEY_SECRET || 'dummy_secret').trim();
+    const secret = process.env.RAZORPAY_KEY_SECRET?.trim();
+    if (!secret) {
+      return { success: false, error: 'Payment gateway configuration error.' };
+    }
     const body = parsed.data.razorpay_order_id + '|' + parsed.data.razorpay_payment_id;
     const expectedSignature = crypto
       .createHmac('sha256', secret)
@@ -322,6 +325,17 @@ export async function recordPaymentFailure(data: { order_id: string; reason?: st
   if (!orderId) return { success: false, error: 'Order ID is required.' };
 
   try {
+    // Ensure order exists and is strictly pending
+    const { data: existingOrder } = await adminClient
+      .from('orders')
+      .select('id, status')
+      .eq('id', orderId)
+      .single();
+
+    if (!existingOrder || existingOrder.status !== 'pending') {
+      return { success: false, error: 'Order cannot be marked as failed.' };
+    }
+
     const { error } = await adminClient
       .from('orders')
       .update({

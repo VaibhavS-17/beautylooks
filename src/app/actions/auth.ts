@@ -128,10 +128,7 @@ export async function requestPasswordReset(formData: FormData) {
     return { error: 'Too many reset requests. Please try again in a minute.' };
   }
 
-  const headersList = await headers();
-  const host = headersList.get('x-forwarded-host') || headersList.get('host') || 'beautylooks.vercel.app';
-  const protocol = headersList.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
-  const origin = `${protocol}://${host}`;
+  const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://beautylooks.vercel.app';
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {

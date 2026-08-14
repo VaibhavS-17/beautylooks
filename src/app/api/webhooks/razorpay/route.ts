@@ -6,7 +6,10 @@ export async function POST(req: Request) {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get('x-razorpay-signature') || '';
-    const secret = (process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET || 'dummy_secret').trim();
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET?.trim() || process.env.RAZORPAY_KEY_SECRET?.trim();
+    if (!secret) {
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+    }
 
     const expectedSignature = crypto
       .createHmac('sha256', secret)
@@ -62,20 +65,7 @@ export async function POST(req: Request) {
             })
             .eq('id', existingOrder.id);
             
-          // 3. Decrement stock securely
-          const { data: orderItems } = await supabase
-            .from('order_items')
-            .select('product_id, quantity')
-            .eq('order_id', existingOrder.id);
-
-          if (orderItems && orderItems.length > 0) {
-            for (const item of orderItems) {
-              await supabase.rpc('decrement_stock', {
-                p_product_id: item.product_id,
-                p_quantity: item.quantity
-              });
-            }
-          }
+          // Note: Stock is already atomically decremented during order creation.
         }
       }
     }
