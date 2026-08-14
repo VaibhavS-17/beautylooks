@@ -149,7 +149,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
       {/* ================= CATEGORIES SECTION ================= */}
       <section className="py-16 md:py-24 max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="font-display text-3xl text-text-main mb-4">Curated Edits</h2>
+          <h2 className="font-display text-3xl text-text-main mb-4">Shop by Category</h2>
           <div className="w-12 h-px bg-accent mx-auto" />
         </div>
 
