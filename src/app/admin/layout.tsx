@@ -39,7 +39,8 @@ export default async function AdminLayout({
     { count: categoriesCount },
     { count: brandsCount },
     { count: blogsCount },
-    { count: discountsCount }
+    { count: discountsCount },
+    { count: messagesCount }
   ] = await Promise.all([
     supabase.from('orders').select('*', { count: 'exact', head: true }),
     supabase.from('products').select('*', { count: 'exact', head: true }),
@@ -48,6 +49,7 @@ export default async function AdminLayout({
     supabase.from('brands').select('*', { count: 'exact', head: true }),
     supabase.from('blog_posts').select('*', { count: 'exact', head: true }),
     supabase.from('discount_codes').select('*', { count: 'exact', head: true }),
+    supabase.from('contact_messages').select('*', { count: 'exact', head: true }).eq('status', 'unread'),
   ]);
 
   const counts = {
@@ -58,6 +60,7 @@ export default async function AdminLayout({
     brands: brandsCount || 0,
     blogs: blogsCount || 0,
     discounts: discountsCount || 0,
+    messages: messagesCount || 0,
   };
 
   return (

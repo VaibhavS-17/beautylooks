@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   LogOut,
-  ExternalLink
+  ExternalLink,
+  Mail
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -29,6 +30,7 @@ interface AdminSidebarProps {
     brands: number;
     blogs: number;
     discounts: number;
+    messages: number;
   };
 }
 
@@ -39,6 +41,7 @@ export default function AdminSidebar({ counts }: AdminSidebarProps) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/admin', count: null },
     { id: 'orders', label: 'Orders', icon: ShoppingBag, href: '/admin/orders', count: counts.orders },
+    { id: 'messages', label: 'Messages', icon: Mail, href: '/admin/messages', count: counts.messages },
     { id: 'products', label: 'Products', icon: Package, href: '/admin/products', count: counts.products },
     { id: 'reviews', label: 'Reviews', icon: Star, href: '/admin/reviews', count: counts.reviews },
     { id: 'faqs', label: 'Common FAQs', icon: HelpCircle, href: '/admin/faqs', count: null },

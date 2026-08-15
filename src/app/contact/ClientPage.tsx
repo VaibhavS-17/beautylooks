@@ -3,21 +3,33 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-
+import { submitContactForm } from '@/app/actions/contactActions';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     subject: '',
     message: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    toast.success('Message sent! Our team will get back to you within 24 hours.');
+    setIsSubmitting(true);
+    
+    const result = await submitContactForm(formData);
+    
+    setIsSubmitting(false);
+    
+    if (result.success) {
+      setSubmitted(true);
+      toast.success('Message sent! Our team will get back to you within 24 hours.');
+    } else {
+      toast.error(result.error || 'Something went wrong. Please try again.');
+    }
   };
 
   return (
@@ -114,18 +126,32 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-main mb-2">
-                    Subject
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    placeholder="Order Inquiry / Skincare Recommendation"
-                    className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:border-text-main"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-main mb-2">
+                      Phone Number <span className="text-text-muted font-normal normal-case tracking-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="+91 98765 43210"
+                      className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:border-text-main"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-main mb-2">
+                      Subject
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.subject}
+                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                      placeholder="Order Inquiry / Skincare Recommendation"
+                      className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:border-text-main"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -144,10 +170,11 @@ export default function ContactPage() {
 
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-8 py-3.5 bg-text-main text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-black transition-colors flex items-center justify-center gap-2"
+                  disabled={isSubmitting}
+                  className={`w-full sm:w-auto px-8 py-3.5 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-colors flex items-center justify-center gap-2 ${isSubmitting ? 'bg-text-muted cursor-not-allowed' : 'bg-text-main hover:bg-black'}`}
                 >
                   <Send size={14} />
-                  Send Message
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
                 </button>
               </form>
             )}
