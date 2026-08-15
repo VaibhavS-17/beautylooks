@@ -324,7 +324,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
           </span>
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-display font-light mb-6 tracking-tight leading-tight">
             Discover Your True
-            <span className="block mt-2 font-medium italic text-primary">Beauty Essence</span>
+            <span className="block mt-2 font-medium italic text-accent">Beauty Essence</span>
           </h1>
           <p className="text-sm md:text-base text-text-muted font-light leading-relaxed max-w-2xl mx-auto">
             Founded with a vision to redefine the beauty landscape in Mumbai, we curate authentic skincare products from the most celebrated global and local cosmetics brands. Every product is rigorously vetted to ensure it meets our standard of excellence.
@@ -382,37 +382,6 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
         </div>
       </section>
 
-      {/* ================= NEWSLETTER ================= */}
-      <section className="py-16 md:py-24 border-t border-border">
-        <div className="max-w-2xl mx-auto px-4 text-center">
-          <h2 className="font-display text-3xl text-text-main mb-6">
-            Join The Society
-          </h2>
-          <p className="text-sm text-text-muted mb-10 font-light">
-            Subscribe to receive updates, access to exclusive deals, and more.
-          </p>
-
-          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row max-w-md mx-auto border border-border rounded-2xl overflow-hidden shadow-sm bg-white">
-            <input
-              suppressHydrationWarning
-              type="email"
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="flex-grow bg-transparent text-sm text-text-main px-6 py-4 focus:outline-none placeholder:text-text-muted/60"
-              required
-            />
-            <button suppressHydrationWarning type="submit" className="bg-text-main text-primary px-8 py-4 text-xs font-semibold uppercase tracking-widest hover:bg-accent transition-colors">
-              Subscribe
-            </button>
-          </form>
-          {subscribed && (
-            <p className="mt-4 text-sm text-text-main uppercase tracking-widest font-semibold animate-fade-in">
-              Thank you for subscribing.
-            </p>
-          )}
-        </div>
-      </section>
 
       {/* Notify Me Modal for out-of-stock products */}
       <NotifyMeModal

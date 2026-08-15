@@ -15,6 +15,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://beautylooksmumbai.com'),
   title: "Beauty Looks Mumbai | Premium Cosmetics & Skincare",
   description: "Simple • Genuine • Affordable. Mumbai's leading curated beauty marketplace for facial kits, serums, face masks, and premium cosmetics.",
   keywords: "beauty, cosmetics, facial kits, skincare, mumbai, natural beauty, serum, cleansers, face mask",

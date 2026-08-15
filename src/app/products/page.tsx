@@ -1,5 +1,13 @@
 import { createClient } from '@/lib/supabase/server';
 import ProductsClient from './ProductsClient';
+
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Shop All Products | Beauty Looks Mumbai",
+  description: "Browse our collection of premium beauty products.",
+};
+
 export const revalidate = 3600;
 
 export default async function ProductsPage() {

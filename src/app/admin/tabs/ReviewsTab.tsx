@@ -302,7 +302,7 @@ export default function ReviewsTab({
                       {review.productSlug && (
                         <Link
                           href={`/products/${review.productSlug}`}
-                          target="_blank"
+                          target="_blank" rel="noopener noreferrer"
                           className="text-[#CA8A04] hover:text-[#1C1917] p-1.5 rounded-lg hover:bg-white transition-colors shrink-0"
                           title="View product on storefront"
                         >

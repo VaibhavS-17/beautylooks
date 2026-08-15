@@ -1,6 +1,14 @@
 import { createClient } from '@/lib/supabase/server';
 import WishlistClient from './WishlistClient';
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Wishlist | Beauty Looks Mumbai",
+  description: "View your saved products.",
+};
+
+
 export default async function WishlistPage() {
   const supabase = await createClient();
 

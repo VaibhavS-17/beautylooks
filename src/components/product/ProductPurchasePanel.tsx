@@ -104,10 +104,12 @@ export function ProductPurchasePanel({
       </div>
 
       <div className="flex flex-col gap-2 mb-8 bg-[#FDFBF7] p-4 border border-[#E8E2D9]/60 rounded-xl">
-        <div className="flex items-center text-sm font-semibold text-[#DC2626]">
-          <span className="mr-2 animate-pulse">🔥</span> 
-          High demand: Currently in {peopleInCart} people's carts
-        </div>
+        {peopleInCart >= 2 && (
+          <div className="flex items-center text-sm font-semibold text-[#DC2626]">
+            <span className="mr-2 animate-pulse">🔥</span> 
+            High demand: Currently in {peopleInCart} people's carts
+          </div>
+        )}
         <div className="text-sm text-text-muted font-medium">
           Want it by <strong className="text-text-main">{deliveryDate}</strong>? Order within <span className="text-[#CA8A04] font-bold">{countdownStr}</span>
         </div>

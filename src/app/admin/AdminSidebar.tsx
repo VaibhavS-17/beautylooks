@@ -142,7 +142,7 @@ export default function AdminSidebar({ counts }: AdminSidebarProps) {
         <div className="p-4 border-t border-[#2A2725] space-y-2">
           <Link
             href="/"
-            target="_blank"
+            target="_blank" rel="noopener noreferrer"
             className="flex items-center justify-between px-4 py-2.5 rounded-xl text-xs font-semibold text-[#CA8A04] hover:bg-[#2A2725] transition-colors"
           >
             <span>View Storefront</span>

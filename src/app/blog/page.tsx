@@ -1,5 +1,13 @@
 import { createClient } from '@/lib/supabase/server';
 import BlogClient from './BlogClient';
+
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Blog | Beauty Looks Mumbai",
+  description: "Read the latest beauty tips and news from Beauty Looks Mumbai.",
+};
+
 export const dynamic = 'force-dynamic';
 
 export default async function BlogPage() {
