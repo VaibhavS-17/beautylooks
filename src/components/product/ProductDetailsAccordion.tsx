@@ -34,6 +34,14 @@ export function ProductDetailsAccordion({ product, commonFaqs }: ProductDetailsA
     ? product.faqs.map((f: { question: string; answer: string }) => ({ question: f.question, answer: f.answer }))
     : (commonFaqs && Array.isArray(commonFaqs) && commonFaqs.length > 0 ? commonFaqs : DEFAULT_FAQS);
 
+  const isHaircare = product.category?.toLowerCase().includes('hair') || 
+                     product.name.toLowerCase().includes('shampoo') || 
+                     product.name.toLowerCase().includes('keratin');
+
+  const defaultDescription = isHaircare 
+    ? "Crafted with salon-grade botanicals and restorative proteins, this formula penetrates deeply to nourish the scalp and strengthen hair fibers. Formulated to integrate effortlessly into your daily hair care routine."
+    : "Crafted using clinical-grade botanicals and dermatologically verified actives, this formula penetrates deeply to nourish and restore balance. Formulated to integrate effortlessly into both morning and evening skincare rituals.";
+
   return (
     <div className="mt-20 space-y-20">
       <div className="pt-12 border-t border-border">
@@ -44,7 +52,7 @@ export function ProductDetailsAccordion({ product, commonFaqs }: ProductDetailsA
               {product.description}
             </p>
             <p className="text-sm text-text-muted font-light leading-relaxed">
-              Crafted using clinical-grade botanicals and dermatologically verified actives, this formula penetrates deeply to nourish and restore balance. Formulated to integrate effortlessly into both morning and evening skincare rituals.
+              {defaultDescription}
             </p>
             <div className="pt-4 space-y-2">
               <div className="flex items-center gap-3">
@@ -66,9 +74,19 @@ export function ProductDetailsAccordion({ product, commonFaqs }: ProductDetailsA
             <div>
               <h3 className="text-[10px] font-bold text-text-muted mb-4 uppercase tracking-widest">Premium Actives</h3>
               <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">Hyaluronic Acid</span>
-                <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">Vitamin C</span>
-                <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">24K Gold Extracts</span>
+                {isHaircare ? (
+                  <>
+                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">Keratin</span>
+                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">Argan Oil</span>
+                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">Biotin</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">Hyaluronic Acid</span>
+                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">Vitamin C</span>
+                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">24K Gold Extracts</span>
+                  </>
+                )}
               </div>
             </div>
 

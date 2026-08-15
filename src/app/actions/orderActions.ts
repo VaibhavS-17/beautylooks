@@ -215,6 +215,21 @@ export async function createRazorpayOrder(data: {
       }
     }
 
+    // 8. Increment discount usage count
+    if (parsed.data.discountCode && couponDiscountAmount > 0) {
+      const { data: currentDiscount } = await adminClient
+        .from('discount_codes')
+        .select('usage_count')
+        .eq('code', parsed.data.discountCode.toUpperCase())
+        .single();
+      if (currentDiscount) {
+        await adminClient
+          .from('discount_codes')
+          .update({ usage_count: currentDiscount.usage_count + 1 })
+          .eq('code', parsed.data.discountCode.toUpperCase());
+      }
+    }
+
     return { 
       success: true, 
       orderId: order.id, 
@@ -271,7 +286,10 @@ export async function verifyPayment(data: {
       .update(body.toString())
       .digest('hex');
 
-    if (expectedSignature !== parsed.data.razorpay_signature) {
+    const sigBuffer = Buffer.from(parsed.data.razorpay_signature, 'utf8');
+    const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+
+    if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
       return { success: false, error: 'Payment verification failed: Invalid signature.' };
     }
 

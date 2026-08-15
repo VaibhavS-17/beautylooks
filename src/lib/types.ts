@@ -45,6 +45,7 @@ export interface Brand {
 export interface CartItem {
   product: Product;
   quantity: number;
+  isSubscription?: boolean;
 }
 
 export interface WishlistItem {

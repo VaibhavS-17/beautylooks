@@ -162,7 +162,7 @@ export function ProductPurchasePanel({
           <div className="flex flex-col sm:flex-row gap-3 w-full mt-4 sm:mt-0">
             <button 
               onClick={() => {
-                addItem(product, quantity);
+                addItem(product, quantity, isSubscription);
               }}
               disabled={isMaxStockReached}
               className={`w-full sm:w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center border-2 ${
@@ -175,7 +175,7 @@ export function ProductPurchasePanel({
             </button>
             <button 
               onClick={() => {
-                setBuyNowItem({ product, quantity });
+                setBuyNowItem({ product, quantity, isSubscription });
                 router.push('/checkout?mode=buynow');
               }}
               className="w-full sm:w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center bg-accent text-white hover:bg-black hover:text-white shadow-gold hover:-translate-y-1"

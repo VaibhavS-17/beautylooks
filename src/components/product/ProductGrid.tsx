@@ -92,8 +92,8 @@ export function ProductGrid({
 
                 return (
                   <div key={product.id} className="product-card group cursor-pointer flex flex-col h-full transition-all duration-500 bg-transparent rounded-2xl overflow-hidden hover:shadow-gold-hover border border-transparent">
-                    <Link href={`/products/${product.slug}`} className="block overflow-hidden">
-                      <div className="product-image-container h-[200px] sm:h-[400px] relative overflow-hidden bg-[#FAFAF9]">
+                    <div className="product-image-container h-[200px] sm:h-[400px] relative overflow-hidden bg-[#FAFAF9]">
+                      <Link href={`/products/${product.slug}`} className="block absolute inset-0 z-0">
                         <Image
                           src={product.images?.[0] || fallbackProductImage}
                           alt={product.name}
@@ -113,17 +113,17 @@ export function ProductGrid({
                             <span className="badge-gold">NEW</span>
                           )}
                         </div>
-                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
-                          <button 
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickViewProduct(product); }}
-                            className="bg-white text-text-main text-xs font-bold uppercase tracking-widest px-8 py-4 hover:bg-black hover:text-white transition-colors"
-                            suppressHydrationWarning
-                          >
-                            Quick View
-                          </button>
-                        </div>
+                      </Link>
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20 pointer-events-none">
+                        <button 
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickViewProduct(product); }}
+                          className="bg-white text-text-main text-xs font-bold uppercase tracking-widest px-8 py-4 hover:bg-black hover:text-white transition-colors pointer-events-auto"
+                          suppressHydrationWarning
+                        >
+                          Quick View
+                        </button>
                       </div>
-                    </Link>
+                    </div>
 
                     <div className="p-2.5 sm:p-5 flex flex-col flex-grow bg-white">
                       <div className="flex justify-between items-start mb-2">

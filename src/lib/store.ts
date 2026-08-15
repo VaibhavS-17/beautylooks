@@ -10,7 +10,7 @@ interface CartState {
   items: CartItem[];
   buyNowItem: CartItem | null;
   isOpen: boolean;
-  addItem: (product: Product, quantity?: number) => void;
+  addItem: (product: Product, quantity?: number, isSubscription?: boolean) => void;
   setBuyNowItem: (item: CartItem | null) => void;
   clearBuyNowItem: () => void;
   removeItem: (productId: string) => void;
@@ -37,7 +37,7 @@ export const useCartStore = create<CartState>()(
       setBuyNowItem: (item: CartItem | null) => set({ buyNowItem: item }),
       clearBuyNowItem: () => set({ buyNowItem: null }),
 
-      addItem: (product: Product, quantity: number = 1) => {
+      addItem: (product: Product, quantity: number = 1, isSubscription: boolean = false) => {
         const showAddedToast = () => {
           toast.custom(
             (t) =>
@@ -153,7 +153,7 @@ export const useCartStore = create<CartState>()(
             return {
               items: state.items.map((item) =>
                 item.product.id === product.id
-                  ? { ...item, quantity: newQuantity }
+                  ? { ...item, quantity: newQuantity, isSubscription: isSubscription || item.isSubscription }
                   : item
               ),
             };
@@ -167,12 +167,12 @@ export const useCartStore = create<CartState>()(
           if (quantity > product.stockQuantity) {
             const noun = product.stockQuantity === 1 ? 'item' : 'items';
             toast.error(`Only ${product.stockQuantity} ${noun} available in stock`, { id: `stock-limit-${product.id}` });
-            const newState = { items: [...state.items, { product, quantity: product.stockQuantity }] };
+            const newState = { items: [...state.items, { product, quantity: product.stockQuantity, isSubscription }] };
             updateCartInDB(newState.items).catch(console.error);
             return newState;
           }
           showAddedToast();
-          const newState = { items: [...state.items, { product, quantity }] };
+          const newState = { items: [...state.items, { product, quantity, isSubscription }] };
           updateCartInDB(newState.items).catch(console.error);
           return newState;
         });
@@ -234,7 +234,8 @@ export const useCartStore = create<CartState>()(
       getTotalPrice: () => {
         return get().items.reduce((total, item) => {
           const price = item.product.salePrice ?? item.product.price;
-          return total + price * item.quantity;
+          const finalPrice = item.isSubscription ? price * 0.85 : price;
+          return total + finalPrice * item.quantity;
         }, 0);
       },
 

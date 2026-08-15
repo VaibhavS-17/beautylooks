@@ -1,7 +1,7 @@
 'use server';
 
 import { Resend } from 'resend';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 // ─────────────────────────────────────────────────────────────
 // Resend Client
@@ -32,7 +32,7 @@ export async function processRestockNotifications(
   product: RestockProduct,
 ) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // 1. Fetch all pending subscribers for this product
     const { data: subscribers, error: fetchError } = await supabase

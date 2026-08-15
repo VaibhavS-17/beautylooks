@@ -46,10 +46,12 @@ export default function BlogClient({ blogPosts }: BlogClientProps) {
               </div>
               <div className="p-6 sm:p-8 flex flex-col justify-between space-y-6">
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-3 text-xs text-text-muted">
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-text-muted">
                     <span className="font-semibold text-accent tracking-widest uppercase">Skincare Secrets</span>
                     <span>•</span>
                     <span>{blogPosts[0].publishedAt}</span>
+                    <span>•</span>
+                    <span>By {blogPosts[0].authorName || 'Beauty Looks'}</span>
                   </div>
                   <h2 className="font-display font-medium text-2xl sm:text-3xl text-text-main group-hover:text-accent transition-colors leading-tight">
                     <Link href={`/blog/${blogPosts[0].slug}`}>{blogPosts[0].title}</Link>
@@ -103,9 +105,10 @@ export default function BlogClient({ blogPosts }: BlogClientProps) {
                 </div>
 
                 <div className="p-6 space-y-3">
-                  <span className="text-[10px] font-semibold text-text-muted tracking-widest uppercase">
-                    {post.publishedAt}
-                  </span>
+                  <div className="flex justify-between items-center text-[10px] font-semibold text-text-muted tracking-widest uppercase">
+                    <span>{post.publishedAt}</span>
+                    <span>By {post.authorName || 'Beauty Looks'}</span>
+                  </div>
                   <h3 className="font-display font-medium text-lg text-text-main group-hover:text-accent transition-colors line-clamp-1">
                     <Link href={`/blog/${post.slug}`}>{post.title}</Link>
                   </h3>

@@ -16,7 +16,10 @@ export async function POST(req: Request) {
       .update(rawBody)
       .digest('hex');
 
-    if (expectedSignature !== signature) {
+    const sigBuffer = Buffer.from(signature, 'utf8');
+    const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+
+    if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
       return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 });
     }
 
@@ -33,13 +36,34 @@ export async function POST(req: Request) {
       const razorpayOrderId = payload.payload?.payment?.entity?.order_id;
       if (razorpayOrderId) {
         const supabase = createAdminClient();
-        await supabase
+        
+        // Ensure order exists and is strictly pending before failing and restoring stock
+        const { data: existingOrder } = await supabase
           .from('orders')
-          .update({
-            status: 'failed',
-            failed_at: new Date().toISOString(),
-          })
-          .eq('razorpay_order_id', razorpayOrderId);
+          .select('id, status')
+          .eq('razorpay_order_id', razorpayOrderId)
+          .single();
+
+        if (existingOrder && existingOrder.status === 'pending') {
+          await supabase
+            .from('orders')
+            .update({
+              status: 'failed',
+              failed_at: new Date().toISOString(),
+            })
+            .eq('id', existingOrder.id);
+            
+          const { data: orderItems } = await supabase
+            .from('order_items')
+            .select('product_id, quantity')
+            .eq('order_id', existingOrder.id);
+
+          if (orderItems && orderItems.length > 0) {
+            await supabase.rpc('atomic_restore_stock', {
+              items: orderItems
+            });
+          }
+        }
       }
     } else if (event === 'payment.captured' || event === 'order.paid') {
       const razorpayOrderId = payload.payload?.payment?.entity?.order_id || payload.payload?.order?.entity?.id;

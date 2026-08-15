@@ -120,7 +120,10 @@ export default function BlogDetailClient({ post, relatedPosts }: BlogDetailClien
                   key={r.id}
                   className="glass-card p-6 border border-[#EFECE6] bg-white hover:border-[#C9A94E25] block group transition-all duration-300 shadow-sm"
                 >
-                  <span className="text-[10px] text-[#8A8177] uppercase tracking-wider block mb-2">{r.publishedAt}</span>
+                  <div className="flex justify-between text-[10px] text-[#8A8177] uppercase tracking-wider mb-2">
+                    <span>{r.publishedAt}</span>
+                    <span>{r.readTime} min read</span>
+                  </div>
                   <h4 className="font-display font-medium text-base text-[#1A1A1A] group-hover:text-[#9A7B2F] line-clamp-1 transition-colors">
                     {r.title}
                   </h4>
