@@ -22,6 +22,19 @@ export default function ImageUploader({ label, folder, currentValue, onChange, r
   const handleUpload = async (file: File) => {
     if (!file) return;
 
+    // Client-side validation: MIME type and size
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert('Invalid file type. Please upload a JPG, PNG, GIF, or WEBP image.');
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      alert('File is too large. Maximum size is 5MB.');
+      return;
+    }
+
     try {
       setUploading(true);
       

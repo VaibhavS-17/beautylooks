@@ -21,7 +21,7 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     // Ensure any URL hash access tokens from recovery links are picked up by Supabase client
     const supabase = createClient();
-    supabase.auth.getSession();
+    supabase.auth.getUser();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

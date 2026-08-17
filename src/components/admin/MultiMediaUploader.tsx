@@ -42,9 +42,23 @@ export default function MultiMediaUploader({
     const uploadedUrls: string[] = [...currentValues];
 
     try {
+      const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm'];
+
       for (let i = 0; i < fileArray.length; i++) {
         const file = fileArray[i];
         const isVideo = file.type.startsWith('video/');
+
+        if (isVideo && (!acceptVideo || !ALLOWED_VIDEO_TYPES.includes(file.type))) {
+          alert(`Video file ${file.name} is not supported or not allowed.`);
+          continue;
+        }
+
+        if (!isVideo && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
+          alert(`File ${file.name} has an unsupported image format.`);
+          continue;
+        }
+
         const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
 
         if (file.size > maxSize) {

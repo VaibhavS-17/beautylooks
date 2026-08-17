@@ -137,7 +137,7 @@ export async function requestPasswordReset(formData: FormData) {
 
   if (error) {
     console.error('Password reset error:', error);
-    return { error: error.message || 'Could not send password reset email. Please verify your email address.' };
+    return { error: 'Could not send password reset email. Please verify your email address.' };
   }
 
   return { success: true };
@@ -169,7 +169,7 @@ export async function updatePassword(formData: FormData) {
 
   if (error) {
     console.error('Update password error:', error);
-    return { error: error.message || 'Could not update password. Your reset session may have expired.' };
+    return { error: 'Could not update password. Your reset session may have expired.' };
   }
 
   return { success: true };

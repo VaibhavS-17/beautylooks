@@ -1,40 +1,27 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 
-// Persistent rate limiter for Server Actions using Supabase
 export async function rateLimit(key: string, limit: number = 10, windowMs: number = 60_000): Promise<{ success: boolean; remaining: number }> {
-  // If no service role or anon key is configured (e.g. local dev), bypass rate limiting
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn('Rate limiting bypassed: No Supabase keys are defined.');
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.warn('Rate limiting bypassed: SUPABASE_SERVICE_ROLE_KEY not set.');
     return { success: true, remaining: 99 };
   }
 
-  // Use admin client to bypass RLS for rate limit table
   const supabase = createAdminClient();
-  
-  const { data: record } = await supabase
-    .from('rate_limits')
-    .select('count, last_reset')
-    .eq('key', key)
-    .single();
 
-  const now = new Date();
+  const { data, error } = await supabase.rpc('check_rate_limit', {
+    p_key: key,
+    p_limit: limit,
+    p_window_ms: windowMs,
+  });
 
-  if (!record || (now.getTime() - new Date(record.last_reset).getTime() > windowMs)) {
-    await supabase.from('rate_limits').upsert({
-      key,
-      count: 1,
-      last_reset: now.toISOString()
-    });
-    return { success: true, remaining: limit - 1 };
+  if (error) {
+    console.error('Rate limit RPC error:', error);
+    // Fail open: allow the request if rate limiting itself fails
+    return { success: true, remaining: 99 };
   }
 
-  if (record.count >= limit) {
-    return { success: false, remaining: 0 };
-  }
-
-  await supabase.from('rate_limits').update({
-    count: record.count + 1
-  }).eq('key', key);
-
-  return { success: true, remaining: limit - record.count - 1 };
+  return {
+    success: data?.allowed ?? true,
+    remaining: data?.remaining ?? 0,
+  };
 }

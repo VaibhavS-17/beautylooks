@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function subscribeRestockNotification({
   productId,
@@ -12,6 +13,9 @@ export async function subscribeRestockNotification({
   try {
     const supabase = await createClient();
     const normalizedEmail = email.toLowerCase().trim();
+
+    const rl = await rateLimit('restock:' + normalizedEmail, 5, 60_000);
+    if (!rl.success) return { success: false, error: 'Too many requests. Please try again later.' };
 
     // Check for existing active (pending) subscription
     const { data: existing } = await supabase

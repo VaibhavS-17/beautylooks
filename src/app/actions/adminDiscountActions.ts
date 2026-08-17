@@ -38,7 +38,7 @@ export async function createDiscountCode(data: DiscountData) {
     if (error.code === '23505') {
       return { error: 'A discount code with this name already exists' };
     }
-    return { error: error.message };
+    return { error: 'Failed to create discount code. Please try again.' };
   }
 
   revalidatePath('/admin');
@@ -75,7 +75,7 @@ export async function updateDiscountCode(id: string, data: DiscountData) {
     if (error.code === '23505') {
       return { error: 'A discount code with this name already exists' };
     }
-    return { error: error.message };
+    return { error: 'Failed to update discount code. Please try again.' };
   }
 
   revalidatePath('/admin');
@@ -99,7 +99,7 @@ export async function deleteDiscountCode(id: string) {
 
   const { error } = await supabase.from('discount_codes').delete().eq('id', id);
 
-  if (error) return { error: error.message };
+  if (error) return { error: 'Failed to delete discount code. Please try again.' };
 
   revalidatePath('/admin');
   revalidatePath('/admin/discounts');

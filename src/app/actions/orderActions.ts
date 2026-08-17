@@ -189,7 +189,7 @@ export async function createRazorpayOrder(data: {
       await adminClient.rpc('atomic_restore_stock', { items: itemsForReserve });
       return { 
         success: false, 
-        error: orderError?.message || orderError?.details || 'Failed to save order to database.' 
+        error: 'Failed to save order to database.' 
       };
     }
 
@@ -210,7 +210,7 @@ export async function createRazorpayOrder(data: {
         await adminClient.rpc('atomic_restore_stock', { items: itemsForReserve });
         return {
           success: false,
-          error: itemsError?.message || itemsError?.details || 'Failed to save order items.'
+          error: 'Failed to save order items.'
         };
       }
     }
@@ -242,8 +242,7 @@ export async function createRazorpayOrder(data: {
     console.error('Create Order Error:', error);
     // Note: We can't easily restore stock here unless we have itemsForReserve in scope,
     // but the specific failure points above handle the common cases.
-    const err = error as Record<string, any>;
-    const errorMessage = err?.error?.description || err?.description || err?.message || 'An unexpected error occurred. Please try again.';
+    const errorMessage = 'An unexpected error occurred. Please try again.';
     return { success: false, error: errorMessage };
   }
 }

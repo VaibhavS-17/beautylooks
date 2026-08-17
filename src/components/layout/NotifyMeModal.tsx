@@ -28,9 +28,9 @@ export default function NotifyMeModal({ isOpen, onClose, productId, productName 
   useEffect(() => {
     if (!isOpen) return;
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user?.email) {
-        setEmail(session.user.email);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email) {
+        setEmail(user.email);
         setIsSessionEmail(true);
       }
     });
