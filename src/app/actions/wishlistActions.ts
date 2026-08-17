@@ -38,7 +38,7 @@ export async function syncWishlistWithDB(localProductIds: string[]) {
     console.error('Toggle Wishlist Error:', error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'An unexpected error occurred while updating your wishlist.'
+      error: 'An unexpected error occurred while updating your wishlist.'
     };
   }
 }

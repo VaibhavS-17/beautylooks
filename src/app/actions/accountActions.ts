@@ -317,7 +317,8 @@ export async function upgradeGuestToAccount(email: string, password: string, ful
     });
 
     if (error) {
-      return { success: false, error: error.message };
+      console.error('Guest upgrade error:', error);
+      return { success: false, error: 'Could not create account. Please try again.' };
     }
     
     // We do not save address here because the user is typically not logged in until they verify email

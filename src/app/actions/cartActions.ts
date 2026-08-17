@@ -50,7 +50,7 @@ export async function syncCartWithDB(localItems: CartItem[]) {
     console.error('Add to Cart Error:', error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'An unexpected error occurred while adding the item to your cart.'
+      error: 'An unexpected error occurred while updating your cart.'
     };
   }
 }
@@ -90,6 +90,6 @@ export async function checkCartStock(productIds: string[]): Promise<{ success: b
     return { success: true, stockMap };
   } catch (error: any) {
     console.error('Failed to check cart stock:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: 'Failed to check stock. Please try again.' };
   }
 }

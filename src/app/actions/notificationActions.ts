@@ -2,6 +2,12 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { rateLimit } from '@/lib/rate-limit';
+import { z } from 'zod';
+
+const restockSchema = z.object({
+  productId: z.string().uuid('Invalid product ID'),
+  email: z.string().email('Invalid email address').max(254),
+});
 
 export async function subscribeRestockNotification({
   productId,
@@ -11,8 +17,13 @@ export async function subscribeRestockNotification({
   email: string;
 }): Promise<{ success: boolean; error?: string }> {
   try {
+    const parsed = restockSchema.safeParse({ productId, email });
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || 'Invalid input.' };
+    }
+
     const supabase = await createClient();
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = parsed.data.email.toLowerCase().trim();
 
     const rl = await rateLimit('restock:' + normalizedEmail, 5, 60_000);
     if (!rl.success) return { success: false, error: 'Too many requests. Please try again later.' };

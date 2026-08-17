@@ -356,7 +356,7 @@ function CheckoutContent() {
       setPlacedFinalTotal(finalTotal);
 
       const options: any = {
-        key: res.keyId || 'rzp_test_dummy', 
+        key: res.keyId, 
         amount: res.amount,
         currency: 'INR',
         name: 'Beauty Looks Mumbai',

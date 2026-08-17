@@ -9,10 +9,14 @@ import { validateDiscountCode } from './discountActions';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 
-const razorpay = new Razorpay({
-  key_id: (process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy').trim(),
-  key_secret: (process.env.RAZORPAY_KEY_SECRET || 'dummy_secret').trim(),
-});
+function getRazorpayInstance() {
+  const keyId = process.env.RAZORPAY_KEY_ID?.trim();
+  const keySecret = process.env.RAZORPAY_KEY_SECRET?.trim();
+  if (!keyId || !keySecret) {
+    throw new Error('Missing Razorpay credentials: RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set.');
+  }
+  return new Razorpay({ key_id: keyId, key_secret: keySecret });
+}
 
 const createOrderSchema = z.object({
   items: z.array(z.object({
@@ -158,7 +162,7 @@ export async function createRazorpayOrder(data: {
     const amountInPaise = Math.round(finalAmount * 100);
 
     // 5. Create Razorpay Order
-    const rpOrder = await razorpay.orders.create({
+    const rpOrder = await getRazorpayInstance().orders.create({
       amount: amountInPaise,
       currency: 'INR',
       receipt: `receipt_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
@@ -236,7 +240,7 @@ export async function createRazorpayOrder(data: {
       razorpayOrderId: rpOrder.id, 
       amount: amountInPaise,
       discountApplied: parsed.data.paymentMethod === 'upi',
-      keyId: (process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy').trim()
+      keyId: process.env.RAZORPAY_KEY_ID!.trim()
     };
   } catch (error: unknown) {
     console.error('Create Order Error:', error);
