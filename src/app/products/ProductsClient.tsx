@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -43,12 +43,66 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
   const [sortBy, setSortBy] = useState('newest');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState<any | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   // Debounce search query by 300ms
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Close suggestions dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Compute suggestions (matching brands and products)
+  const suggestions = useMemo(() => {
+    if (!debouncedSearchQuery.trim()) {
+      return { brands: [], products: [] };
+    }
+    const q = debouncedSearchQuery.toLowerCase().trim();
+
+    const matchedBrands = allBrands
+      .filter((b) => b.name.toLowerCase().includes(q))
+      .slice(0, 4);
+
+    const matchedProducts = products
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.brand.toLowerCase().includes(q) ||
+          (p.category && p.category.toLowerCase().includes(q))
+      )
+      .slice(0, 5);
+
+    return { brands: matchedBrands, products: matchedProducts };
+  }, [products, allBrands, debouncedSearchQuery]);
+
+  // Handle search submission and smooth scroll to results
+  const handleSearchSubmit = (term?: string) => {
+    if (term !== undefined) {
+      setSearchQuery(term);
+    }
+    setShowSuggestions(false);
+
+    if (resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   // Sync state when URL params change from navbar clicks
   useEffect(() => {
@@ -62,6 +116,9 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
 
     if (searchParam) {
       setSearchQuery(searchParam);
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
     } else {
       setSearchQuery('');
     }
@@ -228,21 +285,40 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
         </p>
       </div>
 
-      {/* Centered Large & Cool Search Bar with Search Button */}
-      <div className="max-w-2xl mx-auto mb-14">
-        <div className="relative flex items-center bg-white rounded-2xl border-2 border-[#E8E2D9] focus-within:border-[#C88E75] focus-within:ring-4 focus-within:ring-[#C88E75]/10 shadow-[0_4px_20px_-4px_rgba(44,30,22,0.04)] hover:shadow-[0_8px_30px_rgba(44,30,22,0.08)] transition-all duration-300 overflow-hidden p-1.5">
+      {/* Centered Large & Cool Search Bar with Search Button & Autocomplete */}
+      <div className="max-w-2xl mx-auto mb-14 relative" ref={searchContainerRef}>
+        <div className="relative flex items-center bg-white rounded-2xl border-2 border-[#E8E2D9] focus-within:border-[#C88E75] focus-within:ring-4 focus-within:ring-[#C88E75]/10 shadow-[0_4px_20px_-4px_rgba(44,30,22,0.04)] hover:shadow-[0_8px_30px_rgba(44,30,22,0.08)] transition-all duration-300 p-1.5 z-20">
           <Search size={22} className="text-accent ml-4 shrink-0" />
           <input
             type="text"
             placeholder="Search our premium collection (e.g. Lotus, Scrub, Serum)..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => {
+              if (searchQuery.trim()) {
+                setShowSuggestions(true);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSearchSubmit();
+              } else if (e.key === 'Escape') {
+                setShowSuggestions(false);
+              }
+            }}
             className="w-full bg-transparent border-none text-base sm:text-lg text-[#2C1E16] placeholder:text-[#6B5C52]/40 focus:outline-none focus:ring-0 px-3 py-2 font-medium"
             suppressHydrationWarning
           />
           {searchQuery && (
             <button 
-              onClick={() => setSearchQuery('')}
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setShowSuggestions(false);
+              }}
               className="p-1.5 rounded-full hover:bg-[#FAF9F6] text-[#6B5C52] mr-2 transition-colors cursor-pointer"
               aria-label="Clear search"
               suppressHydrationWarning
@@ -252,12 +328,105 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
           )}
           <button
             type="button"
+            onClick={() => handleSearchSubmit()}
             className="bg-[#2C1E16] hover:bg-[#C88E75] text-white text-xs sm:text-sm uppercase tracking-widest font-bold px-7 py-3 rounded-xl transition-all duration-300 cursor-pointer shrink-0 hover:shadow-md active:scale-95"
             suppressHydrationWarning
           >
             Search
           </button>
         </div>
+
+        {/* Autocomplete / Suggestions Dropdown */}
+        {showSuggestions && debouncedSearchQuery.trim() && (
+          <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white rounded-2xl shadow-2xl border border-[#E8E2D9] overflow-hidden z-30 animate-in fade-in slide-in-from-top-2 duration-200">
+            {suggestions.brands.length === 0 && suggestions.products.length === 0 ? (
+              <div className="p-5 text-center text-sm text-text-muted">
+                No suggestions found for &ldquo;<span className="font-semibold text-text-main">{debouncedSearchQuery}</span>&rdquo;
+              </div>
+            ) : (
+              <div className="py-2">
+                {/* Brand Suggestions */}
+                {suggestions.brands.length > 0 && (
+                  <div className="px-4 py-2 border-b border-[#E8E2D9]/60">
+                    <div className="text-[10px] font-bold text-accent uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <Sparkles size={12} />
+                      <span>Brand Suggestions</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestions.brands.map((brand) => (
+                        <button
+                          key={brand.id || brand.name}
+                          type="button"
+                          onClick={() => handleSearchSubmit(brand.name)}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FAF9F6] hover:bg-[#C88E75]/10 border border-[#E8E2D9] hover:border-[#C88E75] text-xs font-semibold text-[#2C1E16] hover:text-[#C88E75] transition-colors cursor-pointer"
+                        >
+                          <Search size={12} className="text-accent" />
+                          <span>{brand.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Product Suggestions */}
+                {suggestions.products.length > 0 && (
+                  <div>
+                    <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                      Product Suggestions
+                    </div>
+                    <div className="divide-y divide-[#E8E2D9]/40">
+                      {suggestions.products.map((product) => (
+                        <button
+                          key={product.id}
+                          type="button"
+                          onClick={() => handleSearchSubmit(product.name)}
+                          className="w-full text-left px-4 py-2.5 hover:bg-[#FAF9F6] flex items-center gap-3 transition-colors group cursor-pointer"
+                        >
+                          <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-secondary shrink-0 border border-[#E8E2D9]/50">
+                            <Image
+                              src={product.images?.[0] || fallbackProductImage}
+                              alt={product.name}
+                              fill
+                              sizes="40px"
+                              className="object-cover group-hover:scale-105 transition-transform"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[10px] font-bold text-accent uppercase tracking-wider line-clamp-1">
+                              {product.brand}
+                            </div>
+                            <div className="text-xs sm:text-sm font-medium text-text-main group-hover:text-accent transition-colors line-clamp-1">
+                              {product.name}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="text-xs font-bold text-text-main">
+                              {formatPrice(product.salePrice || product.price)}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Bottom Bar: Press Enter to Search */}
+                <div className="p-3 bg-[#FAF9F6] border-t border-[#E8E2D9]/60 flex items-center justify-between text-xs">
+                  <span className="text-text-muted">
+                    Press <kbd className="px-1.5 py-0.5 bg-white border border-[#E8E2D9] rounded text-[11px] font-mono shadow-xs">Enter</kbd> to search
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleSearchSubmit()}
+                    className="font-bold text-accent hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Search all results &rarr;</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ================= SHOP BY CATEGORY (VISUAL BUTTONS WITH ICONS) ================= */}
@@ -345,7 +514,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
       </div>
 
       {/* Main Layout */}
-      <div className="flex flex-col lg:flex-row gap-12">
+      <div ref={resultsRef} className="flex flex-col lg:flex-row gap-12 scroll-mt-28">
         
         {/* Mobile Filter Toggle */}
         <div className="lg:hidden flex justify-between items-center border-b border-border pb-4">
