@@ -13,7 +13,12 @@ import MobileDrawer from './navbar/MobileDrawer';
 import SearchBar from './navbar/SearchBar';
 
 export default function Navbar({ categories = [] }: { categories?: { id: string, name: string, slug: string }[] }) {
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.scrollY > 10;
+    }
+    return false;
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
@@ -58,6 +63,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -91,11 +97,12 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
       </div>
 
       <nav
-        className={`${isTransparent ? 'absolute' : 'sticky'} top-0 sm:top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 sm:px-6 lg:px-8 sm:mb-4 ${
+        suppressHydrationWarning
+        className={`sticky top-0 sm:top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 sm:px-6 lg:px-8 sm:mb-4 ${
           isScrolled ? 'translate-y-0 sm:translate-y-[-4px]' : ''
         }`}
       >
-        <div className={`transition-all duration-500 sm:rounded-2xl border-b sm:border ${
+        <div suppressHydrationWarning className={`transition-all duration-500 sm:rounded-2xl border-b sm:border ${
           isScrolled
             ? 'bg-white/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border-[var(--color-border)]'
             : isTransparent
