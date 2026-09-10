@@ -129,7 +129,7 @@ export default function CartDrawer() {
             <button
               id="cart-close-btn"
               onClick={closeCart}
-              className="text-text-muted hover:text-text-main transition-colors focus-visible:outline-none"
+              className="text-text-muted hover:text-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black rounded"
               aria-label="Close cart"
             >
               <X size={24} strokeWidth={1.5} />
@@ -155,7 +155,7 @@ export default function CartDrawer() {
           )}
 
           {/* Item List */}
-          <div className="flex-1 overflow-y-auto px-4 divide-y divide-gray-100 no-scrollbar">
+          <div className="flex-1 overflow-y-auto overscroll-contain px-4 divide-y divide-gray-100 no-scrollbar">
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
                 <ShoppingBag size={48} strokeWidth={1} className="text-gray-300" />
@@ -231,6 +231,7 @@ export default function CartDrawer() {
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                               className="px-3 py-1 text-text-muted hover:text-black transition-colors"
+                              aria-label="Decrease quantity"
                             >
                               <Minus size={14} />
                             </button>
@@ -245,6 +246,7 @@ export default function CartDrawer() {
                                   ? 'text-gray-300 cursor-not-allowed'
                                   : 'text-text-muted hover:text-black'
                               }`}
+                              aria-label="Increase quantity"
                             >
                               <Plus size={14} />
                             </button>
