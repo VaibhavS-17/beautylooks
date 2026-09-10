@@ -91,15 +91,15 @@ export function ProductGrid({
                 const currentPrice = product.salePrice || product.price;
 
                 return (
-                  <div key={product.id} className="product-card group cursor-pointer flex flex-col h-full transition-all duration-500 bg-transparent rounded-2xl overflow-hidden hover:shadow-gold-hover border border-transparent">
-                    <div className="product-image-container h-[200px] sm:h-[400px] relative overflow-hidden bg-[#FAFAF9]">
+                  <div key={product.id} className="group flex flex-col cursor-pointer h-full">
+                    <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-4">
                       <Link href={`/products/${product.slug}`} className="block absolute inset-0 z-0">
                         <Image
                           src={product.images?.[0] || fallbackProductImage}
                           alt={product.name}
                           fill
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
-                          className="object-cover product-image transition-transform duration-700 group-hover:scale-105"
+                          className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                           priority={index < 4}
                         />
                         <div className="absolute top-4 left-4 flex flex-col space-y-2 z-10">
@@ -125,7 +125,7 @@ export function ProductGrid({
                       </div>
                     </div>
 
-                    <div className="p-2.5 sm:p-5 flex flex-col flex-grow bg-white">
+                    <div className="flex flex-col flex-grow">
                       <div className="flex justify-between items-start mb-2">
                         <div className="w-full">
                           <span className="text-[10px] font-bold text-accent tracking-widest uppercase block mb-1">
