@@ -9,7 +9,7 @@ export interface NavLinkProps {
   href: string;
 }
 
-export default function NavLinks({ links }: { links: NavLinkProps[] }) {
+export default function NavLinks({ links, isTransparent }: { links: NavLinkProps[], isTransparent?: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -28,7 +28,7 @@ export default function NavLinks({ links }: { links: NavLinkProps[] }) {
             key={link.name}
             href={link.href}
             className={`relative text-[11px] tracking-[0.15em] uppercase font-semibold transition-all duration-300 group px-2 py-1 ${
-              isActive ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-main)] hover:text-[var(--color-accent)] hover:-translate-y-0.5'
+              isActive ? 'text-[var(--color-accent)]' : `${isTransparent ? 'text-white' : 'text-[var(--color-text-main)]'} hover:text-[var(--color-accent)] hover:-translate-y-0.5`
             }`}
           >
             {link.name}

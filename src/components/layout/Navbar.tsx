@@ -18,6 +18,10 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
 
+  const isHome = pathname === '/';
+  const isTransparent = isHome && !isScrolled;
+  const textColorClass = isTransparent ? 'text-white' : 'text-[var(--color-text-main)]';
+
   const cartItemsCount = useCartStore((state) => state.getTotalItems());
   const openCart = useCartStore((state) => state.openCart);
   const wishlistCount = useWishlistStore((state) => state.items.length);
@@ -87,13 +91,15 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
       </div>
 
       <nav
-        className={`sticky top-0 sm:top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 sm:px-6 lg:px-8 sm:mb-4 ${
+        className={`${isTransparent ? 'absolute' : 'sticky'} top-0 sm:top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 sm:px-6 lg:px-8 sm:mb-4 ${
           isScrolled ? 'translate-y-0 sm:translate-y-[-4px]' : ''
         }`}
       >
         <div className={`transition-all duration-500 sm:rounded-2xl border-b sm:border ${
           isScrolled
             ? 'bg-white/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border-[var(--color-border)]'
+            : isTransparent
+            ? 'bg-transparent border-transparent'
             : 'bg-[var(--color-primary)] shadow-sm border-[var(--color-border)]'
         }`}>
           {/* Main Navbar Row */}
@@ -104,7 +110,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
               <div className="flex items-center md:hidden">
                 <button
                   onClick={() => setIsMobileMenuOpen(true)}
-                  className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors mr-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
+                  className={`${textColorClass} hover:text-[var(--color-accent)] transition-colors mr-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm`}
                   aria-label="Open menu"
                   aria-expanded={isMobileMenuOpen}
                   suppressHydrationWarning
@@ -129,7 +135,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
                   </div>
                   {/* Brand Name Text */}
                   <div className="transition-transform duration-500 group-hover:translate-x-1 flex flex-col justify-center">
-                    <div className="text-[var(--color-text-main)] font-semibold text-xl leading-none tracking-wide font-display mb-1 transition-colors duration-300 group-hover:text-[var(--color-accent)]">
+                    <div className={`${textColorClass} font-semibold text-xl leading-none tracking-wide font-display mb-1 transition-colors duration-300 group-hover:text-[var(--color-accent)]`}>
                       Beauty Looks
                     </div>
                     <div className="text-[9px] text-[var(--color-accent)] tracking-[0.3em] uppercase font-bold opacity-90 group-hover:opacity-100 transition-opacity duration-300">
@@ -140,7 +146,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
               </div>
 
               {/* Center: Desktop Nav Links */}
-              <NavLinks links={navLinks} />
+              <NavLinks links={navLinks} isTransparent={isTransparent} />
 
               {/* Logo Section for Mobile Layout */}
               <Link href="/" className="absolute left-1/2 transform -translate-x-1/2 flex md:hidden items-center gap-2 group flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm">
@@ -154,7 +160,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
                     priority
                   />
                 </div>
-                <span className="text-[14px] font-semibold tracking-wider font-display text-[var(--color-text-main)] uppercase">
+                <span className={`text-[14px] font-semibold tracking-wider font-display ${textColorClass} uppercase`}>
                   Beauty Looks
                 </span>
               </Link>
@@ -165,14 +171,14 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
                 <button
                   suppressHydrationWarning
                   onClick={() => setIsSearchOpen(!isSearchOpen)}
-                  className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors p-2 rounded-full hover:bg-[var(--color-secondary)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className={`${textColorClass} hover:text-[var(--color-accent)] transition-colors p-2 rounded-full hover:bg-[var(--color-secondary)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent`}
                   aria-label="Open search"
                 >
                   <Search size={19} strokeWidth={1.5} />
                 </button>
 
                 {/* Wishlist */}
-                <Link href="/wishlist" className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2" aria-label={`Wishlist, ${wishlistCount} items`}>
+                <Link href="/wishlist" className={`relative ${textColorClass} hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2`} aria-label={`Wishlist, ${wishlistCount} items`}>
                   <Heart size={19} strokeWidth={1.5} />
                   {mounted && wishlistCount > 0 && (
                     <span className="absolute -top-1.5 -right-2 bg-[var(--color-accent)] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
@@ -185,12 +191,12 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
                 <button
                   suppressHydrationWarning
                   onClick={openCart}
-                  className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2"
+                  className={`relative ${textColorClass} hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2`}
                   aria-label={`Cart, ${cartItemsCount} items`}
                 >
                   <ShoppingBag size={19} strokeWidth={1.5} />
                   {mounted && cartItemsCount > 0 && (
-                    <span className="absolute -top-1.5 -right-2 bg-[var(--color-text-main)] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
+                    <span className={`absolute -top-1.5 -right-2 ${isTransparent ? 'bg-white text-black' : 'bg-[var(--color-text-main)] text-white'} text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm`}>
                       {cartItemsCount}
                     </span>
                   )}
@@ -199,7 +205,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
                 {/* Account */}
                 <Link
                   href={isLoggedIn ? '/account/orders' : '/login'}
-                  className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2"
+                  className={`${textColorClass} hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2`}
                   title={isLoggedIn ? 'My Account' : 'Sign In'}
                   aria-label={isLoggedIn ? 'My Account' : 'Sign In'}
                 >
