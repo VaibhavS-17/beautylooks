@@ -46,51 +46,20 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
   return (
     <div className="w-full bg-primary overflow-hidden">
       {/* ================= HERO SECTION ================= */}
-      <section className="relative w-full h-[80vh] sm:h-auto sm:aspect-video sm:max-h-[85vh] xl:max-h-[800px] flex items-center justify-center bg-[#111]">
-        <div className="absolute inset-0 z-0">
-          {/* Desktop Image */}
-          <div className="hidden sm:block absolute inset-0">
-            <Image
-              src={heroImageUrl}
-              alt={siteSettings.hero_title}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              priority
-            />
-          </div>
-          {/* Mobile Image */}
-          <div className="block sm:hidden absolute inset-0">
-            <Image
-              src={heroMobileImageUrl}
-              alt={siteSettings.hero_title}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              priority
-            />
-          </div>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+      <div className="relative w-full h-screen overflow-hidden">
+        {/* Background Media */}
+        <div className="absolute inset-0 bg-gray-900">
+          <img src="/path/to/cinematic-lifestyle.jpg" className="w-full h-full object-cover opacity-70" alt="Hero" />
         </div>
-
-        <div className="relative z-10 px-6 py-16 md:px-12 text-center max-w-4xl mx-4 animate-slide-up">
-          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-white/90 mb-6 block">
-            {siteSettings.hero_subtitle}
-          </span>
-          <h1 className="text-4xl md:text-5xl lg:text-7xl font-display text-white leading-[1.1] mb-8">
-            {siteSettings.hero_title}
-          </h1>
-          <p className="text-sm md:text-base text-white/80 mb-10 font-light max-w-xl mx-auto">
-            {siteSettings.hero_description}
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <Link href={siteSettings.hero_button_link} className="inline-flex items-center justify-center px-10 py-4 bg-white text-black text-xs font-bold uppercase tracking-[0.15em] transition-transform duration-700 hover:scale-105">
-              {siteSettings.hero_button_text}
-            </Link>
-          </div>
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-4">Discover Your Glow</h1>
+          <p className="text-lg md:text-2xl font-light mb-8 max-w-2xl">Premium skincare for a modern lifestyle.</p>
+          <Link href="/products" className="px-8 py-4 bg-white text-black font-semibold uppercase tracking-wider hover:bg-gray-100 transition">
+            Shop Collection
+          </Link>
         </div>
-      </section>
+      </div>
 
       {/* ================= SHOP BY CONCERN ================= */}
       <section className="py-16 md:py-24 bg-white overflow-hidden">
