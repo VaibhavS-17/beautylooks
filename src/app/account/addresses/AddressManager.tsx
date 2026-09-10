@@ -103,7 +103,7 @@ export default function AddressManager({ initialAddresses }: { initialAddresses:
         };
         
         setAddresses(prev => {
-          let updated = savedAddr.isDefault 
+          const updated = savedAddr.isDefault 
             ? prev.map(a => ({ ...a, isDefault: false })) 
             : prev;
             

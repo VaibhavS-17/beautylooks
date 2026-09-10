@@ -79,7 +79,7 @@ export default function CartPage() {
                 Your bag is empty
               </h2>
               <p className="text-sm text-text-muted max-w-xs font-light leading-relaxed">
-                It looks like you haven't added anything to your cart yet. Discover our premium collections to start your beauty journey.
+                It looks like you haven&apos;t added anything to your cart yet. Discover our premium collections to start your beauty journey.
               </p>
             </div>
             <Link

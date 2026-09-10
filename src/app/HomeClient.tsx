@@ -196,7 +196,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
             <div>
               <h2 className="font-display text-3xl text-text-main mb-4">Cult Favorites</h2>
               <p className="text-sm text-text-muted font-light">
-                The essentials trusted by Mumbai's beauty enthusiasts.
+                The essentials trusted by Mumbai&apos;s beauty enthusiasts.
               </p>
             </div>
             <Link

@@ -23,7 +23,7 @@ export interface Product {
   features?: string[];
   benefits?: string[];
   howToUse?: string;
-  faqs?: any;
+  faqs?: { question: string; answer: string }[] | Record<string, unknown> | null;
 }
 
 export interface Category {

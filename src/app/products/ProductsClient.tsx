@@ -30,7 +30,6 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     setTimeout(() => setIsMounted(true), 0);
   }, []);
 

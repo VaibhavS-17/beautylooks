@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { formatPrice } from '@/lib/data';
@@ -8,12 +8,12 @@ import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/store';
 import { Printer } from 'lucide-react';
 
-export function InvoicePrintView({ order }: { order: any }) {
-  const [mounted, setMounted] = useState(false);
+const emptySubscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+export function InvoicePrintView({ order }: { order: any }) {
+  const mounted = React.useSyncExternalStore(emptySubscribe, getSnapshot, getServerSnapshot);
 
   const isConfirmed = ['confirmed', 'shipped', 'out_for_delivery', 'delivered'].includes((order?.status || '').toLowerCase());
   if (!isConfirmed || !mounted || typeof document === 'undefined') return null;

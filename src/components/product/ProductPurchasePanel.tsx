@@ -107,7 +107,7 @@ export function ProductPurchasePanel({
         {peopleInCart >= 2 && (
           <div className="flex items-center text-sm font-semibold text-[#DC2626]">
             <span className="mr-2 animate-pulse">🔥</span> 
-            High demand: Currently in {peopleInCart} people's carts
+            High demand: Currently in {peopleInCart} people&apos;s carts
           </div>
         )}
         <div className="text-sm text-text-muted font-medium">

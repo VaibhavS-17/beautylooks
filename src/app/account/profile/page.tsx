@@ -12,7 +12,7 @@ export default async function ProfilePage() {
 
   if (!user) return null;
 
-  let { data: profile } = await supabase
+  const { data: profile } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)

@@ -82,11 +82,11 @@ export default function BlogDetailClient({ post, relatedPosts }: BlogDetailClien
         {/* Article Content */}
         <article className="text-[#5C554D] text-sm sm:text-base leading-relaxed font-light space-y-6">
           <p className="font-medium text-[#1A1A1A] text-base sm:text-lg italic">
-            "{post.excerpt}"
+            &ldquo;{post.excerpt}&rdquo;
           </p>
 
           <p>
-            Achieving flawless, glowing skin doesn't always require a trip to an expensive spa or salon. With a curated, high-performance skincare routine using authentic products, you can easily replicate professional results at home. Understanding your skin type and using premium products tailored to your needs is the first step toward revealing your natural radiance.
+            Achieving flawless, glowing skin doesn&apos;t always require a trip to an expensive spa or salon. With a curated, high-performance skincare routine using authentic products, you can easily replicate professional results at home. Understanding your skin type and using premium products tailored to your needs is the first step toward revealing your natural radiance.
           </p>
 
           <h3 className="font-display font-medium text-xl text-[#1A1A1A] pt-4">1. Understand Your Skin Needs</h3>

@@ -17,7 +17,7 @@ export default function AboutPage() {
             About Us
           </h1>
           <p className="text-xs text-[#8A8177] mt-2 font-light">
-            The story behind Mumbai's trusted destination for premium and genuine beauty cosmetics.
+            The story behind Mumbai&apos;s trusted destination for premium and genuine beauty cosmetics.
           </p>
         </div>
 
@@ -113,7 +113,7 @@ export default function AboutPage() {
             </div>
 
             <p className="text-sm text-[#5C554D] max-w-lg mx-auto font-light leading-relaxed">
-              "We built Beauty Looks Mumbai to bridge the gap between quality skincare and affordability. Our goal is to bring salon-quality treatments directly into your home with products that are tested, genuine, and trusted by hundreds of beauty enthusiasts across Mumbai."
+              &ldquo;We built Beauty Looks Mumbai to bridge the gap between quality skincare and affordability. Our goal is to bring salon-quality treatments directly into your home with products that are tested, genuine, and trusted by hundreds of beauty enthusiasts across Mumbai.&rdquo;
             </p>
 
             <div className="flex justify-center space-x-4 pt-2">

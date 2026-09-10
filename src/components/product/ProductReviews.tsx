@@ -53,7 +53,9 @@ export function ProductReviews({
         voted[r.id] = true;
       }
     });
-    setHelpfulVotes(voted);
+    queueMicrotask(() => {
+      setHelpfulVotes(voted);
+    });
   }, [reviews]);
 
   // Handle helpful vote click

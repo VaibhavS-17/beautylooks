@@ -130,7 +130,7 @@ export async function createRazorpayOrder(data: {
     }
 
     const shippingCharge = calculatedTotal >= 499 ? 0 : 49;
-    let baseFinal = calculatedTotal + shippingCharge;
+    const baseFinal = calculatedTotal + shippingCharge;
 
     // Apply Coupon Code if valid
     let couponDiscountAmount = 0;
