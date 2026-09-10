@@ -28,11 +28,13 @@ export default function NavLinks({ links, isTransparent }: { links: NavLinkProps
             key={link.name}
             href={link.href}
             className={`relative text-[11px] tracking-[0.15em] uppercase font-semibold transition-all duration-300 group px-2 py-1 ${
-              isActive ? 'text-[var(--color-accent)]' : `${isTransparent ? 'text-white' : 'text-[var(--color-text-main)]'} hover:text-[var(--color-accent)] hover:-translate-y-0.5`
+              isActive 
+                ? (isTransparent ? 'text-white' : 'text-[var(--color-accent)]') 
+                : `${isTransparent ? 'text-white/80 hover:text-white' : 'text-[var(--color-text-main)] hover:text-[var(--color-accent)]'} hover:-translate-y-0.5`
             }`}
           >
             {link.name}
-            <span className={`absolute -bottom-0.5 left-0 h-px bg-[var(--color-accent)] transition-all duration-300 ${
+            <span className={`absolute -bottom-0.5 left-0 h-px transition-all duration-300 ${isTransparent ? 'bg-white' : 'bg-[var(--color-accent)]'} ${
               isActive ? 'w-full' : 'w-0 group-hover:w-full'
             }`} />
           </Link>

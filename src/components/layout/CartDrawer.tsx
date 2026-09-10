@@ -124,7 +124,8 @@ export default function CartDrawer() {
         <div className="w-full h-[100dvh] md:max-w-md md:h-full bg-white shadow-2xl flex flex-col overflow-hidden relative">
           
           {/* Header */}
-          <div className="flex-none px-4 py-6 border-b border-gray-100 flex items-center justify-between bg-white z-10">
+          <div className="flex-none px-4 py-6 border-b border-gray-100 flex items-center justify-between bg-white z-10 relative">
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 bg-gray-200 rounded-full md:hidden" aria-hidden="true"></div>
             <h2 className="text-2xl font-display font-light text-text-main">Your Bag ({getTotalItems()})</h2>
             <button
               id="cart-close-btn"
@@ -266,7 +267,8 @@ export default function CartDrawer() {
                         </div>
                         
                         {isOutOfStock && (
-                           <div className="mt-3">
+                           <div className="mt-3 flex items-center justify-between">
+                             <span className="text-xs font-bold text-red-600 uppercase tracking-widest bg-red-50 px-2 py-1 rounded">Out of Stock</span>
                              <NotifyMeButton
                                productId={item.product.id}
                                defaultEmail={userEmail}

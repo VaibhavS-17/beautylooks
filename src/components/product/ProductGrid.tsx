@@ -99,7 +99,7 @@ export function ProductGrid({
                           alt={product.name}
                           fill
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
-                          className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                          className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
                           priority={index < 4}
                         />
                         <div className="absolute top-4 left-4 flex flex-col space-y-2 z-10">

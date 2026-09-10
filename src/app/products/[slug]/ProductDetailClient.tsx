@@ -119,7 +119,7 @@ export default function ProductDetailClient({
         </nav>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
         <div className="lg:grid lg:grid-cols-2 lg:gap-x-12 xl:gap-x-16">
           
           {/* Left Column: Scrollable Image Gallery */}
@@ -128,7 +128,7 @@ export default function ProductDetailClient({
           </div>
 
           {/* Right Column: Sticky Purchase Panel */}
-          <div className="lg:sticky lg:top-24 self-start flex flex-col justify-center">
+          <div className="lg:sticky lg:top-24 self-start flex flex-col">
             <span className="text-xs font-semibold text-text-muted tracking-widest uppercase mb-2">
               {product.brand}
             </span>

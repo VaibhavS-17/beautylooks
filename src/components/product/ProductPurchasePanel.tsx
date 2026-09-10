@@ -73,7 +73,7 @@ export function ProductPurchasePanel({
   return (
     <>
       <div className="mb-8 border border-border bg-white">
-        <label className={`flex items-start p-4 cursor-pointer transition-colors ${!isSubscription ? 'bg-gray-50 border-b border-border' : ''}`}>
+        <label className={`flex items-start p-4 cursor-pointer transition-colors border-b border-border ${!isSubscription ? 'bg-gray-50' : ''}`}>
           <div className="flex-shrink-0 mt-0.5">
             <input type="radio" name="purchaseType" checked={!isSubscription} onChange={() => setIsSubscription(false)} className="w-4 h-4 text-accent border-border focus:ring-accent" />
           </div>
