@@ -114,90 +114,72 @@ export default function CartDrawer() {
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-[2px] transition-opacity"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={closeCart}
         aria-hidden="true"
       />
 
-      {/* Responsive Drawer Container - Wider on PC so rows fit horizontally without wrapping */}
+      {/* Drawer Container */}
       <div className="absolute inset-0 md:inset-y-0 md:right-0 md:left-auto flex justify-end">
-        <div className="w-full h-[100dvh] md:max-w-xl md:h-full bg-[#FDFBF7] shadow-2xl flex flex-col overflow-hidden relative border-l border-border/50">
-          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none mix-blend-multiply z-0"></div>
-
-          {/* ── COMPACT STICKY HEADER (flex-none) ── */}
-          <div className="flex-none relative z-10 bg-white/95 backdrop-blur border-b border-border">
-            {/* Drag Handle (Mobile only) */}
-            <div className="md:hidden flex justify-center pt-2 pb-1">
-              <div className="w-10 h-1 bg-border rounded-full"></div>
-            </div>
-
-            {/* Header: Bag Count & Close */}
-            <div className="px-5 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-base font-display font-bold text-text-main">Your Bag</h2>
-                <span className="text-xs font-semibold bg-secondary px-2.5 py-0.5 rounded-full text-text-main">
-                  {getTotalItems()} {getTotalItems() === 1 ? 'item' : 'items'}
-                </span>
-              </div>
-              <button
-                id="cart-close-btn"
-                onClick={closeCart}
-                className="text-text-muted hover:text-text-main hover:bg-stone-100 p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                aria-label="Close cart"
-              >
-                <X size={18} strokeWidth={2} />
-              </button>
-            </div>
-
-            {/* Ultra-Compact Free Shipping Progress Bar */}
-            {items.length > 0 && (
-              <div className="px-5 py-2 bg-[#FBF9F6] border-t border-border/60 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Shipping</span>
-                  <span className="text-xs font-semibold text-text-main">
-                    {subtotal >= 499 ? '✓ Free Shipping Unlocked' : `Add ${formatPrice(499 - subtotal)} more for Free Shipping`}
-                  </span>
-                </div>
-                <div className="w-24 h-1.5 bg-border/50 rounded-full overflow-hidden shrink-0">
-                  <div
-                    className="h-full bg-accent transition-all duration-500 ease-out"
-                    style={{ width: `${Math.min(100, (subtotal / 499) * 100)}%` }}
-                  />
-                </div>
-              </div>
-            )}
+        <div className="w-full h-[100dvh] md:max-w-md md:h-full bg-white shadow-2xl flex flex-col overflow-hidden relative">
+          
+          {/* Header */}
+          <div className="flex-none px-4 py-6 border-b border-gray-100 flex items-center justify-between bg-white z-10">
+            <h2 className="text-2xl font-display font-light text-text-main">Your Bag ({getTotalItems()})</h2>
+            <button
+              id="cart-close-btn"
+              onClick={closeCart}
+              className="text-text-muted hover:text-text-main transition-colors focus-visible:outline-none"
+              aria-label="Close cart"
+            >
+              <X size={24} strokeWidth={1.5} />
+            </button>
           </div>
 
-          {/* ── SCROLLABLE COMPACT ITEMS LIST (flex-1) ── */}
-          <div className="flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] divide-y divide-border/60 relative z-10 no-scrollbar">
+          {/* Free Shipping Progress */}
+          {items.length > 0 && (
+            <div className="px-4 py-4 bg-white border-b border-gray-100 flex flex-col gap-2 z-10">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-muted font-medium">Shipping</span>
+                <span className="font-medium text-text-main">
+                  {subtotal >= 499 ? 'Free Shipping Unlocked' : `Add ${formatPrice(499 - subtotal)} more for Free`}
+                </span>
+              </div>
+              <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-black transition-all duration-500 ease-out"
+                  style={{ width: `${Math.min(100, (subtotal / 499) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Item List */}
+          <div className="flex-1 overflow-y-auto px-4 divide-y divide-gray-100 no-scrollbar">
             {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-5 px-6">
-                <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-secondary/60 border border-border/40 shadow-inner">
-                  <ShoppingBag size={26} strokeWidth={1.3} className="text-accent" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-display text-xl text-text-main font-semibold">Your bag is empty</h3>
-                  <p className="text-xs text-text-muted max-w-[220px] font-light leading-relaxed">
-                    Discover our premium salon-grade cosmetics and skincare.
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
+                <ShoppingBag size={48} strokeWidth={1} className="text-gray-300" />
+                <div className="space-y-2">
+                  <h3 className="font-display text-2xl text-text-main">Your bag is empty</h3>
+                  <p className="text-text-muted font-light">
+                    Discover our premium salon-grade cosmetics.
                   </p>
                 </div>
                 <Link
                   href="/products"
                   onClick={closeCart}
-                  className="mt-2 bg-brand-dark text-primary px-6 py-2.5 text-xs font-semibold uppercase tracking-wider hover:bg-accent hover:text-brand-dark transition-all rounded-xl shadow-sm"
+                  className="mt-4 px-8 py-3 bg-black text-white text-sm uppercase tracking-wider hover:bg-gray-900 transition-colors"
                 >
                   Shop Collection
                 </Link>
               </div>
             ) : (
-              <div className="p-3 sm:p-0 space-y-3 sm:space-y-0 sm:divide-y sm:divide-border">
+              <div className="flex flex-col">
                 {items.map((item) => {
                   const itemPrice = item.product.salePrice || item.product.price;
                   const originalPrice = item.product.price;
                   const hasDiscount = item.product.salePrice !== null && item.product.salePrice < originalPrice;
-                  const discountPercent = hasDiscount ? Math.round(((originalPrice - itemPrice) / originalPrice) * 100) : 0;
                   
-                  // Use real-time stock if available
                   const currentStock = stockChecked && stockMap[item.product.id] !== undefined
                     ? stockMap[item.product.id]
                     : item.product.stockQuantity;
@@ -206,207 +188,112 @@ export default function CartDrawer() {
                   return (
                     <div
                       key={item.product.id}
-                      className={`p-4 sm:px-5 sm:py-3 bg-white sm:bg-transparent rounded-2xl sm:rounded-none border sm:border-0 shadow-xs sm:shadow-none hover:bg-white/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 ${
-                        isOutOfStock ? 'border-red-200 bg-red-50/50 sm:bg-red-50/30' : 'border-border'
+                      className={`py-6 flex gap-4 ${
+                        isOutOfStock ? 'opacity-50' : ''
                       }`}
                     >
-                      {/* Top / Left Section: Image + Info */}
-                      <div className="flex items-start sm:items-center justify-between sm:justify-start gap-3.5 sm:gap-4 flex-1 min-w-0">
-                        <div className="flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0 flex-1">
-                          {/* Thumbnail: 80x80 on mobile, 56x56 on PC */}
-                          <div className="relative w-20 h-20 sm:w-14 sm:h-14 bg-secondary rounded-xl sm:rounded-lg overflow-hidden shrink-0 border border-border/60 shadow-2xs">
-                            <Image
-                              src={item.product.images?.[0] || fallbackProductImage}
-                              alt={item.product.name}
-                              fill
-                              sizes="(max-width: 640px) 80px, 56px"
-                              className="object-cover"
-                            />
-                          </div>
+                      {/* Image */}
+                      <div className="relative w-24 h-24 bg-gray-50 shrink-0">
+                        <Image
+                          src={item.product.images?.[0] || fallbackProductImage}
+                          alt={item.product.name}
+                          fill
+                          sizes="96px"
+                          className="object-cover"
+                        />
+                      </div>
 
-                          {/* Middle Details */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-text-muted truncate block">
-                                {item.product.brand}
-                              </span>
-                              {item.product.stockQuantity === 1 && (
-                                <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded shrink-0">
-                                  Only 1 left
-                                </span>
-                              )}
-                              {isOutOfStock && (
-                                <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-200 px-1.5 py-0.5 rounded shrink-0">
-                                  Out of Stock
-                                </span>
-                              )}
-                            </div>
-
-                            <h4 className="text-sm sm:text-xs font-semibold text-text-main line-clamp-2 sm:truncate hover:text-accent transition-colors mt-0.5">
+                      {/* Details */}
+                      <div className="flex-1 flex flex-col justify-between min-w-0">
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <span className="text-xs font-bold uppercase tracking-widest text-text-muted block mb-1">
+                              {item.product.brand}
+                            </span>
+                            <h4 className="text-base text-text-main line-clamp-2">
                               <Link href={`/products/${item.product.slug}`} onClick={closeCart}>
                                 {item.product.name}
                               </Link>
                             </h4>
-
-                            {/* Quantity Selector + Controls Row */}
-                            <div className="flex items-center gap-3 mt-2 sm:mt-1.5">
-                              <div className="inline-flex items-center border border-border rounded-lg sm:rounded-md bg-white h-8 sm:h-6 overflow-hidden">
-                                <button
-                                  onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                                  className="px-2.5 sm:px-2 text-text-muted hover:text-text-main hover:bg-stone-100 transition-colors h-full flex items-center"
-                                  aria-label="Decrease quantity"
-                                >
-                                  <Minus size={13} className="sm:w-[11px] sm:h-[11px]" />
-                                </button>
-                                <span className="px-2.5 sm:px-2 text-xs sm:text-xs font-semibold text-text-main select-none min-w-[24px] sm:min-w-[20px] text-center">
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                                  disabled={item.quantity >= item.product.stockQuantity}
-                                  className={`px-2.5 sm:px-2 h-full flex items-center transition-colors ${
-                                    item.quantity >= item.product.stockQuantity
-                                      ? 'text-border cursor-not-allowed'
-                                      : 'text-text-muted hover:text-text-main hover:bg-stone-100'
-                                  }`}
-                                  aria-label="Increase quantity"
-                                >
-                                  <Plus size={13} className="sm:w-[11px] sm:h-[11px]" />
-                                </button>
-                              </div>
-
-                              {/* Desktop Remove Button */}
-                              <div className="hidden sm:flex items-center gap-3">
-                                <button
-                                  onClick={() => removeItem(item.product.id)}
-                                  className="text-[11px] text-text-muted hover:text-red-600 transition-colors flex items-center gap-1 font-medium"
-                                  aria-label="Remove item"
-                                >
-                                  <Trash2 size={12} /> Remove
-                                </button>
-                                {isOutOfStock && (
-                                  <NotifyMeButton
-                                    productId={item.product.id}
-                                    defaultEmail={userEmail}
-                                    className="!mt-0 font-medium"
-                                  />
-                                )}
-                              </div>
-                            </div>
                           </div>
-                        </div>
-
-                        {/* Mobile Top-Right Trash Icon + Notify Me */}
-                        <div className="sm:hidden flex flex-col items-end gap-1">
                           <button
                             onClick={() => removeItem(item.product.id)}
-                            className="p-1.5 text-text-muted hover:text-red-600 transition-colors rounded-lg hover:bg-red-50/50 -mr-1 -mt-1 shrink-0"
+                            className="text-text-muted hover:text-red-600 transition-colors p-1 -mr-1"
                             aria-label="Remove item"
                           >
-                            <Trash2 size={17} />
+                            <X size={16} />
                           </button>
-                          {isOutOfStock && (
-                            <NotifyMeButton
-                              productId={item.product.id}
-                              defaultEmail={userEmail}
-                              className="!mt-0 font-medium"
-                            />
-                          )}
                         </div>
-                      </div>
 
-                      {/* Bottom / Right Section: Nykaa 'You Pay' on mobile, Price column on PC */}
-                      <div className="mt-1 pt-3 border-t border-border/60 sm:mt-0 sm:pt-0 sm:border-0 flex items-center justify-between sm:block sm:text-right shrink-0">
-                        <span className="text-xs font-medium text-text-muted sm:hidden">
-                          You Pay
-                        </span>
-
-                        <div className="flex sm:block items-baseline gap-1.5 text-right">
-                          <span className="text-sm sm:text-xs font-bold text-text-main">
-                            {formatPrice(itemPrice * item.quantity)}
-                          </span>
-                          {hasDiscount && (
-                            <>
-                              <span className="text-xs sm:text-[10px] text-text-muted line-through">
-                                {formatPrice(originalPrice * item.quantity)}
-                              </span>
-                              <span className="text-xs sm:text-[10px] font-bold text-emerald-600">
-                                {discountPercent}% off
-                              </span>
-                            </>
-                          )}
-                          {item.quantity > 1 && (
-                            <span className="hidden sm:block text-[10px] text-text-muted">
-                              {formatPrice(itemPrice)} each
+                        <div className="flex items-end justify-between mt-4">
+                          {/* Quantity */}
+                          <div className="flex items-center border border-gray-200">
+                            <button
+                              onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                              className="px-3 py-1 text-text-muted hover:text-black transition-colors"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span className="px-3 py-1 text-sm text-text-main min-w-[32px] text-center">
+                              {item.quantity}
                             </span>
-                          )}
+                            <button
+                              onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                              disabled={item.quantity >= item.product.stockQuantity}
+                              className={`px-3 py-1 transition-colors ${
+                                item.quantity >= item.product.stockQuantity
+                                  ? 'text-gray-300 cursor-not-allowed'
+                                  : 'text-text-muted hover:text-black'
+                              }`}
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+
+                          {/* Price */}
+                          <div className="text-right">
+                            <div className="text-base font-medium text-text-main">
+                              {formatPrice(itemPrice * item.quantity)}
+                            </div>
+                            {hasDiscount && (
+                              <div className="text-xs text-text-muted line-through mt-0.5">
+                                {formatPrice(originalPrice * item.quantity)}
+                              </div>
+                            )}
+                          </div>
                         </div>
+                        
+                        {isOutOfStock && (
+                           <div className="mt-3">
+                             <NotifyMeButton
+                               productId={item.product.id}
+                               defaultEmail={userEmail}
+                               className="!mt-0 font-medium text-xs text-red-600"
+                             />
+                           </div>
+                        )}
                       </div>
                     </div>
                   );
                 })}
-
-                {/* Compact Optional Gift Box Strip - only shown if <= 3 items so it never forces scrolling */}
-                {items.length <= 3 && (
-                  <div className="mx-5 my-3 px-3.5 py-2.5 bg-secondary/40 border border-border/80 rounded-xl flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="text-sm">🎁</span>
-                      <div className="min-w-0">
-                        <span className="font-semibold text-text-main text-xs block truncate">Add Luxury Gift Packaging</span>
-                        <span className="text-[10px] text-text-muted block">Premium box & ribbon · ₹299</span>
-                      </div>
-                    </div>
-                    <button className="px-2.5 py-1 bg-white border border-border text-xs font-bold rounded-lg hover:border-accent hover:text-accent transition-colors shrink-0">
-                      + Add
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </div>
 
-          {/* ── ULTRA-COMPACT NYKAA-STYLE STICKY FOOTER (flex-none) ── */}
+          {/* Footer with clean CTA */}
           {items.length > 0 && (
-            <div
-              className="flex-none bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)] relative z-10"
-              style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
-            >
-              {/* Top info bar */}
-              <div className="px-5 py-1.5 bg-[#FBF9F6] border-b border-border/50 text-[11px] text-text-muted flex items-center justify-between">
-                <span>✨ 100% Authentic & Salon Quality Guarantee</span>
-                <span className="font-semibold text-text-main">
-                  {shipping === 0 ? 'Free Shipping Included' : `Shipping: ${formatPrice(shipping)}`}
-                </span>
+            <div className="border-t border-gray-100 px-4 py-6 bg-white flex-none">
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-base text-text-main">Subtotal</span>
+                <span className="text-lg font-medium text-text-main">{formatPrice(subtotal)}</span>
               </div>
-
-              {/* Compact Checkout Action Row */}
-              <div className="px-5 py-3 flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-base font-bold text-text-main">{formatPrice(grandTotal)}</span>
-                    <span className="text-[11px] text-text-muted font-medium">Grand Total</span>
-                  </div>
-                  <span className="text-[10px] text-text-muted block">
-                    Subtotal {formatPrice(subtotal)} {shipping > 0 ? `+ ${formatPrice(shipping)} ship` : ''}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2.5">
-                  <button
-                    onClick={closeCart}
-                    className="px-3 py-2.5 text-xs font-semibold text-text-muted hover:text-text-main transition-colors hidden sm:block"
-                  >
-                    Continue Shopping
-                  </button>
-                  <Link
-                    href="/checkout"
-                    onClick={closeCart}
-                    className="px-6 py-2.5 bg-brand-dark text-primary hover:bg-accent hover:text-brand-dark text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-2"
-                  >
-                    Proceed <ArrowRight size={14} />
-                  </Link>
-                </div>
-              </div>
+              <Link
+                href="/checkout"
+                onClick={closeCart}
+                className="block w-full py-4 bg-black text-white text-center text-sm uppercase tracking-wider hover:bg-gray-900 transition-colors"
+              >
+                Checkout
+              </Link>
             </div>
           )}
         </div>
