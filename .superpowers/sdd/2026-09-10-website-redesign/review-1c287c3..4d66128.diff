@@ -1,0 +1,1511 @@
+# Review package: 1c287c3ed9e05536bdfb5ee5dd1686fc707bb89e..HEAD
+
+## Commits
+4d66128 fix: restore cart drawer accessibility and mobile scroll
+2cb3069 style: simplify cart drawer UI
+8701dd8 feat: implement sticky scroll product detail layout
+c9cf69a style: modernize product grids and cards
+5720b57 fix: restore next/image and dynamic bindings in hero
+f614e7c feat: build cinematic full screen hero
+9c48548 fix: resolve layout jank and hydration flash in navbar transition
+3410cdc feat: implement transparent to solid navbar transition
+0fdaa82 fix: restore structural components and mobile optimizations with new minimalist styles
+f0f7ebd style: implement light mode first aesthetic foundation
+
+## Files changed
+ src/app/HomeClient.tsx                          |  36 +--
+ src/app/globals.css                             | 225 ++++-----------
+ src/app/layout.tsx                              |  12 +-
+ src/app/products/[slug]/ProductDetailClient.tsx |  14 +-
+ src/components/layout/CartDrawer.tsx            | 351 ++++++++----------------
+ src/components/layout/Navbar.tsx                |  35 ++-
+ src/components/layout/navbar/NavLinks.tsx       |   4 +-
+ src/components/product/ProductGallery.tsx       |  95 +++----
+ src/components/product/ProductGrid.tsx          |   8 +-
+ src/components/product/ProductPurchasePanel.tsx |  12 +-
+ 10 files changed, 259 insertions(+), 533 deletions(-)
+
+## Diff
+diff --git a/src/app/HomeClient.tsx b/src/app/HomeClient.tsx
+index 60fb9e0..da9a7b8 100644
+--- a/src/app/HomeClient.tsx
++++ b/src/app/HomeClient.tsx
+@@ -39,65 +39,53 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
+     if (email.trim()) {
+       setSubscribed(true);
+       setEmail('');
+       setTimeout(() => setSubscribed(false), 5000);
+     }
+   };
+ 
+   return (
+     <div className="w-full bg-primary overflow-hidden">
+       {/* ================= HERO SECTION ================= */}
+-      <section className="relative w-full h-[80vh] sm:h-auto sm:aspect-video sm:max-h-[85vh] xl:max-h-[800px] flex items-center justify-center bg-[#111]">
++      <div className="relative w-full h-[100dvh] overflow-hidden bg-gray-900">
++        {/* Background Media */}
+         <div className="absolute inset-0 z-0">
+-          {/* Desktop Image */}
+           <div className="hidden sm:block absolute inset-0">
+             <Image
+               src={heroImageUrl}
+               alt={siteSettings.hero_title}
+               fill
+               sizes="100vw"
+-              className="object-cover"
++              className="object-cover opacity-70"
+               priority
+             />
+           </div>
+-          {/* Mobile Image */}
+           <div className="block sm:hidden absolute inset-0">
+             <Image
+               src={heroMobileImageUrl}
+               alt={siteSettings.hero_title}
+               fill
+               sizes="100vw"
+-              className="object-cover"
++              className="object-cover opacity-70"
+               priority
+             />
+           </div>
+-          <div className="absolute inset-0 bg-black/40" />
+-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+         </div>
+-
+-        <div className="relative z-10 px-6 py-16 md:px-12 text-center max-w-4xl mx-4 animate-slide-up">
+-          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-white/90 mb-6 block">
+-            {siteSettings.hero_subtitle}
+-          </span>
+-          <h1 className="text-4xl md:text-5xl lg:text-7xl font-display text-white leading-[1.1] mb-8">
+-            {siteSettings.hero_title}
+-          </h1>
+-          <p className="text-sm md:text-base text-white/80 mb-10 font-light max-w-xl mx-auto">
+-            {siteSettings.hero_description}
+-          </p>
+-          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+-            <Link href={siteSettings.hero_button_link} className="inline-flex items-center justify-center px-10 py-4 bg-white text-black text-xs font-bold uppercase tracking-[0.15em] transition-transform duration-700 hover:scale-105">
+-              {siteSettings.hero_button_text}
+-            </Link>
+-          </div>
++        {/* Content */}
++        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
++          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-4">{siteSettings.hero_title}</h1>
++          <p className="text-lg md:text-2xl font-light mb-8 max-w-2xl">{siteSettings.hero_description}</p>
++          <Link href={siteSettings.hero_button_link} className="px-8 py-4 bg-white text-black font-semibold uppercase tracking-wider hover:bg-gray-100 transition">
++            {siteSettings.hero_button_text}
++          </Link>
+         </div>
+-      </section>
++      </div>
+ 
+       {/* ================= SHOP BY CONCERN ================= */}
+       <section className="py-16 md:py-24 bg-white overflow-hidden">
+         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
+           <div className="text-center mb-12 md:mb-16">
+             <span className="subtitle block mb-4">Targeted Solutions</span>
+             <h2 className="font-display text-3xl md:text-4xl text-text-main mb-4">Shop by Concern</h2>
+             <div className="w-12 h-px bg-accent mx-auto" />
+           </div>
+           
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 5cd1c2f..911902e 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -1,323 +1,196 @@
+ @import "tailwindcss";
+ 
+ @theme {
+-  --color-primary: #FAFAF9;      /* Clean Off-White Background */
+-  --color-primary-dark: #F5F5F4; /* Slightly darker cream for sections */
+-  --color-secondary: #E7E5E4;    /* Light stone for subtle backgrounds */
+-  --color-accent: #CA8A04;       /* Premium Gold */
+-  --color-accent-light: #FDE047; /* Light Gold for borders/hovers */
+-  
+-  --color-text-main: #0C0A09;    /* Almost Black */
+-  --color-text-muted: #44403C;   /* Rich Charcoal for high contrast */
+-  
+-  --color-border: #D6D3D1;       /* Warm subtle border */
+-  
+-  --color-brand-dark: #1C1917;   /* Obsidian */
++  --color-background: #ffffff;
++  --color-foreground: #111827;
++  --color-muted: #f3f4f6;
++  --color-border: #e5e7eb;
+   
+   --font-sans: var(--font-inter), sans-serif;
+   --font-serif: var(--font-playfair), serif;
+ }
+ 
+ @layer base {
+   body {
+-    @apply bg-primary text-text-main font-sans antialiased selection:bg-accent/20 selection:text-text-main;
++    background-color: var(--color-background);
++    color: var(--color-foreground);
++    font-family: var(--font-sans);
++    -webkit-font-smoothing: antialiased;
+   }
+-  
++
+   h1, h2, h3, h4, h5, h6 {
+-    @apply font-serif text-text-main tracking-tight;
++    @apply font-sans text-foreground tracking-tight;
+   }
+ 
+   @media (prefers-reduced-motion: reduce) {
+     *,
+     ::before,
+     ::after {
+       animation-duration: 0.01ms !important;
+       animation-iteration-count: 1 !important;
+       transition-duration: 0.01ms !important;
+       scroll-behavior: auto !important;
+     }
+   }
+ }
+ 
+ @layer components {
+-  /* Editorial Typography */
++  /* Minimalist Editorial Typography */
+   .font-display {
+-    @apply font-serif tracking-tight leading-tight;
++    @apply font-sans tracking-tight leading-tight;
+   }
+   
+   .subtitle {
+-    @apply text-xs font-semibold tracking-[0.2em] uppercase text-accent mb-3;
++    @apply text-xs font-semibold tracking-widest uppercase text-foreground/70 mb-3;
+   }
+ 
+-  /* Luxurious Buttons */
++  /* Minimalist Buttons */
+   .btn-primary {
+     @apply inline-flex items-center justify-center px-8 py-3.5 
+-           bg-text-main text-primary text-xs font-semibold uppercase tracking-widest
+-           transition-all duration-300 ease-in-out
+-           hover:bg-accent hover:text-white hover:shadow-md hover:-translate-y-0.5
+-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2
++           bg-foreground text-background text-sm font-medium
++           transition-colors duration-200 ease-in-out
++           hover:bg-foreground/90
++           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2
+            disabled:opacity-50 disabled:cursor-not-allowed;
+   }
+ 
+   .btn-secondary {
+     @apply inline-flex items-center justify-center px-8 py-3.5 
+-           bg-transparent border border-accent text-accent text-xs font-semibold uppercase tracking-widest
+-           transition-all duration-300 ease-in-out
+-           hover:bg-accent hover:text-white hover:-translate-y-0.5
+-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2
++           bg-transparent border border-border text-foreground text-sm font-medium
++           transition-colors duration-200 ease-in-out
++           hover:bg-muted
++           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2
+            disabled:opacity-50 disabled:cursor-not-allowed;
+   }
+   
+   .btn-tertiary {
+     @apply inline-flex items-center justify-center px-8 py-3.5 
+-           bg-secondary text-text-main text-xs font-semibold uppercase tracking-widest border border-border
+-           transition-all duration-300 ease-in-out
+-           hover:bg-primary-dark hover:border-accent/50
+-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2
++           bg-muted text-foreground text-sm font-medium
++           transition-colors duration-200 ease-in-out
++           hover:bg-muted/80
++           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2
+            disabled:opacity-50 disabled:cursor-not-allowed;
+   }
+ 
+-  /* Cosmetic Containers */
++  /* Clean Containers */
+   .card-container {
+-    @apply bg-white rounded-none border-b border-border overflow-hidden;
++    @apply bg-background rounded-lg border border-border overflow-hidden;
+   }
+   
+   /* Badges */
+-  .badge-gold {
+-    @apply absolute top-4 left-4 bg-accent text-primary text-[10px] uppercase tracking-widest font-semibold px-3 py-1 rounded-full z-10;
+-  }
+-  
+-  .badge-dark {
+-    @apply absolute top-4 left-4 bg-text-main text-primary text-[10px] uppercase tracking-widest font-semibold px-3 py-1 rounded-full z-10;
++  .badge-gold, .badge-dark {
++    @apply absolute top-4 left-4 bg-foreground text-background text-[10px] uppercase tracking-widest font-semibold px-3 py-1 rounded-full z-10;
+   }
+ 
+-  /* Premium Minimalist Product Card */
++  /* Minimalist Product Card */
+   .product-card {
+-    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+-  }
+-
+-  .product-card:hover {
+-    transform: translateY(-2px);
++    transition: opacity 0.3s ease;
+   }
+ 
+   .product-image-container {
+     overflow: hidden;
++    @apply rounded-lg bg-muted;
+   }
+ 
+   .product-image-container img {
+-    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
++    transition: transform 0.5s ease;
+   }
+ 
+   .product-card:hover .product-image-container img {
+-    transform: scale(1.05);
++    transform: scale(1.02);
+   }
+ }
+ 
+ @layer utilities {
+   .no-scrollbar::-webkit-scrollbar {
+     display: none;
+   }
+   .no-scrollbar {
+     -ms-overflow-style: none;
+     scrollbar-width: none;
+   }
+   
+   .blend-multiply {
+     mix-blend-mode: multiply;
+   }
+   
+   .blend-darken {
+     mix-blend-mode: darken;
+   }
+ 
+-  /* Theme Accents */
+-  .shadow-gold {
+-    box-shadow: 0 4px 14px 0 rgba(202, 138, 4, 0.25);
+-  }
+-  
+-  .shadow-gold-hover:hover {
+-    box-shadow: 0 6px 20px 0 rgba(202, 138, 4, 0.4);
+-    border-color: var(--color-accent);
+-  }
+-
+-  /* 3D perspective utilities */
++  /* 3D perspective utilities (kept for structure) */
+   .perspective-1000 {
+     perspective: 1000px;
+   }
+ 
+   .transform-3d {
+     transform-style: preserve-3d;
+   }
+ }
+ 
+ /* =============================================
+    KEYFRAME ANIMATIONS
+    ============================================= */
+ 
+ @keyframes slide-up {
+-  from {
+-    opacity: 0;
+-    transform: translateY(30px);
+-  }
+-  to {
+-    opacity: 1;
+-    transform: translateY(0);
+-  }
++  from { opacity: 0; transform: translateY(20px); }
++  to { opacity: 1; transform: translateY(0); }
+ }
+ 
+ @keyframes fade-in {
+   from { opacity: 0; }
+   to   { opacity: 1; }
+ }
+ 
+-@keyframes fade-in-up {
+-  from {
+-    opacity: 0;
+-    transform: translateY(20px);
+-  }
+-  to {
+-    opacity: 1;
+-    transform: translateY(0);
+-  }
+-}
+-
+-@keyframes scale-in {
+-  from {
+-    opacity: 0;
+-    transform: scale(0.92);
+-  }
+-  to {
+-    opacity: 1;
+-    transform: scale(1);
+-  }
+-}
+-
+ @keyframes shimmer {
+   0%   { background-position: -200% center; }
+   100% { background-position: 200% center; }
+ }
+ 
+-@keyframes float {
+-  0%, 100% { transform: translateY(0px) rotate(0deg); }
+-  33%       { transform: translateY(-8px) rotate(1deg); }
+-  66%       { transform: translateY(-4px) rotate(-1deg); }
+-}
+-
+-@keyframes glow-pulse {
+-  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 142, 117, 0); }
+-  50%       { box-shadow: 0 0 20px 4px rgba(200, 142, 117, 0.25); }
+-}
+-
+-@keyframes rotate-3d {
+-  0%   { transform: perspective(600px) rotateY(-4deg) rotateX(2deg); }
+-  50%  { transform: perspective(600px) rotateY(4deg) rotateX(-2deg); }
+-  100% { transform: perspective(600px) rotateY(-4deg) rotateX(2deg); }
+-}
+-
+-@keyframes marquee {
+-  0%   { transform: translateX(0); }
+-  100% { transform: translateX(-50%); }
+-}
+-
+ /* Animation classes */
+ .animate-slide-up {
+-  animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
++  animation: slide-up 0.5s ease-out both;
+ }
+ 
+ .animate-fade-in {
+-  animation: fade-in 0.5s ease both;
+-}
+-
+-.animate-fade-in-up {
+-  animation: fade-in-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+-}
+-
+-.animate-scale-in {
+-  animation: scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+-}
+-
+-.animate-float {
+-  animation: float 6s ease-in-out infinite;
+-}
+-
+-.animate-glow-pulse {
+-  animation: glow-pulse 2.5s ease-in-out infinite;
+-}
+-
+-.animate-rotate-3d {
+-  animation: rotate-3d 8s ease-in-out infinite;
+-}
+-
+-.animate-marquee {
+-  animation: marquee 20s linear infinite;
++  animation: fade-in 0.3s ease both;
+ }
+ 
+ /* Stagger animation delays */
+ .delay-100 { animation-delay: 100ms; }
+ .delay-200 { animation-delay: 200ms; }
+ .delay-300 { animation-delay: 300ms; }
+-.delay-400 { animation-delay: 400ms; }
+-.delay-500 { animation-delay: 500ms; }
+ 
+ /* Shimmer loading effect */
+ .shimmer {
+   background: linear-gradient(
+     90deg,
+-    #F5F5F4 0%,
+-    #FAFAF9 40%,
+-    #F5F5F4 80%,
+-    #FAFAF9 100%
++    var(--color-muted) 0%,
++    var(--color-background) 40%,
++    var(--color-muted) 80%,
++    var(--color-background) 100%
+   );
+   background-size: 200% auto;
+-  animation: shimmer 2s linear infinite;
+-}
+-
+-/* Glassmorphism - Premium frosted glass */
+-.glass {
+-  background: rgba(250, 250, 249, 0.65);
+-  backdrop-filter: blur(20px) saturate(180%);
+-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+-  border: 1px solid rgba(255, 255, 255, 0.7);
+-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.04);
+-}
+-
+-.glass-dark {
+-  background: rgba(28, 25, 23, 0.65);
+-  backdrop-filter: blur(20px) saturate(180%);
+-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+-  border: 1px solid rgba(255, 255, 255, 0.08);
+-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+-}
+-
+-.glass-gold {
+-  background: linear-gradient(135deg, rgba(202, 138, 4, 0.15) 0%, rgba(202, 138, 4, 0.05) 100%);
+-  backdrop-filter: blur(12px) saturate(160%);
+-  -webkit-backdrop-filter: blur(12px) saturate(160%);
+-  border: 1px solid rgba(202, 138, 4, 0.3);
+-  box-shadow: 0 4px 20px -4px rgba(202, 138, 4, 0.2);
+-}
+-
+-.premium-gradient {
+-  background: linear-gradient(135deg, rgba(250, 250, 249, 0.8) 0%, rgba(245, 245, 244, 0.9) 100%);
++  animation: shimmer 1.5s linear infinite;
+ }
+ 
+ /* Touch-optimized active states for mobile */
+ @media (hover: none) {
+   .btn-primary:active, .btn-secondary:active, .btn-tertiary:active {
+-    transform: scale(0.96);
++    transform: scale(0.98);
+   }
+   .product-card:active {
+-    transform: scale(0.98);
++    opacity: 0.9;
+   }
+ }
+ 
+ /* Scroll-triggered reveal utility class */
+ .reveal {
+   opacity: 0;
+-  transform: translateY(20px);
+-  transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
++  transform: translateY(15px);
++  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+ }
+ .reveal.active {
+   opacity: 1;
+   transform: translateY(0);
+ }
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index 0ba0b5f..6c4561b 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -1,42 +1,36 @@
+ import type { Metadata } from "next";
+-import { Inter, Playfair_Display } from "next/font/google";
++import { Inter } from "next/font/google";
+ import "./globals.css";
+ 
+ const inter = Inter({
+   subsets: ["latin"],
+   variable: "--font-inter",
+   display: "swap",
+ });
+ 
+-const playfair = Playfair_Display({
+-  subsets: ["latin"],
+-  variable: "--font-playfair",
+-  display: "swap",
+-});
+-
+ export const metadata: Metadata = {
+   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://beautylooksmumbai.com'),
+   title: "Beauty Looks Mumbai | Premium Cosmetics & Skincare",
+   description: "Simple • Genuine • Affordable. Mumbai's leading curated beauty marketplace for facial kits, serums, face masks, and premium cosmetics.",
+   keywords: "beauty, cosmetics, facial kits, skincare, mumbai, natural beauty, serum, cleansers, face mask",
+ };
+ 
+ import RootLayoutClient from "@/components/layout/RootLayoutClient";
+ import { createClient } from '@/lib/supabase/server';
+ 
+ export default async function RootLayout({
+   children,
+ }: Readonly<{
+   children: React.ReactNode;
+ }>) {
+   const supabase = await createClient();
+   const { data: categories } = await supabase.from('categories').select('*').order('created_at', { ascending: true });
+ 
+   return (
+-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
+-      <body suppressHydrationWarning className="min-h-full flex flex-col bg-primary text-text-main font-sans">
++    <html lang="en" suppressHydrationWarning className={`${inter.variable} h-full antialiased`}>
++      <body suppressHydrationWarning className="min-h-full flex flex-col font-sans">
+         <RootLayoutClient categories={categories || []}>{children}</RootLayoutClient>
+       </body>
+     </html>
+   );
+ }
+diff --git a/src/app/products/[slug]/ProductDetailClient.tsx b/src/app/products/[slug]/ProductDetailClient.tsx
+index c22454c..5d729eb 100644
+--- a/src/app/products/[slug]/ProductDetailClient.tsx
++++ b/src/app/products/[slug]/ProductDetailClient.tsx
+@@ -112,28 +112,30 @@ export default function ProductDetailClient({
+         </nav>
+         {/* Mobile Back Link */}
+         <nav className="flex sm:hidden items-center text-[10px] font-semibold tracking-widest uppercase text-text-muted">
+           <Link href={product.categoryId ? `/products?category=${product.categoryId}` : '/products'} className="flex items-center hover:text-text-main transition-colors gap-1">
+             <ChevronLeft size={12} className="-ml-1 shrink-0" />
+             <span>Back to {product.category || 'Collection'}</span>
+           </Link>
+         </nav>
+       </div>
+ 
+-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 md:py-12">
+-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-24">
++      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
++        <div className="lg:grid lg:grid-cols-2 lg:gap-x-12 xl:gap-x-16">
+           
+-          {/* Left: Product Images */}
+-          <ProductGallery images={product.images} name={product.name} badge={product.badge} fallbackImage={fallbackProductImage} />
++          {/* Left Column: Scrollable Image Gallery */}
++          <div className="mb-10 lg:mb-0">
++            <ProductGallery images={product.images} name={product.name} badge={product.badge} fallbackImage={fallbackProductImage} />
++          </div>
+ 
+-          {/* Right: Product Details */}
+-          <div className="flex flex-col justify-center">
++          {/* Right Column: Sticky Purchase Panel */}
++          <div className="lg:sticky lg:top-24 self-start flex flex-col justify-center">
+             <span className="text-xs font-semibold text-text-muted tracking-widest uppercase mb-2">
+               {product.brand}
+             </span>
+             <h1 className="font-display text-3xl md:text-4xl text-text-main leading-tight mb-3">
+               {product.name}
+             </h1>
+ 
+             {/* Star Rating Summary */}
+             <div className="flex items-center gap-3 mb-4">
+               <StarRating rating={averageRating} size={16} />
+diff --git a/src/components/layout/CartDrawer.tsx b/src/components/layout/CartDrawer.tsx
+index 9998935..d1b020d 100644
+--- a/src/components/layout/CartDrawer.tsx
++++ b/src/components/layout/CartDrawer.tsx
+@@ -107,310 +107,199 @@ export default function CartDrawer() {
+     <div 
+       className="fixed inset-0 z-50 overflow-hidden" 
+       role="dialog" 
+       aria-modal="true" 
+       aria-label="Shopping Cart"
+       onKeyDown={handleTabKey}
+       ref={drawerRef}
+     >
+       {/* Backdrop */}
+       <div
+-        className="absolute inset-0 bg-black/50 backdrop-blur-[2px] transition-opacity"
++        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+         onClick={closeCart}
+         aria-hidden="true"
+       />
+ 
+-      {/* Responsive Drawer Container - Wider on PC so rows fit horizontally without wrapping */}
++      {/* Drawer Container */}
+       <div className="absolute inset-0 md:inset-y-0 md:right-0 md:left-auto flex justify-end">
+-        <div className="w-full h-[100dvh] md:max-w-xl md:h-full bg-[#FDFBF7] shadow-2xl flex flex-col overflow-hidden relative border-l border-border/50">
+-          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] pointer-events-none mix-blend-multiply z-0"></div>
+-
+-          {/* ── COMPACT STICKY HEADER (flex-none) ── */}
+-          <div className="flex-none relative z-10 bg-white/95 backdrop-blur border-b border-border">
+-            {/* Drag Handle (Mobile only) */}
+-            <div className="md:hidden flex justify-center pt-2 pb-1">
+-              <div className="w-10 h-1 bg-border rounded-full"></div>
+-            </div>
++        <div className="w-full h-[100dvh] md:max-w-md md:h-full bg-white shadow-2xl flex flex-col overflow-hidden relative">
++          
++          {/* Header */}
++          <div className="flex-none px-4 py-6 border-b border-gray-100 flex items-center justify-between bg-white z-10">
++            <h2 className="text-2xl font-display font-light text-text-main">Your Bag ({getTotalItems()})</h2>
++            <button
++              id="cart-close-btn"
++              onClick={closeCart}
++              className="text-text-muted hover:text-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black rounded"
++              aria-label="Close cart"
++            >
++              <X size={24} strokeWidth={1.5} />
++            </button>
++          </div>
+ 
+-            {/* Header: Bag Count & Close */}
+-            <div className="px-5 py-3 flex items-center justify-between">
+-              <div className="flex items-center gap-2.5">
+-                <h2 className="text-base font-display font-bold text-text-main">Your Bag</h2>
+-                <span className="text-xs font-semibold bg-secondary px-2.5 py-0.5 rounded-full text-text-main">
+-                  {getTotalItems()} {getTotalItems() === 1 ? 'item' : 'items'}
++          {/* Free Shipping Progress */}
++          {items.length > 0 && (
++            <div className="px-4 py-4 bg-white border-b border-gray-100 flex flex-col gap-2 z-10">
++              <div className="flex items-center justify-between text-sm">
++                <span className="text-text-muted font-medium">Shipping</span>
++                <span className="font-medium text-text-main">
++                  {subtotal >= 499 ? 'Free Shipping Unlocked' : `Add ${formatPrice(499 - subtotal)} more for Free`}
+                 </span>
+               </div>
+-              <button
+-                id="cart-close-btn"
+-                onClick={closeCart}
+-                className="text-text-muted hover:text-text-main hover:bg-stone-100 p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+-                aria-label="Close cart"
+-              >
+-                <X size={18} strokeWidth={2} />
+-              </button>
+-            </div>
+-
+-            {/* Ultra-Compact Free Shipping Progress Bar */}
+-            {items.length > 0 && (
+-              <div className="px-5 py-2 bg-[#FBF9F6] border-t border-border/60 flex items-center justify-between gap-4">
+-                <div className="flex items-center gap-2 text-xs">
+-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Shipping</span>
+-                  <span className="text-xs font-semibold text-text-main">
+-                    {subtotal >= 499 ? '✓ Free Shipping Unlocked' : `Add ${formatPrice(499 - subtotal)} more for Free Shipping`}
+-                  </span>
+-                </div>
+-                <div className="w-24 h-1.5 bg-border/50 rounded-full overflow-hidden shrink-0">
+-                  <div
+-                    className="h-full bg-accent transition-all duration-500 ease-out"
+-                    style={{ width: `${Math.min(100, (subtotal / 499) * 100)}%` }}
+-                  />
+-                </div>
++              <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
++                <div
++                  className="h-full bg-black transition-all duration-500 ease-out"
++                  style={{ width: `${Math.min(100, (subtotal / 499) * 100)}%` }}
++                />
+               </div>
+-            )}
+-          </div>
++            </div>
++          )}
+ 
+-          {/* ── SCROLLABLE COMPACT ITEMS LIST (flex-1) ── */}
+-          <div className="flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] divide-y divide-border/60 relative z-10 no-scrollbar">
++          {/* Item List */}
++          <div className="flex-1 overflow-y-auto overscroll-contain px-4 divide-y divide-gray-100 no-scrollbar">
+             {items.length === 0 ? (
+-              <div className="flex flex-col items-center justify-center h-full text-center space-y-5 px-6">
+-                <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-secondary/60 border border-border/40 shadow-inner">
+-                  <ShoppingBag size={26} strokeWidth={1.3} className="text-accent" />
+-                </div>
+-                <div className="space-y-1">
+-                  <h3 className="font-display text-xl text-text-main font-semibold">Your bag is empty</h3>
+-                  <p className="text-xs text-text-muted max-w-[220px] font-light leading-relaxed">
+-                    Discover our premium salon-grade cosmetics and skincare.
++              <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
++                <ShoppingBag size={48} strokeWidth={1} className="text-gray-300" />
++                <div className="space-y-2">
++                  <h3 className="font-display text-2xl text-text-main">Your bag is empty</h3>
++                  <p className="text-text-muted font-light">
++                    Discover our premium salon-grade cosmetics.
+                   </p>
+                 </div>
+                 <Link
+                   href="/products"
+                   onClick={closeCart}
+-                  className="mt-2 bg-brand-dark text-primary px-6 py-2.5 text-xs font-semibold uppercase tracking-wider hover:bg-accent hover:text-brand-dark transition-all rounded-xl shadow-sm"
++                  className="mt-4 px-8 py-3 bg-black text-white text-sm uppercase tracking-wider hover:bg-gray-900 transition-colors"
+                 >
+                   Shop Collection
+                 </Link>
+               </div>
+             ) : (
+-              <div className="p-3 sm:p-0 space-y-3 sm:space-y-0 sm:divide-y sm:divide-border">
++              <div className="flex flex-col">
+                 {items.map((item) => {
+                   const itemPrice = item.product.salePrice || item.product.price;
+                   const originalPrice = item.product.price;
+                   const hasDiscount = item.product.salePrice !== null && item.product.salePrice < originalPrice;
+-                  const discountPercent = hasDiscount ? Math.round(((originalPrice - itemPrice) / originalPrice) * 100) : 0;
+                   
+-                  // Use real-time stock if available
+                   const currentStock = stockChecked && stockMap[item.product.id] !== undefined
+                     ? stockMap[item.product.id]
+                     : item.product.stockQuantity;
+                   const isOutOfStock = currentStock <= 0;
+ 
+                   return (
+                     <div
+                       key={item.product.id}
+-                      className={`p-4 sm:px-5 sm:py-3 bg-white sm:bg-transparent rounded-2xl sm:rounded-none border sm:border-0 shadow-xs sm:shadow-none hover:bg-white/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 ${
+-                        isOutOfStock ? 'border-red-200 bg-red-50/50 sm:bg-red-50/30' : 'border-border'
++                      className={`py-6 flex gap-4 ${
++                        isOutOfStock ? 'opacity-50' : ''
+                       }`}
+                     >
+-                      {/* Top / Left Section: Image + Info */}
+-                      <div className="flex items-start sm:items-center justify-between sm:justify-start gap-3.5 sm:gap-4 flex-1 min-w-0">
+-                        <div className="flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0 flex-1">
+-                          {/* Thumbnail: 80x80 on mobile, 56x56 on PC */}
+-                          <div className="relative w-20 h-20 sm:w-14 sm:h-14 bg-secondary rounded-xl sm:rounded-lg overflow-hidden shrink-0 border border-border/60 shadow-2xs">
+-                            <Image
+-                              src={item.product.images?.[0] || fallbackProductImage}
+-                              alt={item.product.name}
+-                              fill
+-                              sizes="(max-width: 640px) 80px, 56px"
+-                              className="object-cover"
+-                            />
+-                          </div>
+-
+-                          {/* Middle Details */}
+-                          <div className="flex-1 min-w-0">
+-                            <div className="flex items-center justify-between gap-2">
+-                              <span className="text-[11px] sm:text-[10px] font-bold uppercase tracking-wider text-text-muted truncate block">
+-                                {item.product.brand}
+-                              </span>
+-                              {item.product.stockQuantity === 1 && (
+-                                <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded shrink-0">
+-                                  Only 1 left
+-                                </span>
+-                              )}
+-                              {isOutOfStock && (
+-                                <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-200 px-1.5 py-0.5 rounded shrink-0">
+-                                  Out of Stock
+-                                </span>
+-                              )}
+-                            </div>
++                      {/* Image */}
++                      <div className="relative w-24 h-24 bg-gray-50 shrink-0">
++                        <Image
++                          src={item.product.images?.[0] || fallbackProductImage}
++                          alt={item.product.name}
++                          fill
++                          sizes="96px"
++                          className="object-cover"
++                        />
++                      </div>
+ 
+-                            <h4 className="text-sm sm:text-xs font-semibold text-text-main line-clamp-2 sm:truncate hover:text-accent transition-colors mt-0.5">
++                      {/* Details */}
++                      <div className="flex-1 flex flex-col justify-between min-w-0">
++                        <div className="flex justify-between items-start gap-4">
++                          <div>
++                            <span className="text-xs font-bold uppercase tracking-widest text-text-muted block mb-1">
++                              {item.product.brand}
++                            </span>
++                            <h4 className="text-base text-text-main line-clamp-2">
+                               <Link href={`/products/${item.product.slug}`} onClick={closeCart}>
+                                 {item.product.name}
+                               </Link>
+                             </h4>
+-
+-                            {/* Quantity Selector + Controls Row */}
+-                            <div className="flex items-center gap-3 mt-2 sm:mt-1.5">
+-                              <div className="inline-flex items-center border border-border rounded-lg sm:rounded-md bg-white h-8 sm:h-6 overflow-hidden">
+-                                <button
+-                                  onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+-                                  className="px-2.5 sm:px-2 text-text-muted hover:text-text-main hover:bg-stone-100 transition-colors h-full flex items-center"
+-                                  aria-label="Decrease quantity"
+-                                >
+-                                  <Minus size={13} className="sm:w-[11px] sm:h-[11px]" />
+-                                </button>
+-                                <span className="px-2.5 sm:px-2 text-xs sm:text-xs font-semibold text-text-main select-none min-w-[24px] sm:min-w-[20px] text-center">
+-                                  {item.quantity}
+-                                </span>
+-                                <button
+-                                  onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+-                                  disabled={item.quantity >= item.product.stockQuantity}
+-                                  className={`px-2.5 sm:px-2 h-full flex items-center transition-colors ${
+-                                    item.quantity >= item.product.stockQuantity
+-                                      ? 'text-border cursor-not-allowed'
+-                                      : 'text-text-muted hover:text-text-main hover:bg-stone-100'
+-                                  }`}
+-                                  aria-label="Increase quantity"
+-                                >
+-                                  <Plus size={13} className="sm:w-[11px] sm:h-[11px]" />
+-                                </button>
+-                              </div>
+-
+-                              {/* Desktop Remove Button */}
+-                              <div className="hidden sm:flex items-center gap-3">
+-                                <button
+-                                  onClick={() => removeItem(item.product.id)}
+-                                  className="text-[11px] text-text-muted hover:text-red-600 transition-colors flex items-center gap-1 font-medium"
+-                                  aria-label="Remove item"
+-                                >
+-                                  <Trash2 size={12} /> Remove
+-                                </button>
+-                                {isOutOfStock && (
+-                                  <NotifyMeButton
+-                                    productId={item.product.id}
+-                                    defaultEmail={userEmail}
+-                                    className="!mt-0 font-medium"
+-                                  />
+-                                )}
+-                              </div>
+-                            </div>
+                           </div>
+-                        </div>
+-
+-                        {/* Mobile Top-Right Trash Icon + Notify Me */}
+-                        <div className="sm:hidden flex flex-col items-end gap-1">
+                           <button
+                             onClick={() => removeItem(item.product.id)}
+-                            className="p-1.5 text-text-muted hover:text-red-600 transition-colors rounded-lg hover:bg-red-50/50 -mr-1 -mt-1 shrink-0"
++                            className="text-text-muted hover:text-red-600 transition-colors p-1 -mr-1"
+                             aria-label="Remove item"
+                           >
+-                            <Trash2 size={17} />
++                            <X size={16} />
+                           </button>
+-                          {isOutOfStock && (
+-                            <NotifyMeButton
+-                              productId={item.product.id}
+-                              defaultEmail={userEmail}
+-                              className="!mt-0 font-medium"
+-                            />
+-                          )}
+                         </div>
+-                      </div>
+ 
+-                      {/* Bottom / Right Section: Nykaa 'You Pay' on mobile, Price column on PC */}
+-                      <div className="mt-1 pt-3 border-t border-border/60 sm:mt-0 sm:pt-0 sm:border-0 flex items-center justify-between sm:block sm:text-right shrink-0">
+-                        <span className="text-xs font-medium text-text-muted sm:hidden">
+-                          You Pay
+-                        </span>
++                        <div className="flex items-end justify-between mt-4">
++                          {/* Quantity */}
++                          <div className="flex items-center border border-gray-200">
++                            <button
++                              onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
++                              className="px-3 py-1 text-text-muted hover:text-black transition-colors"
++                              aria-label="Decrease quantity"
++                            >
++                              <Minus size={14} />
++                            </button>
++                            <span className="px-3 py-1 text-sm text-text-main min-w-[32px] text-center">
++                              {item.quantity}
++                            </span>
++                            <button
++                              onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
++                              disabled={item.quantity >= item.product.stockQuantity}
++                              className={`px-3 py-1 transition-colors ${
++                                item.quantity >= item.product.stockQuantity
++                                  ? 'text-gray-300 cursor-not-allowed'
++                                  : 'text-text-muted hover:text-black'
++                              }`}
++                              aria-label="Increase quantity"
++                            >
++                              <Plus size={14} />
++                            </button>
++                          </div>
+ 
+-                        <div className="flex sm:block items-baseline gap-1.5 text-right">
+-                          <span className="text-sm sm:text-xs font-bold text-text-main">
+-                            {formatPrice(itemPrice * item.quantity)}
+-                          </span>
+-                          {hasDiscount && (
+-                            <>
+-                              <span className="text-xs sm:text-[10px] text-text-muted line-through">
++                          {/* Price */}
++                          <div className="text-right">
++                            <div className="text-base font-medium text-text-main">
++                              {formatPrice(itemPrice * item.quantity)}
++                            </div>
++                            {hasDiscount && (
++                              <div className="text-xs text-text-muted line-through mt-0.5">
+                                 {formatPrice(originalPrice * item.quantity)}
+-                              </span>
+-                              <span className="text-xs sm:text-[10px] font-bold text-emerald-600">
+-                                {discountPercent}% off
+-                              </span>
+-                            </>
+-                          )}
+-                          {item.quantity > 1 && (
+-                            <span className="hidden sm:block text-[10px] text-text-muted">
+-                              {formatPrice(itemPrice)} each
+-                            </span>
+-                          )}
++                              </div>
++                            )}
++                          </div>
+                         </div>
++                        
++                        {isOutOfStock && (
++                           <div className="mt-3">
++                             <NotifyMeButton
++                               productId={item.product.id}
++                               defaultEmail={userEmail}
++                               className="!mt-0 font-medium text-xs text-red-600"
++                             />
++                           </div>
++                        )}
+                       </div>
+                     </div>
+                   );
+                 })}
+-
+-                {/* Compact Optional Gift Box Strip - only shown if <= 3 items so it never forces scrolling */}
+-                {items.length <= 3 && (
+-                  <div className="mx-5 my-3 px-3.5 py-2.5 bg-secondary/40 border border-border/80 rounded-xl flex items-center justify-between text-xs">
+-                    <div className="flex items-center gap-2.5 min-w-0">
+-                      <span className="text-sm">🎁</span>
+-                      <div className="min-w-0">
+-                        <span className="font-semibold text-text-main text-xs block truncate">Add Luxury Gift Packaging</span>
+-                        <span className="text-[10px] text-text-muted block">Premium box & ribbon · ₹299</span>
+-                      </div>
+-                    </div>
+-                    <button className="px-2.5 py-1 bg-white border border-border text-xs font-bold rounded-lg hover:border-accent hover:text-accent transition-colors shrink-0">
+-                      + Add
+-                    </button>
+-                  </div>
+-                )}
+               </div>
+             )}
+           </div>
+ 
+-          {/* ── ULTRA-COMPACT NYKAA-STYLE STICKY FOOTER (flex-none) ── */}
++          {/* Footer with clean CTA */}
+           {items.length > 0 && (
+-            <div
+-              className="flex-none bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)] relative z-10"
+-              style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+-            >
+-              {/* Top info bar */}
+-              <div className="px-5 py-1.5 bg-[#FBF9F6] border-b border-border/50 text-[11px] text-text-muted flex items-center justify-between">
+-                <span>✨ 100% Authentic & Salon Quality Guarantee</span>
+-                <span className="font-semibold text-text-main">
+-                  {shipping === 0 ? 'Free Shipping Included' : `Shipping: ${formatPrice(shipping)}`}
+-                </span>
+-              </div>
+-
+-              {/* Compact Checkout Action Row */}
+-              <div className="px-5 py-3 flex items-center justify-between gap-4">
+-                <div>
+-                  <div className="flex items-baseline gap-1.5">
+-                    <span className="text-base font-bold text-text-main">{formatPrice(grandTotal)}</span>
+-                    <span className="text-[11px] text-text-muted font-medium">Grand Total</span>
+-                  </div>
+-                  <span className="text-[10px] text-text-muted block">
+-                    Subtotal {formatPrice(subtotal)} {shipping > 0 ? `+ ${formatPrice(shipping)} ship` : ''}
+-                  </span>
+-                </div>
+-
+-                <div className="flex items-center gap-2.5">
+-                  <button
+-                    onClick={closeCart}
+-                    className="px-3 py-2.5 text-xs font-semibold text-text-muted hover:text-text-main transition-colors hidden sm:block"
+-                  >
+-                    Continue Shopping
+-                  </button>
+-                  <Link
+-                    href="/checkout"
+-                    onClick={closeCart}
+-                    className="px-6 py-2.5 bg-brand-dark text-primary hover:bg-accent hover:text-brand-dark text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-2"
+-                  >
+-                    Proceed <ArrowRight size={14} />
+-                  </Link>
+-                </div>
++            <div className="border-t border-gray-100 px-4 py-6 bg-white flex-none">
++              <div className="flex justify-between items-center mb-6">
++                <span className="text-base text-text-main">Subtotal</span>
++                <span className="text-lg font-medium text-text-main">{formatPrice(subtotal)}</span>
+               </div>
++              <Link
++                href="/checkout"
++                onClick={closeCart}
++                className="block w-full py-4 bg-black text-white text-center text-sm uppercase tracking-wider hover:bg-gray-900 transition-colors"
++              >
++                Checkout
++              </Link>
+             </div>
+           )}
+         </div>
+       </div>
+     </div>
+   );
+ }
+diff --git a/src/components/layout/Navbar.tsx b/src/components/layout/Navbar.tsx
+index 6c46449..9315d00 100644
+--- a/src/components/layout/Navbar.tsx
++++ b/src/components/layout/Navbar.tsx
+@@ -6,25 +6,34 @@ import Image from 'next/image';
+ import { usePathname } from 'next/navigation';
+ import { Search, Heart, ShoppingBag, Menu, Truck, Shield, Sparkles, User } from 'lucide-react';
+ import { useCartStore, useWishlistStore } from '@/lib/store';
+ import { createClient } from '@/lib/supabase/client';
+ 
+ import NavLinks from './navbar/NavLinks';
+ import MobileDrawer from './navbar/MobileDrawer';
+ import SearchBar from './navbar/SearchBar';
+ 
+ export default function Navbar({ categories = [] }: { categories?: { id: string, name: string, slug: string }[] }) {
+-  const [isScrolled, setIsScrolled] = useState(false);
++  const [isScrolled, setIsScrolled] = useState(() => {
++    if (typeof window !== 'undefined') {
++      return window.scrollY > 10;
++    }
++    return false;
++  });
+   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+   const [isSearchOpen, setIsSearchOpen] = useState(false);
+   const pathname = usePathname();
+ 
++  const isHome = pathname === '/';
++  const isTransparent = isHome && !isScrolled;
++  const textColorClass = isTransparent ? 'text-white' : 'text-[var(--color-text-main)]';
++
+   const cartItemsCount = useCartStore((state) => state.getTotalItems());
+   const openCart = useCartStore((state) => state.openCart);
+   const wishlistCount = useWishlistStore((state) => state.items.length);
+   const [isLoggedIn, setIsLoggedIn] = useState(false);
+   const [mounted, setMounted] = useState(false);
+ 
+   useEffect(() => {
+     setMounted(true);
+     const supabase = createClient();
+ 
+@@ -47,20 +56,21 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
+       }
+     });
+ 
+     return () => subscription.unsubscribe();
+   }, []);
+ 
+   useEffect(() => {
+     const handleScroll = () => {
+       setIsScrolled(window.scrollY > 10);
+     };
++    handleScroll();
+     window.addEventListener('scroll', handleScroll, { passive: true });
+     return () => window.removeEventListener('scroll', handleScroll);
+   }, []);
+ 
+   useEffect(() => {
+     setIsMobileMenuOpen(false);
+     setIsSearchOpen(false);
+   }, [pathname]);
+ 
+   const navLinks = [
+@@ -80,38 +90,41 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
+     <>
+       {/* Top Announcement Bar */}
+       <div className="bg-[var(--color-text-main)] text-[var(--color-primary)] text-center py-2 text-[10px] tracking-[0.2em] uppercase font-medium overflow-hidden">
+         <div className="flex items-center justify-center gap-8">
+           <span>• Free Delivery on Orders Above ₹499 •</span>
+           <span className="hidden sm:inline">100% Authentic Products • Mumbai&apos;s Trusted Beauty Store</span>
+         </div>
+       </div>
+ 
+       <nav
++        suppressHydrationWarning
+         className={`sticky top-0 sm:top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 sm:px-6 lg:px-8 sm:mb-4 ${
+           isScrolled ? 'translate-y-0 sm:translate-y-[-4px]' : ''
+         }`}
+       >
+-        <div className={`transition-all duration-500 sm:rounded-2xl border-b sm:border ${
++        <div suppressHydrationWarning className={`transition-all duration-500 sm:rounded-2xl border-b sm:border ${
+           isScrolled
+             ? 'bg-white/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border-[var(--color-border)]'
++            : isTransparent
++            ? 'bg-transparent border-transparent'
+             : 'bg-[var(--color-primary)] shadow-sm border-[var(--color-border)]'
+         }`}>
+           {/* Main Navbar Row */}
+           <div className="px-4 sm:px-6">
+             <div className={`flex justify-between items-center relative transition-all duration-500 ${isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'}`}>
+ 
+               {/* Left: Mobile Menu Button (Hamburger) */}
+               <div className="flex items-center md:hidden">
+                 <button
+                   onClick={() => setIsMobileMenuOpen(true)}
+-                  className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors mr-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
++                  className={`${textColorClass} hover:text-[var(--color-accent)] transition-colors mr-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm`}
+                   aria-label="Open menu"
+                   aria-expanded={isMobileMenuOpen}
+                   suppressHydrationWarning
+                 >
+                   <Menu size={22} strokeWidth={1.5} />
+                 </button>
+               </div>
+ 
+               {/* Left: Desktop Logo */}
+               <div className="hidden md:flex items-center flex-1">
+@@ -122,91 +135,91 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
+                       src="/images/brand/logo.png"
+                       alt="Beauty Looks Logo"
+                       fill
+                       sizes="48px"
+                       className="object-contain p-0.5"
+                       priority
+                     />
+                   </div>
+                   {/* Brand Name Text */}
+                   <div className="transition-transform duration-500 group-hover:translate-x-1 flex flex-col justify-center">
+-                    <div className="text-[var(--color-text-main)] font-semibold text-xl leading-none tracking-wide font-display mb-1 transition-colors duration-300 group-hover:text-[var(--color-accent)]">
++                    <div className={`${textColorClass} font-semibold text-xl leading-none tracking-wide font-display mb-1 transition-colors duration-300 group-hover:text-[var(--color-accent)]`}>
+                       Beauty Looks
+                     </div>
+                     <div className="text-[9px] text-[var(--color-accent)] tracking-[0.3em] uppercase font-bold opacity-90 group-hover:opacity-100 transition-opacity duration-300">
+                       Premium Cosmetics
+                     </div>
+                   </div>
+                 </Link>
+               </div>
+ 
+               {/* Center: Desktop Nav Links */}
+-              <NavLinks links={navLinks} />
++              <NavLinks links={navLinks} isTransparent={isTransparent} />
+ 
+               {/* Logo Section for Mobile Layout */}
+               <Link href="/" className="absolute left-1/2 transform -translate-x-1/2 flex md:hidden items-center gap-2 group flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm">
+                 <div className="relative h-8 w-8 rounded-full overflow-hidden border border-[var(--color-accent)]/20 shadow-sm shrink-0 bg-white p-0.5">
+                   <Image
+                     src="/images/brand/logo.png"
+                     alt="Beauty Looks Logo"
+                     fill
+                     sizes="32px"
+                     className="object-cover rounded-full"
+                     priority
+                   />
+                 </div>
+-                <span className="text-[14px] font-semibold tracking-wider font-display text-[var(--color-text-main)] uppercase">
++                <span className={`text-[14px] font-semibold tracking-wider font-display ${textColorClass} uppercase`}>
+                   Beauty Looks
+                 </span>
+               </Link>
+ 
+               {/* Right Icons */}
+               <div className="flex items-center justify-end gap-3 sm:gap-4 flex-1">
+                 {/* Search Toggle */}
+                 <button
+                   suppressHydrationWarning
+                   onClick={() => setIsSearchOpen(!isSearchOpen)}
+-                  className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors p-2 rounded-full hover:bg-[var(--color-secondary)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
++                  className={`${textColorClass} hover:text-[var(--color-accent)] transition-colors p-2 rounded-full hover:bg-[var(--color-secondary)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent`}
+                   aria-label="Open search"
+                 >
+                   <Search size={19} strokeWidth={1.5} />
+                 </button>
+ 
+                 {/* Wishlist */}
+-                <Link href="/wishlist" className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2" aria-label={`Wishlist, ${wishlistCount} items`}>
++                <Link href="/wishlist" className={`relative ${textColorClass} hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2`} aria-label={`Wishlist, ${wishlistCount} items`}>
+                   <Heart size={19} strokeWidth={1.5} />
+                   {mounted && wishlistCount > 0 && (
+                     <span className="absolute -top-1.5 -right-2 bg-[var(--color-accent)] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
+                       {wishlistCount}
+                     </span>
+                   )}
+                 </Link>
+ 
+                 {/* Cart */}
+                 <button
+                   suppressHydrationWarning
+                   onClick={openCart}
+-                  className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2"
++                  className={`relative ${textColorClass} hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2`}
+                   aria-label={`Cart, ${cartItemsCount} items`}
+                 >
+                   <ShoppingBag size={19} strokeWidth={1.5} />
+                   {mounted && cartItemsCount > 0 && (
+-                    <span className="absolute -top-1.5 -right-2 bg-[var(--color-text-main)] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
++                    <span className={`absolute -top-1.5 -right-2 ${isTransparent ? 'bg-white text-black' : 'bg-[var(--color-text-main)] text-white'} text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm`}>
+                       {cartItemsCount}
+                     </span>
+                   )}
+                 </button>
+ 
+                 {/* Account */}
+                 <Link
+                   href={isLoggedIn ? '/account/orders' : '/login'}
+-                  className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2"
++                  className={`${textColorClass} hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2`}
+                   title={isLoggedIn ? 'My Account' : 'Sign In'}
+                   aria-label={isLoggedIn ? 'My Account' : 'Sign In'}
+                 >
+                   <User size={19} strokeWidth={1.5} />
+                 </Link>
+               </div>
+             </div>
+           </div>
+ 
+ 
+diff --git a/src/components/layout/navbar/NavLinks.tsx b/src/components/layout/navbar/NavLinks.tsx
+index d25b5e6..e419387 100644
+--- a/src/components/layout/navbar/NavLinks.tsx
++++ b/src/components/layout/navbar/NavLinks.tsx
+@@ -2,40 +2,40 @@
+ 
+ import React from 'react';
+ import Link from 'next/link';
+ import { usePathname, useSearchParams } from 'next/navigation';
+ 
+ export interface NavLinkProps {
+   name: string;
+   href: string;
+ }
+ 
+-export default function NavLinks({ links }: { links: NavLinkProps[] }) {
++export default function NavLinks({ links, isTransparent }: { links: NavLinkProps[], isTransparent?: boolean }) {
+   const pathname = usePathname();
+   const searchParams = useSearchParams();
+ 
+   return (
+     <div className="hidden md:flex absolute left-1/2 transform -translate-x-1/2 items-center justify-center gap-6 lg:gap-10">
+       {links.map((link) => {
+         const [linkPath, linkQuery] = link.href.split('?');
+         const isActive = pathname === linkPath && (
+           !linkQuery 
+             ? !searchParams.get('category') 
+             : searchParams.get('category') === new URLSearchParams(linkQuery).get('category')
+         );
+         
+         return (
+           <Link
+             key={link.name}
+             href={link.href}
+             className={`relative text-[11px] tracking-[0.15em] uppercase font-semibold transition-all duration-300 group px-2 py-1 ${
+-              isActive ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-main)] hover:text-[var(--color-accent)] hover:-translate-y-0.5'
++              isActive ? 'text-[var(--color-accent)]' : `${isTransparent ? 'text-white' : 'text-[var(--color-text-main)]'} hover:text-[var(--color-accent)] hover:-translate-y-0.5`
+             }`}
+           >
+             {link.name}
+             <span className={`absolute -bottom-0.5 left-0 h-px bg-[var(--color-accent)] transition-all duration-300 ${
+               isActive ? 'w-full' : 'w-0 group-hover:w-full'
+             }`} />
+           </Link>
+         );
+       })}
+     </div>
+diff --git a/src/components/product/ProductGallery.tsx b/src/components/product/ProductGallery.tsx
+index 8fdb607..0debdf9 100644
+--- a/src/components/product/ProductGallery.tsx
++++ b/src/components/product/ProductGallery.tsx
+@@ -11,86 +11,53 @@ interface ProductGalleryProps {
+   fallbackImage: string;
+ }
+ 
+ export function ProductGallery({ images = [], name, badge, fallbackImage }: ProductGalleryProps) {
+   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+   const [lightboxOpen, setLightboxOpen] = useState(false);
+ 
+   const displayImages = images.length > 0 ? images : [fallbackImage];
+ 
+   return (
+-    <div className="space-y-4">
+-      <div
+-        className="relative aspect-square w-full bg-[#FAFAF9] overflow-hidden group cursor-pointer"
+-        onClick={() => setLightboxOpen(true)}
+-      >
+-        <Image
+-          src={displayImages[selectedImageIndex] || fallbackImage}
+-          alt={name}
+-          fill
+-          sizes="(max-width: 1024px) 100vw, 50vw"
+-          className="object-cover transition-transform duration-700 group-hover:scale-105"
+-          priority
+-        />
+-        <div className="absolute top-6 left-6 flex flex-col space-y-2 z-10">
+-          {badge === 'bestseller' && (
+-            <span className="badge-dark">BESTSELLER</span>
+-          )}
+-          {badge === 'sale' && (
+-            <span className="badge-dark">SALE</span>
+-          )}
+-          {badge === 'new' && (
+-            <span className="badge-gold">NEW</span>
+-          )}
+-        </div>
+-
+-        {/* Left/Right Navigation Arrows */}
+-        {displayImages.length > 1 && (
+-          <>
+-            <button
+-              onClick={(e) => {
+-                e.stopPropagation();
+-                setSelectedImageIndex((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1));
+-              }}
+-              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/70 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-white shadow-lg"
+-              aria-label="Previous image"
+-            >
+-              <ChevronLeft size={20} className="text-text-main" />
+-            </button>
+-            <button
+-              onClick={(e) => {
+-                e.stopPropagation();
+-                setSelectedImageIndex((prev) => (prev === displayImages.length - 1 ? 0 : prev + 1));
+-              }}
+-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/70 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-white shadow-lg"
+-              aria-label="Next image"
+-            >
+-              <ChevronRight size={20} className="text-text-main" />
+-            </button>
+-          </>
+-        )}
+-      </div>
+-      
+-      {/* Thumbnail Gallery */}
+-      {displayImages.length > 1 && (
+-        <div className="grid grid-cols-4 gap-2 sm:gap-4">
+-          {displayImages.map((img, idx) => (
+-            <div
+-              key={idx}
+-              onClick={() => setSelectedImageIndex(idx)}
+-              className={`relative aspect-square w-full bg-[#FAFAF9] overflow-hidden cursor-pointer hover:opacity-80 transition-all duration-200 ${idx === selectedImageIndex ? 'border-b-2 border-text-main' : 'border-b-2 border-transparent'}`}
+-            >
+-              <Image src={img} alt={`${name} view ${idx + 1}`} fill sizes="(max-width: 640px) 25vw, 120px" className="object-cover" />
++    <div className="flex flex-col gap-4">
++      {displayImages.map((img, idx) => (
++        <div
++          key={idx}
++          className="relative aspect-[3/4] w-full bg-gray-100 overflow-hidden cursor-pointer group"
++          onClick={() => {
++            setSelectedImageIndex(idx);
++            setLightboxOpen(true);
++          }}
++        >
++          <Image
++            src={img}
++            alt={`${name} view ${idx + 1}`}
++            fill
++            sizes="(max-width: 1024px) 100vw, 50vw"
++            className="object-cover transition-transform duration-700 group-hover:scale-105"
++            priority={idx === 0}
++          />
++          {idx === 0 && (
++            <div className="absolute top-6 left-6 flex flex-col space-y-2 z-10">
++              {badge === 'bestseller' && (
++                <span className="badge-dark">BESTSELLER</span>
++              )}
++              {badge === 'sale' && (
++                <span className="badge-dark">SALE</span>
++              )}
++              {badge === 'new' && (
++                <span className="badge-gold">NEW</span>
++              )}
+             </div>
+-          ))}
++          )}
+         </div>
+-      )}
++      ))}
+ 
+       {/* Lightbox Modal */}
+       {lightboxOpen && (
+         <Lightbox
+           images={displayImages}
+           selectedIndex={selectedImageIndex}
+           onClose={() => setLightboxOpen(false)}
+           onChangeIndex={setSelectedImageIndex}
+           title={name}
+         />
+diff --git a/src/components/product/ProductGrid.tsx b/src/components/product/ProductGrid.tsx
+index 0d0f30d..38428b3 100644
+--- a/src/components/product/ProductGrid.tsx
++++ b/src/components/product/ProductGrid.tsx
+@@ -84,29 +84,29 @@ export function ProductGrid({
+               </span>
+             </div>
+ 
+             {/* Grid of Products inside this Category, sorted by Brand & Name */}
+             <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-6 sm:gap-x-8 sm:gap-y-12">
+               {group.products.map((product, index) => {
+                 const isOnSale = product.salePrice !== null && product.salePrice !== undefined;
+                 const currentPrice = product.salePrice || product.price;
+ 
+                 return (
+-                  <div key={product.id} className="product-card group cursor-pointer flex flex-col h-full transition-all duration-500 bg-transparent rounded-2xl overflow-hidden hover:shadow-gold-hover border border-transparent">
+-                    <div className="product-image-container h-[200px] sm:h-[400px] relative overflow-hidden bg-[#FAFAF9]">
++                  <div key={product.id} className="group flex flex-col cursor-pointer h-full">
++                    <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-4">
+                       <Link href={`/products/${product.slug}`} className="block absolute inset-0 z-0">
+                         <Image
+                           src={product.images?.[0] || fallbackProductImage}
+                           alt={product.name}
+                           fill
+                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
+-                          className="object-cover product-image transition-transform duration-700 group-hover:scale-105"
++                          className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                           priority={index < 4}
+                         />
+                         <div className="absolute top-4 left-4 flex flex-col space-y-2 z-10">
+                           {product.badge === 'bestseller' && (
+                             <span className="badge-dark">BESTSELLER</span>
+                           )}
+                           {product.badge === 'sale' && (
+                             <span className="badge-dark">SALE</span>
+                           )}
+                           {product.badge === 'new' && (
+@@ -118,21 +118,21 @@ export function ProductGrid({
+                         <button 
+                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickViewProduct(product); }}
+                           className="bg-white text-text-main text-xs font-bold uppercase tracking-widest px-8 py-4 hover:bg-black hover:text-white transition-colors pointer-events-auto"
+                           suppressHydrationWarning
+                         >
+                           Quick View
+                         </button>
+                       </div>
+                     </div>
+ 
+-                    <div className="p-2.5 sm:p-5 flex flex-col flex-grow bg-white">
++                    <div className="flex flex-col flex-grow">
+                       <div className="flex justify-between items-start mb-2">
+                         <div className="w-full">
+                           <span className="text-[10px] font-bold text-accent tracking-widest uppercase block mb-1">
+                             {product.brand}
+                           </span>
+                           <h3 className="font-display text-base text-text-main line-clamp-2 font-semibold mb-1">
+                             <Link href={`/products/${product.slug}`} className="hover:text-accent transition-colors">
+                               {product.name}
+                             </Link>
+                           </h3>
+diff --git a/src/components/product/ProductPurchasePanel.tsx b/src/components/product/ProductPurchasePanel.tsx
+index ad4e068..602f09a 100644
+--- a/src/components/product/ProductPurchasePanel.tsx
++++ b/src/components/product/ProductPurchasePanel.tsx
+@@ -65,52 +65,52 @@ export function ProductPurchasePanel({
+     
+     const del = new Date();
+     del.setDate(del.getDate() + 3);
+     setDeliveryDate(del.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+     
+     return () => clearInterval(interval);
+   }, [product.id]);
+ 
+   return (
+     <>
+-      <div className="mb-8 border border-border/60 rounded-xl overflow-hidden bg-[#FCFBF9]">
+-        <label className={`flex items-start p-4 cursor-pointer transition-colors ${!isSubscription ? 'bg-[#F4F1EB] border-b border-border/60' : ''}`}>
++      <div className="mb-8 border border-border bg-white">
++        <label className={`flex items-start p-4 cursor-pointer transition-colors ${!isSubscription ? 'bg-gray-50 border-b border-border' : ''}`}>
+           <div className="flex-shrink-0 mt-0.5">
+-            <input type="radio" name="purchaseType" checked={!isSubscription} onChange={() => setIsSubscription(false)} className="w-4 h-4 text-accent border-border/60 focus:ring-accent" />
++            <input type="radio" name="purchaseType" checked={!isSubscription} onChange={() => setIsSubscription(false)} className="w-4 h-4 text-accent border-border focus:ring-accent" />
+           </div>
+           <div className="ml-3 flex-1">
+             <div className="flex justify-between items-center">
+               <span className="text-sm font-bold text-text-main">One-time purchase</span>
+               <span className="text-sm font-semibold text-text-main">
+                 {formatPrice(product.salePrice ?? product.price)}
+               </span>
+             </div>
+           </div>
+         </label>
+         
+-        <label className={`flex items-start p-4 cursor-pointer transition-colors ${isSubscription ? 'bg-[#F4F1EB]' : ''}`}>
++        <label className={`flex items-start p-4 cursor-pointer transition-colors ${isSubscription ? 'bg-gray-50' : ''}`}>
+           <div className="flex-shrink-0 mt-0.5">
+-            <input type="radio" name="purchaseType" checked={isSubscription} onChange={() => setIsSubscription(true)} className="w-4 h-4 text-accent border-border/60 focus:ring-accent" />
++            <input type="radio" name="purchaseType" checked={isSubscription} onChange={() => setIsSubscription(true)} className="w-4 h-4 text-accent border-border focus:ring-accent" />
+           </div>
+           <div className="ml-3 flex-1">
+             <div className="flex justify-between items-center">
+               <span className="text-sm font-bold text-text-main">Subscribe & Save 15%</span>
+               <span className="text-sm font-semibold text-text-main">
+                 {formatPrice((product.salePrice ?? product.price) * 0.85)}
+               </span>
+             </div>
+             <p className="text-xs text-text-muted mt-1">Deliver every 1, 2, or 3 months. Cancel anytime.</p>
+           </div>
+         </label>
+       </div>
+ 
+-      <div className="flex flex-col gap-2 mb-8 bg-[#FDFBF7] p-4 border border-[#E8E2D9]/60 rounded-xl">
++      <div className="flex flex-col gap-2 mb-8 bg-gray-50 p-4 border border-border">
+         {peopleInCart >= 2 && (
+           <div className="flex items-center text-sm font-semibold text-[#DC2626]">
+             <span className="mr-2 animate-pulse">🔥</span> 
+             High demand: Currently in {peopleInCart} people&apos;s carts
+           </div>
+         )}
+         <div className="text-sm text-text-muted font-medium">
+           Want it by <strong className="text-text-main">{deliveryDate}</strong>? Order within <span className="text-[#CA8A04] font-bold">{countdownStr}</span>
+         </div>
+       </div>

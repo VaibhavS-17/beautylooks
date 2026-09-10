@@ -1,0 +1,93 @@
+# Review package: 3410cdc..HEAD
+
+## Commits
+9c48548 fix: resolve layout jank and hydration flash in navbar transition
+
+## Files changed
+ src/components/layout/Navbar.tsx | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+## Diff
+diff --git a/src/components/layout/Navbar.tsx b/src/components/layout/Navbar.tsx
+index 0ae8343..9315d00 100644
+--- a/src/components/layout/Navbar.tsx
++++ b/src/components/layout/Navbar.tsx
+@@ -6,21 +6,26 @@ import Image from 'next/image';
+ import { usePathname } from 'next/navigation';
+ import { Search, Heart, ShoppingBag, Menu, Truck, Shield, Sparkles, User } from 'lucide-react';
+ import { useCartStore, useWishlistStore } from '@/lib/store';
+ import { createClient } from '@/lib/supabase/client';
+ 
+ import NavLinks from './navbar/NavLinks';
+ import MobileDrawer from './navbar/MobileDrawer';
+ import SearchBar from './navbar/SearchBar';
+ 
+ export default function Navbar({ categories = [] }: { categories?: { id: string, name: string, slug: string }[] }) {
+-  const [isScrolled, setIsScrolled] = useState(false);
++  const [isScrolled, setIsScrolled] = useState(() => {
++    if (typeof window !== 'undefined') {
++      return window.scrollY > 10;
++    }
++    return false;
++  });
+   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+   const [isSearchOpen, setIsSearchOpen] = useState(false);
+   const pathname = usePathname();
+ 
+   const isHome = pathname === '/';
+   const isTransparent = isHome && !isScrolled;
+   const textColorClass = isTransparent ? 'text-white' : 'text-[var(--color-text-main)]';
+ 
+   const cartItemsCount = useCartStore((state) => state.getTotalItems());
+   const openCart = useCartStore((state) => state.openCart);
+@@ -51,20 +56,21 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
+       }
+     });
+ 
+     return () => subscription.unsubscribe();
+   }, []);
+ 
+   useEffect(() => {
+     const handleScroll = () => {
+       setIsScrolled(window.scrollY > 10);
+     };
++    handleScroll();
+     window.addEventListener('scroll', handleScroll, { passive: true });
+     return () => window.removeEventListener('scroll', handleScroll);
+   }, []);
+ 
+   useEffect(() => {
+     setIsMobileMenuOpen(false);
+     setIsSearchOpen(false);
+   }, [pathname]);
+ 
+   const navLinks = [
+@@ -84,25 +90,26 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
+     <>
+       {/* Top Announcement Bar */}
+       <div className="bg-[var(--color-text-main)] text-[var(--color-primary)] text-center py-2 text-[10px] tracking-[0.2em] uppercase font-medium overflow-hidden">
+         <div className="flex items-center justify-center gap-8">
+           <span>• Free Delivery on Orders Above ₹499 •</span>
+           <span className="hidden sm:inline">100% Authentic Products • Mumbai&apos;s Trusted Beauty Store</span>
+         </div>
+       </div>
+ 
+       <nav
+-        className={`${isTransparent ? 'absolute' : 'sticky'} top-0 sm:top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 sm:px-6 lg:px-8 sm:mb-4 ${
++        suppressHydrationWarning
++        className={`sticky top-0 sm:top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 sm:px-6 lg:px-8 sm:mb-4 ${
+           isScrolled ? 'translate-y-0 sm:translate-y-[-4px]' : ''
+         }`}
+       >
+-        <div className={`transition-all duration-500 sm:rounded-2xl border-b sm:border ${
++        <div suppressHydrationWarning className={`transition-all duration-500 sm:rounded-2xl border-b sm:border ${
+           isScrolled
+             ? 'bg-white/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border-[var(--color-border)]'
+             : isTransparent
+             ? 'bg-transparent border-transparent'
+             : 'bg-[var(--color-primary)] shadow-sm border-[var(--color-border)]'
+         }`}>
+           {/* Main Navbar Row */}
+           <div className="px-4 sm:px-6">
+             <div className={`flex justify-between items-center relative transition-all duration-500 ${isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'}`}>
+ 

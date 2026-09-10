@@ -1,0 +1,212 @@
+# Review package: f0f7ebd..HEAD
+
+## Commits
+0fdaa82 fix: restore structural components and mobile optimizations with new minimalist styles
+
+## Files changed
+ src/app/globals.css | 158 +++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 157 insertions(+), 1 deletion(-)
+
+## Diff
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 70063fa..911902e 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -1,40 +1,196 @@
+ @import "tailwindcss";
+ 
+ @theme {
+   --color-background: #ffffff;
+   --color-foreground: #111827;
+   --color-muted: #f3f4f6;
+   --color-border: #e5e7eb;
+-
++  
+   --font-sans: var(--font-inter), sans-serif;
++  --font-serif: var(--font-playfair), serif;
+ }
+ 
+ @layer base {
+   body {
+     background-color: var(--color-background);
+     color: var(--color-foreground);
+     font-family: var(--font-sans);
+     -webkit-font-smoothing: antialiased;
+   }
+ 
++  h1, h2, h3, h4, h5, h6 {
++    @apply font-sans text-foreground tracking-tight;
++  }
++
+   @media (prefers-reduced-motion: reduce) {
+     *,
+     ::before,
+     ::after {
+       animation-duration: 0.01ms !important;
+       animation-iteration-count: 1 !important;
+       transition-duration: 0.01ms !important;
+       scroll-behavior: auto !important;
+     }
+   }
+ }
+ 
++@layer components {
++  /* Minimalist Editorial Typography */
++  .font-display {
++    @apply font-sans tracking-tight leading-tight;
++  }
++  
++  .subtitle {
++    @apply text-xs font-semibold tracking-widest uppercase text-foreground/70 mb-3;
++  }
++
++  /* Minimalist Buttons */
++  .btn-primary {
++    @apply inline-flex items-center justify-center px-8 py-3.5 
++           bg-foreground text-background text-sm font-medium
++           transition-colors duration-200 ease-in-out
++           hover:bg-foreground/90
++           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2
++           disabled:opacity-50 disabled:cursor-not-allowed;
++  }
++
++  .btn-secondary {
++    @apply inline-flex items-center justify-center px-8 py-3.5 
++           bg-transparent border border-border text-foreground text-sm font-medium
++           transition-colors duration-200 ease-in-out
++           hover:bg-muted
++           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2
++           disabled:opacity-50 disabled:cursor-not-allowed;
++  }
++  
++  .btn-tertiary {
++    @apply inline-flex items-center justify-center px-8 py-3.5 
++           bg-muted text-foreground text-sm font-medium
++           transition-colors duration-200 ease-in-out
++           hover:bg-muted/80
++           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2
++           disabled:opacity-50 disabled:cursor-not-allowed;
++  }
++
++  /* Clean Containers */
++  .card-container {
++    @apply bg-background rounded-lg border border-border overflow-hidden;
++  }
++  
++  /* Badges */
++  .badge-gold, .badge-dark {
++    @apply absolute top-4 left-4 bg-foreground text-background text-[10px] uppercase tracking-widest font-semibold px-3 py-1 rounded-full z-10;
++  }
++
++  /* Minimalist Product Card */
++  .product-card {
++    transition: opacity 0.3s ease;
++  }
++
++  .product-image-container {
++    overflow: hidden;
++    @apply rounded-lg bg-muted;
++  }
++
++  .product-image-container img {
++    transition: transform 0.5s ease;
++  }
++
++  .product-card:hover .product-image-container img {
++    transform: scale(1.02);
++  }
++}
++
+ @layer utilities {
+   .no-scrollbar::-webkit-scrollbar {
+     display: none;
+   }
+   .no-scrollbar {
+     -ms-overflow-style: none;
+     scrollbar-width: none;
+   }
++  
++  .blend-multiply {
++    mix-blend-mode: multiply;
++  }
++  
++  .blend-darken {
++    mix-blend-mode: darken;
++  }
++
++  /* 3D perspective utilities (kept for structure) */
++  .perspective-1000 {
++    perspective: 1000px;
++  }
++
++  .transform-3d {
++    transform-style: preserve-3d;
++  }
++}
++
++/* =============================================
++   KEYFRAME ANIMATIONS
++   ============================================= */
++
++@keyframes slide-up {
++  from { opacity: 0; transform: translateY(20px); }
++  to { opacity: 1; transform: translateY(0); }
++}
++
++@keyframes fade-in {
++  from { opacity: 0; }
++  to   { opacity: 1; }
++}
++
++@keyframes shimmer {
++  0%   { background-position: -200% center; }
++  100% { background-position: 200% center; }
++}
++
++/* Animation classes */
++.animate-slide-up {
++  animation: slide-up 0.5s ease-out both;
++}
++
++.animate-fade-in {
++  animation: fade-in 0.3s ease both;
++}
++
++/* Stagger animation delays */
++.delay-100 { animation-delay: 100ms; }
++.delay-200 { animation-delay: 200ms; }
++.delay-300 { animation-delay: 300ms; }
++
++/* Shimmer loading effect */
++.shimmer {
++  background: linear-gradient(
++    90deg,
++    var(--color-muted) 0%,
++    var(--color-background) 40%,
++    var(--color-muted) 80%,
++    var(--color-background) 100%
++  );
++  background-size: 200% auto;
++  animation: shimmer 1.5s linear infinite;
++}
++
++/* Touch-optimized active states for mobile */
++@media (hover: none) {
++  .btn-primary:active, .btn-secondary:active, .btn-tertiary:active {
++    transform: scale(0.98);
++  }
++  .product-card:active {
++    opacity: 0.9;
++  }
++}
++
++/* Scroll-triggered reveal utility class */
++.reveal {
++  opacity: 0;
++  transform: translateY(15px);
++  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
++}
++.reveal.active {
++  opacity: 1;
++  transform: translateY(0);
+ }

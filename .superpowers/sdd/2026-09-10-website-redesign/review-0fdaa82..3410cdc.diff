@@ -1,0 +1,230 @@
+# Review package: 0fdaa8271e3193c9935e8934e0588cb3d083ccbe..HEAD
+
+## Commits
+3410cdc feat: implement transparent to solid navbar transition
+
+## Files changed
+ src/components/layout/Navbar.tsx          | 26 ++++++++++++++++----------
+ src/components/layout/navbar/NavLinks.tsx |  4 ++--
+ 2 files changed, 18 insertions(+), 12 deletions(-)
+
+## Diff
+diff --git a/src/components/layout/Navbar.tsx b/src/components/layout/Navbar.tsx
+index 6c46449..0ae8343 100644
+--- a/src/components/layout/Navbar.tsx
++++ b/src/components/layout/Navbar.tsx
+@@ -11,20 +11,24 @@ import { createClient } from '@/lib/supabase/client';
+ import NavLinks from './navbar/NavLinks';
+ import MobileDrawer from './navbar/MobileDrawer';
+ import SearchBar from './navbar/SearchBar';
+ 
+ export default function Navbar({ categories = [] }: { categories?: { id: string, name: string, slug: string }[] }) {
+   const [isScrolled, setIsScrolled] = useState(false);
+   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+   const [isSearchOpen, setIsSearchOpen] = useState(false);
+   const pathname = usePathname();
+ 
++  const isHome = pathname === '/';
++  const isTransparent = isHome && !isScrolled;
++  const textColorClass = isTransparent ? 'text-white' : 'text-[var(--color-text-main)]';
++
+   const cartItemsCount = useCartStore((state) => state.getTotalItems());
+   const openCart = useCartStore((state) => state.openCart);
+   const wishlistCount = useWishlistStore((state) => state.items.length);
+   const [isLoggedIn, setIsLoggedIn] = useState(false);
+   const [mounted, setMounted] = useState(false);
+ 
+   useEffect(() => {
+     setMounted(true);
+     const supabase = createClient();
+ 
+@@ -80,38 +84,40 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
+     <>
+       {/* Top Announcement Bar */}
+       <div className="bg-[var(--color-text-main)] text-[var(--color-primary)] text-center py-2 text-[10px] tracking-[0.2em] uppercase font-medium overflow-hidden">
+         <div className="flex items-center justify-center gap-8">
+           <span>• Free Delivery on Orders Above ₹499 •</span>
+           <span className="hidden sm:inline">100% Authentic Products • Mumbai&apos;s Trusted Beauty Store</span>
+         </div>
+       </div>
+ 
+       <nav
+-        className={`sticky top-0 sm:top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 sm:px-6 lg:px-8 sm:mb-4 ${
++        className={`${isTransparent ? 'absolute' : 'sticky'} top-0 sm:top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 sm:px-6 lg:px-8 sm:mb-4 ${
+           isScrolled ? 'translate-y-0 sm:translate-y-[-4px]' : ''
+         }`}
+       >
+         <div className={`transition-all duration-500 sm:rounded-2xl border-b sm:border ${
+           isScrolled
+             ? 'bg-white/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border-[var(--color-border)]'
++            : isTransparent
++            ? 'bg-transparent border-transparent'
+             : 'bg-[var(--color-primary)] shadow-sm border-[var(--color-border)]'
+         }`}>
+           {/* Main Navbar Row */}
+           <div className="px-4 sm:px-6">
+             <div className={`flex justify-between items-center relative transition-all duration-500 ${isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'}`}>
+ 
+               {/* Left: Mobile Menu Button (Hamburger) */}
+               <div className="flex items-center md:hidden">
+                 <button
+                   onClick={() => setIsMobileMenuOpen(true)}
+-                  className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors mr-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
++                  className={`${textColorClass} hover:text-[var(--color-accent)] transition-colors mr-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm`}
+                   aria-label="Open menu"
+                   aria-expanded={isMobileMenuOpen}
+                   suppressHydrationWarning
+                 >
+                   <Menu size={22} strokeWidth={1.5} />
+                 </button>
+               </div>
+ 
+               {/* Left: Desktop Logo */}
+               <div className="hidden md:flex items-center flex-1">
+@@ -122,91 +128,91 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
+                       src="/images/brand/logo.png"
+                       alt="Beauty Looks Logo"
+                       fill
+                       sizes="48px"
+                       className="object-contain p-0.5"
+                       priority
+                     />
+                   </div>
+                   {/* Brand Name Text */}
+                   <div className="transition-transform duration-500 group-hover:translate-x-1 flex flex-col justify-center">
+-                    <div className="text-[var(--color-text-main)] font-semibold text-xl leading-none tracking-wide font-display mb-1 transition-colors duration-300 group-hover:text-[var(--color-accent)]">
++                    <div className={`${textColorClass} font-semibold text-xl leading-none tracking-wide font-display mb-1 transition-colors duration-300 group-hover:text-[var(--color-accent)]`}>
+                       Beauty Looks
+                     </div>
+                     <div className="text-[9px] text-[var(--color-accent)] tracking-[0.3em] uppercase font-bold opacity-90 group-hover:opacity-100 transition-opacity duration-300">
+                       Premium Cosmetics
+                     </div>
+                   </div>
+                 </Link>
+               </div>
+ 
+               {/* Center: Desktop Nav Links */}
+-              <NavLinks links={navLinks} />
++              <NavLinks links={navLinks} isTransparent={isTransparent} />
+ 
+               {/* Logo Section for Mobile Layout */}
+               <Link href="/" className="absolute left-1/2 transform -translate-x-1/2 flex md:hidden items-center gap-2 group flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm">
+                 <div className="relative h-8 w-8 rounded-full overflow-hidden border border-[var(--color-accent)]/20 shadow-sm shrink-0 bg-white p-0.5">
+                   <Image
+                     src="/images/brand/logo.png"
+                     alt="Beauty Looks Logo"
+                     fill
+                     sizes="32px"
+                     className="object-cover rounded-full"
+                     priority
+                   />
+                 </div>
+-                <span className="text-[14px] font-semibold tracking-wider font-display text-[var(--color-text-main)] uppercase">
++                <span className={`text-[14px] font-semibold tracking-wider font-display ${textColorClass} uppercase`}>
+                   Beauty Looks
+                 </span>
+               </Link>
+ 
+               {/* Right Icons */}
+               <div className="flex items-center justify-end gap-3 sm:gap-4 flex-1">
+                 {/* Search Toggle */}
+                 <button
+                   suppressHydrationWarning
+                   onClick={() => setIsSearchOpen(!isSearchOpen)}
+-                  className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors p-2 rounded-full hover:bg-[var(--color-secondary)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
++                  className={`${textColorClass} hover:text-[var(--color-accent)] transition-colors p-2 rounded-full hover:bg-[var(--color-secondary)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent`}
+                   aria-label="Open search"
+                 >
+                   <Search size={19} strokeWidth={1.5} />
+                 </button>
+ 
+                 {/* Wishlist */}
+-                <Link href="/wishlist" className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2" aria-label={`Wishlist, ${wishlistCount} items`}>
++                <Link href="/wishlist" className={`relative ${textColorClass} hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2`} aria-label={`Wishlist, ${wishlistCount} items`}>
+                   <Heart size={19} strokeWidth={1.5} />
+                   {mounted && wishlistCount > 0 && (
+                     <span className="absolute -top-1.5 -right-2 bg-[var(--color-accent)] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
+                       {wishlistCount}
+                     </span>
+                   )}
+                 </Link>
+ 
+                 {/* Cart */}
+                 <button
+                   suppressHydrationWarning
+                   onClick={openCart}
+-                  className="relative text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2"
++                  className={`relative ${textColorClass} hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2`}
+                   aria-label={`Cart, ${cartItemsCount} items`}
+                 >
+                   <ShoppingBag size={19} strokeWidth={1.5} />
+                   {mounted && cartItemsCount > 0 && (
+-                    <span className="absolute -top-1.5 -right-2 bg-[var(--color-text-main)] text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
++                    <span className={`absolute -top-1.5 -right-2 ${isTransparent ? 'bg-white text-black' : 'bg-[var(--color-text-main)] text-white'} text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm`}>
+                       {cartItemsCount}
+                     </span>
+                   )}
+                 </button>
+ 
+                 {/* Account */}
+                 <Link
+                   href={isLoggedIn ? '/account/orders' : '/login'}
+-                  className="text-[var(--color-text-main)] hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2"
++                  className={`${textColorClass} hover:text-[var(--color-accent)] transition-colors hidden md:block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full p-2`}
+                   title={isLoggedIn ? 'My Account' : 'Sign In'}
+                   aria-label={isLoggedIn ? 'My Account' : 'Sign In'}
+                 >
+                   <User size={19} strokeWidth={1.5} />
+                 </Link>
+               </div>
+             </div>
+           </div>
+ 
+ 
+diff --git a/src/components/layout/navbar/NavLinks.tsx b/src/components/layout/navbar/NavLinks.tsx
+index d25b5e6..e419387 100644
+--- a/src/components/layout/navbar/NavLinks.tsx
++++ b/src/components/layout/navbar/NavLinks.tsx
+@@ -2,40 +2,40 @@
+ 
+ import React from 'react';
+ import Link from 'next/link';
+ import { usePathname, useSearchParams } from 'next/navigation';
+ 
+ export interface NavLinkProps {
+   name: string;
+   href: string;
+ }
+ 
+-export default function NavLinks({ links }: { links: NavLinkProps[] }) {
++export default function NavLinks({ links, isTransparent }: { links: NavLinkProps[], isTransparent?: boolean }) {
+   const pathname = usePathname();
+   const searchParams = useSearchParams();
+ 
+   return (
+     <div className="hidden md:flex absolute left-1/2 transform -translate-x-1/2 items-center justify-center gap-6 lg:gap-10">
+       {links.map((link) => {
+         const [linkPath, linkQuery] = link.href.split('?');
+         const isActive = pathname === linkPath && (
+           !linkQuery 
+             ? !searchParams.get('category') 
+             : searchParams.get('category') === new URLSearchParams(linkQuery).get('category')
+         );
+         
+         return (
+           <Link
+             key={link.name}
+             href={link.href}
+             className={`relative text-[11px] tracking-[0.15em] uppercase font-semibold transition-all duration-300 group px-2 py-1 ${
+-              isActive ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-main)] hover:text-[var(--color-accent)] hover:-translate-y-0.5'
++              isActive ? 'text-[var(--color-accent)]' : `${isTransparent ? 'text-white' : 'text-[var(--color-text-main)]'} hover:text-[var(--color-accent)] hover:-translate-y-0.5`
+             }`}
+           >
+             {link.name}
+             <span className={`absolute -bottom-0.5 left-0 h-px bg-[var(--color-accent)] transition-all duration-300 ${
+               isActive ? 'w-full' : 'w-0 group-hover:w-full'
+             }`} />
+           </Link>
+         );
+       })}
+     </div>
