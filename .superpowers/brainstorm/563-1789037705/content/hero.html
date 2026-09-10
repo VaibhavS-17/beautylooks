@@ -1,0 +1,53 @@
+<h2>Homepage Hero Layout</h2>
+<p class="subtitle">How should we structure the very first thing users see on the new Light Mode homepage?</p>
+
+<div class="cards">
+  <!-- Option A -->
+  <div class="card" data-choice="fullscreen" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f0f0f0; padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; height:150px;">
+      <div style="font-size:24px; font-weight:bold; color:#333;">BEAUTYLOOKS</div>
+      <div style="font-size:12px; color:#666; margin-top:5px;">Discover Your Glow</div>
+      <button class="mock-button" style="margin-top:15px; font-size:10px; padding:5px 10px;">SHOP NOW</button>
+    </div>
+    <div class="card-body">
+      <h3>Cinematic Full-Screen</h3>
+      <p>A massive, edge-to-edge lifestyle image or auto-playing video with a transparent navigation bar and text centered over the media.</p>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="splitscreen" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#fff; display:flex; height:150px;">
+      <div style="flex:1; padding:20px; display:flex; flex-direction:column; justify-content:center;">
+        <div style="font-size:18px; font-weight:bold; color:#333;">New Arrivals</div>
+        <div style="font-size:10px; color:#666; margin-top:5px;">Explore the latest collection of premium skincare.</div>
+        <button class="mock-button" style="margin-top:15px; font-size:10px; padding:5px 10px; align-self:flex-start;">SHOP NOW</button>
+      </div>
+      <div style="flex:1; background:#e0e0e0; display:flex; align-items:center; justify-content:center; color:#999;">
+        [ Image ]
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Split Screen</h3>
+      <p>50/50 layout. Clean typography and call-to-action on the left, high-resolution product photography on the right. Very modern and editorial.</p>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="grid" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#fff; display:flex; flex-direction:column; height:150px; padding:10px;">
+      <div style="text-align:center; font-size:16px; font-weight:bold; margin-bottom:10px; color:#333;">Featured Collections</div>
+      <div style="display:flex; gap:10px; flex:1;">
+        <div style="flex:2; background:#e0e0e0;"></div>
+        <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+          <div style="flex:1; background:#d0d0d0;"></div>
+          <div style="flex:1; background:#d0d0d0;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Dynamic Asymmetric Grid</h3>
+      <p>Instead of one big image, present a modern grid showing 3-4 different products or lifestyle shots right away.</p>
+    </div>
+  </div>
+</div>
