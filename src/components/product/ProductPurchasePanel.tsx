@@ -72,10 +72,10 @@ export function ProductPurchasePanel({
 
   return (
     <>
-      <div className="mb-8 border border-border/60 rounded-xl overflow-hidden bg-[#FCFBF9]">
-        <label className={`flex items-start p-4 cursor-pointer transition-colors ${!isSubscription ? 'bg-[#F4F1EB] border-b border-border/60' : ''}`}>
+      <div className="mb-8 border border-border bg-white">
+        <label className={`flex items-start p-4 cursor-pointer transition-colors ${!isSubscription ? 'bg-gray-50 border-b border-border' : ''}`}>
           <div className="flex-shrink-0 mt-0.5">
-            <input type="radio" name="purchaseType" checked={!isSubscription} onChange={() => setIsSubscription(false)} className="w-4 h-4 text-accent border-border/60 focus:ring-accent" />
+            <input type="radio" name="purchaseType" checked={!isSubscription} onChange={() => setIsSubscription(false)} className="w-4 h-4 text-accent border-border focus:ring-accent" />
           </div>
           <div className="ml-3 flex-1">
             <div className="flex justify-between items-center">
@@ -87,9 +87,9 @@ export function ProductPurchasePanel({
           </div>
         </label>
         
-        <label className={`flex items-start p-4 cursor-pointer transition-colors ${isSubscription ? 'bg-[#F4F1EB]' : ''}`}>
+        <label className={`flex items-start p-4 cursor-pointer transition-colors ${isSubscription ? 'bg-gray-50' : ''}`}>
           <div className="flex-shrink-0 mt-0.5">
-            <input type="radio" name="purchaseType" checked={isSubscription} onChange={() => setIsSubscription(true)} className="w-4 h-4 text-accent border-border/60 focus:ring-accent" />
+            <input type="radio" name="purchaseType" checked={isSubscription} onChange={() => setIsSubscription(true)} className="w-4 h-4 text-accent border-border focus:ring-accent" />
           </div>
           <div className="ml-3 flex-1">
             <div className="flex justify-between items-center">
@@ -103,7 +103,7 @@ export function ProductPurchasePanel({
         </label>
       </div>
 
-      <div className="flex flex-col gap-2 mb-8 bg-[#FDFBF7] p-4 border border-[#E8E2D9]/60 rounded-xl">
+      <div className="flex flex-col gap-2 mb-8 bg-gray-50 p-4 border border-border">
         {peopleInCart >= 2 && (
           <div className="flex items-center text-sm font-semibold text-[#DC2626]">
             <span className="mr-2 animate-pulse">🔥</span> 

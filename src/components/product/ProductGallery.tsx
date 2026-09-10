@@ -18,72 +18,39 @@ export function ProductGallery({ images = [], name, badge, fallbackImage }: Prod
   const displayImages = images.length > 0 ? images : [fallbackImage];
 
   return (
-    <div className="space-y-4">
-      <div
-        className="relative aspect-square w-full bg-[#FAFAF9] overflow-hidden group cursor-pointer"
-        onClick={() => setLightboxOpen(true)}
-      >
-        <Image
-          src={displayImages[selectedImageIndex] || fallbackImage}
-          alt={name}
-          fill
-          sizes="(max-width: 1024px) 100vw, 50vw"
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
-          priority
-        />
-        <div className="absolute top-6 left-6 flex flex-col space-y-2 z-10">
-          {badge === 'bestseller' && (
-            <span className="badge-dark">BESTSELLER</span>
-          )}
-          {badge === 'sale' && (
-            <span className="badge-dark">SALE</span>
-          )}
-          {badge === 'new' && (
-            <span className="badge-gold">NEW</span>
-          )}
-        </div>
-
-        {/* Left/Right Navigation Arrows */}
-        {displayImages.length > 1 && (
-          <>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedImageIndex((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1));
-              }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/70 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-white shadow-lg"
-              aria-label="Previous image"
-            >
-              <ChevronLeft size={20} className="text-text-main" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedImageIndex((prev) => (prev === displayImages.length - 1 ? 0 : prev + 1));
-              }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/70 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-white shadow-lg"
-              aria-label="Next image"
-            >
-              <ChevronRight size={20} className="text-text-main" />
-            </button>
-          </>
-        )}
-      </div>
-      
-      {/* Thumbnail Gallery */}
-      {displayImages.length > 1 && (
-        <div className="grid grid-cols-4 gap-2 sm:gap-4">
-          {displayImages.map((img, idx) => (
-            <div
-              key={idx}
-              onClick={() => setSelectedImageIndex(idx)}
-              className={`relative aspect-square w-full bg-[#FAFAF9] overflow-hidden cursor-pointer hover:opacity-80 transition-all duration-200 ${idx === selectedImageIndex ? 'border-b-2 border-text-main' : 'border-b-2 border-transparent'}`}
-            >
-              <Image src={img} alt={`${name} view ${idx + 1}`} fill sizes="(max-width: 640px) 25vw, 120px" className="object-cover" />
+    <div className="flex flex-col gap-4">
+      {displayImages.map((img, idx) => (
+        <div
+          key={idx}
+          className="relative aspect-[3/4] w-full bg-gray-100 overflow-hidden cursor-pointer group"
+          onClick={() => {
+            setSelectedImageIndex(idx);
+            setLightboxOpen(true);
+          }}
+        >
+          <Image
+            src={img}
+            alt={`${name} view ${idx + 1}`}
+            fill
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            priority={idx === 0}
+          />
+          {idx === 0 && (
+            <div className="absolute top-6 left-6 flex flex-col space-y-2 z-10">
+              {badge === 'bestseller' && (
+                <span className="badge-dark">BESTSELLER</span>
+              )}
+              {badge === 'sale' && (
+                <span className="badge-dark">SALE</span>
+              )}
+              {badge === 'new' && (
+                <span className="badge-gold">NEW</span>
+              )}
             </div>
-          ))}
+          )}
         </div>
-      )}
+      ))}
 
       {/* Lightbox Modal */}
       {lightboxOpen && (

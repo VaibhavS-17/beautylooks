@@ -119,14 +119,16 @@ export default function ProductDetailClient({
         </nav>
       </div>
 
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="lg:grid lg:grid-cols-2 lg:gap-x-12 xl:gap-x-16">
           
-          {/* Left: Product Images */}
-          <ProductGallery images={product.images} name={product.name} badge={product.badge} fallbackImage={fallbackProductImage} />
+          {/* Left Column: Scrollable Image Gallery */}
+          <div className="mb-10 lg:mb-0">
+            <ProductGallery images={product.images} name={product.name} badge={product.badge} fallbackImage={fallbackProductImage} />
+          </div>
 
-          {/* Right: Product Details */}
-          <div className="flex flex-col justify-center">
+          {/* Right Column: Sticky Purchase Panel */}
+          <div className="lg:sticky lg:top-24 self-start flex flex-col justify-center">
             <span className="text-xs font-semibold text-text-muted tracking-widest uppercase mb-2">
               {product.brand}
             </span>
