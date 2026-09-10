@@ -89,7 +89,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
   return (
     <>
       {/* Top Announcement Bar */}
-      <div className="bg-[var(--color-text-main)] text-[var(--color-primary)] text-center py-2 text-[10px] tracking-[0.2em] uppercase font-medium overflow-hidden">
+      <div className="relative z-50 bg-[var(--color-text-main)] text-[var(--color-primary)] text-center py-2 text-[10px] tracking-[0.2em] uppercase font-medium overflow-hidden">
         <div className="flex items-center justify-center gap-8">
           <span>• Free Delivery on Orders Above ₹499 •</span>
           <span className="hidden sm:inline">100% Authentic Products • Mumbai&apos;s Trusted Beauty Store</span>
