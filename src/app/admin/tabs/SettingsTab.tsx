@@ -96,7 +96,8 @@ export default function SettingsTab({
 
           <div className="col-span-2 md:col-span-1">
             <MediaUploader
-              label="Hero Background Banner Image (Desktop - 16:9 Landscape)"
+              label="Hero Background Banner Image (Desktop)"
+              helpText="Recommended: 1920x1080 (16:9 ratio), max 5MB"
               folder="hero"
               currentValue={uploadedHeroImg}
               onChange={setUploadedHeroImg}
@@ -109,7 +110,8 @@ export default function SettingsTab({
 
           <div className="col-span-2 md:col-span-1">
             <MediaUploader
-              label="Hero Background Banner Image (Mobile - 9:16 Portrait)"
+              label="Hero Background Banner Image (Mobile)"
+              helpText="Recommended: 1080x1920 (9:16 portrait ratio), max 5MB"
               folder="hero"
               currentValue={uploadedHeroMobileImg}
               onChange={setUploadedHeroMobileImg}
@@ -121,7 +123,8 @@ export default function SettingsTab({
 
           <div className="col-span-2">
             <MediaUploader
-              label="Hero Background Video (Optional - overrides images on desktop)"
+              label="Hero Background Video (Desktop)"
+              helpText="Optional (overrides desktop image). Recommended: 1920x1080 (16:9 ratio), MP4/WebM, max 50MB"
               folder="hero"
               currentValue={uploadedHeroVideo}
               onChange={setUploadedHeroVideo}

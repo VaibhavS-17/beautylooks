@@ -12,9 +12,10 @@ interface MediaUploaderProps {
   required?: boolean;
   acceptTypes?: string;
   maxSizeMB?: number;
+  helpText?: string;
 }
 
-export default function MediaUploader({ label, folder, currentValue, onChange, required = false, acceptTypes = 'image/*,video/*', maxSizeMB = 50 }: MediaUploaderProps) {
+export default function MediaUploader({ label, folder, currentValue, onChange, required = false, acceptTypes = 'image/*,video/*', maxSizeMB = 50, helpText }: MediaUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string>(currentValue);
   const [dragActive, setDragActive] = useState(false);
@@ -98,9 +99,12 @@ export default function MediaUploader({ label, folder, currentValue, onChange, r
 
   return (
     <div className="flex flex-col space-y-1.5 w-full">
-      <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D]">
-        {label} {required && '*'}
-      </label>
+      <div>
+        <label className="text-xs uppercase tracking-wider font-semibold text-[#5C554D]">
+          {label} {required && '*'}
+        </label>
+        {helpText && <p className="text-[11px] text-[#8A8177] mt-0.5">{helpText}</p>}
+      </div>
       
       {preview ? (
         <div className="relative border border-[#EFECE6] rounded-xl overflow-hidden bg-[#FCFBF9] h-40 flex items-center justify-center group shadow-sm">
