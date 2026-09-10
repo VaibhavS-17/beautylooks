@@ -6,6 +6,16 @@
   --color-muted: #f3f4f6;
   --color-border: #e5e7eb;
   
+  --color-primary: #FAFAF9;
+  --color-primary-dark: #F5F5F4;
+  --color-secondary: #E7E5E4;
+  --color-accent: #CA8A04;
+  --color-accent-light: #FDE047;
+  
+  --color-text-main: #0C0A09;
+  --color-text-muted: #44403C;
+  --color-brand-dark: #1C1917;
+  
   --font-sans: var(--font-inter), sans-serif;
   --font-serif: var(--font-playfair), serif;
 }

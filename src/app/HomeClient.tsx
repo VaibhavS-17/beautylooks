@@ -44,9 +44,9 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
   };
 
   return (
-    <div className="w-full bg-primary overflow-hidden">
+    <div className="w-full bg-primary overflow-hidden -mt-[96px] md:-mt-[161px]">
       {/* ================= HERO SECTION ================= */}
-      <div className="relative w-full h-[100dvh] overflow-hidden bg-gray-900 -mt-[96px] md:-mt-[161px]">
+      <div className="relative w-full h-[100dvh] overflow-hidden bg-gray-900">
         {/* Background Media */}
         <div className="absolute inset-0 z-0">
           <div className="hidden sm:block absolute inset-0">
