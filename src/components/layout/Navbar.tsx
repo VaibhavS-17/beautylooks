@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Search, Heart, ShoppingBag, Menu, Truck, Shield, Sparkles, User } from 'lucide-react';
+import { Search, Heart, ShoppingBag, Menu, User } from 'lucide-react';
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
 
@@ -80,11 +80,6 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
     { name: 'Contact', href: '/contact' },
   ];
 
-  const perks = [
-    { icon: Truck, label: 'Free Delivery' },
-    { icon: Shield, label: '100% Genuine' },
-    { icon: Sparkles, label: 'Expert Curated' },
-  ];
 
   return (
     <>
@@ -223,23 +218,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
           </div>
 
 
-          {/* Perks Bar */}
-          <div className="hidden lg:block border-t border-[var(--color-border)] bg-[var(--color-secondary)]/50 rounded-b-2xl">
-            <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-center gap-12 py-2">
-                {perks.map(({ icon: Icon, label }) => (
-                  <div key={label} className="flex items-center gap-2 text-[10px] text-[var(--color-text-muted)] tracking-[0.12em] uppercase font-semibold">
-                    <Icon size={12} className="text-[var(--color-accent)]" strokeWidth={2} />
-                    <span>{label}</span>
-                  </div>
-                ))}
-                <div className="flex items-center gap-2 text-[10px] text-[var(--color-text-muted)] tracking-[0.12em] uppercase font-semibold">
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                  <span>WhatsApp Support · 8879655807</span>
-                </div>
-              </div>
-            </div>
-          </div>
+
 
           <SearchBar isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
         </div>
