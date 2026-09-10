@@ -85,9 +85,9 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
         </div>
         {/* Content */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-4">{siteSettings.hero_title}</h1>
-          <p className="text-lg md:text-2xl font-light mb-8 max-w-2xl">{siteSettings.hero_description}</p>
-          <Link href={siteSettings.hero_button_link} className="px-8 py-4 bg-white text-black font-semibold uppercase tracking-wider hover:bg-gray-100 transition">
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-4 text-white drop-shadow-lg">{siteSettings.hero_title}</h1>
+          <p className="text-lg md:text-2xl font-light mb-8 max-w-2xl drop-shadow-md">{siteSettings.hero_description}</p>
+          <Link href={siteSettings.hero_button_link} className="px-8 py-4 bg-white text-black font-semibold uppercase tracking-wider hover:bg-gray-100 transition shadow-lg">
             {siteSettings.hero_button_text}
           </Link>
         </div>
