@@ -44,7 +44,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
   };
 
   return (
-    <div className="w-full bg-primary overflow-hidden -mt-[96px] md:-mt-[161px]">
+    <div className="w-full bg-primary overflow-hidden -mt-[96px] sm:-mt-[127px]">
       {/* ================= HERO SECTION ================= */}
       <div className="relative w-full h-[100dvh] overflow-hidden bg-gray-900">
         {/* Background Media */}
