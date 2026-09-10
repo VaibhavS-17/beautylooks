@@ -18,6 +18,7 @@ interface HomeClientProps {
     hero_description: string;
     hero_image_url: string;
     hero_mobile_image_url?: string;
+    hero_video_url?: string;
     hero_button_text: string;
     hero_button_link: string;
   };
@@ -28,6 +29,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
   const [subscribed, setSubscribed] = useState(false);
   const heroImageUrl = siteSettings.hero_image_url || '/images/hero-beauty.png';
   const heroMobileImageUrl = siteSettings.hero_mobile_image_url || heroImageUrl;
+  const heroVideoUrl = siteSettings.hero_video_url;
   const fallbackProductImage = '/images/products/facial-kit-1.png';
 
   const addItem = useCartStore((state) => state.addItem);
@@ -50,14 +52,25 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
         {/* Background Media */}
         <div className="absolute inset-0 z-0">
           <div className="hidden sm:block absolute inset-0">
-            <Image
-              src={heroImageUrl}
-              alt={siteSettings.hero_title}
-              fill
-              sizes="100vw"
-              className="object-cover opacity-70"
-              priority
-            />
+            {heroVideoUrl ? (
+              <video
+                src={heroVideoUrl}
+                className="w-full h-full object-cover opacity-70"
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+            ) : (
+              <Image
+                src={heroImageUrl}
+                alt={siteSettings.hero_title}
+                fill
+                sizes="100vw"
+                className="object-cover opacity-70"
+                priority
+              />
+            )}
           </div>
           <div className="block sm:hidden absolute inset-0">
             <Image

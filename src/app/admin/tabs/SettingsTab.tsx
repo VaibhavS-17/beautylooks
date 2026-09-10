@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import ImageUploader from '@/components/admin/ImageUploader';
+import MediaUploader from '@/components/admin/MediaUploader';
 
 interface SettingsTabProps {
   siteSettings: {
@@ -11,6 +11,7 @@ interface SettingsTabProps {
     hero_description: string;
     hero_image_url: string;
     hero_mobile_image_url?: string;
+    hero_video_url?: string;
     hero_button_text: string;
     hero_button_link: string;
     common_faqs?: Array<{ question: string; answer: string }>;
@@ -26,6 +27,7 @@ export default function SettingsTab({
 }: SettingsTabProps) {
   const [uploadedHeroImg, setUploadedHeroImg] = useState(siteSettings.hero_image_url);
   const [uploadedHeroMobileImg, setUploadedHeroMobileImg] = useState(siteSettings.hero_mobile_image_url || '');
+  const [uploadedHeroVideo, setUploadedHeroVideo] = useState(siteSettings.hero_video_url || '');
 
 
   return (
@@ -93,24 +95,40 @@ export default function SettingsTab({
           </div>
 
           <div className="col-span-2 md:col-span-1">
-            <ImageUploader
+            <MediaUploader
               label="Hero Background Banner Image (Desktop - 16:9 Landscape)"
               folder="hero"
               currentValue={uploadedHeroImg}
               onChange={setUploadedHeroImg}
+              acceptTypes="image/*"
+              maxSizeMB={5}
               required
             />
             <input type="hidden" name="heroImageUrl" value={uploadedHeroImg} />
           </div>
 
           <div className="col-span-2 md:col-span-1">
-            <ImageUploader
+            <MediaUploader
               label="Hero Background Banner Image (Mobile - 9:16 Portrait)"
               folder="hero"
               currentValue={uploadedHeroMobileImg}
               onChange={setUploadedHeroMobileImg}
+              acceptTypes="image/*"
+              maxSizeMB={5}
             />
             <input type="hidden" name="heroMobileImageUrl" value={uploadedHeroMobileImg} />
+          </div>
+
+          <div className="col-span-2">
+            <MediaUploader
+              label="Hero Background Video (Optional - overrides images on desktop)"
+              folder="hero"
+              currentValue={uploadedHeroVideo}
+              onChange={setUploadedHeroVideo}
+              acceptTypes="video/*"
+              maxSizeMB={50}
+            />
+            <input type="hidden" name="heroVideoUrl" value={uploadedHeroVideo} />
           </div>
         </div>
 
