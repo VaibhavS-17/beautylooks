@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { rateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
 
@@ -22,7 +22,7 @@ export async function subscribeRestockNotification({
       return { success: false, error: parsed.error.issues[0]?.message || 'Invalid input.' };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const normalizedEmail = parsed.data.email.toLowerCase().trim();
 
     const rl = await rateLimit('restock:' + normalizedEmail, 5, 60_000);

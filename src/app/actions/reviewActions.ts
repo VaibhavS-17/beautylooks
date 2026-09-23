@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { rateLimit } from '@/lib/rate-limit';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -144,7 +145,7 @@ export async function incrementHelpfulCount(reviewId: string) {
   const rl = await rateLimit('helpful:' + parsed.data, 10, 60_000);
   if (!rl.success) return { error: 'Too many votes. Please try again later.' };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   try {
     const { error } = await supabase.rpc('increment_helpful_count', {

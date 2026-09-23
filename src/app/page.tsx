@@ -5,27 +5,49 @@ export const revalidate = 3600;
 export default async function Homepage() {
   const supabase = await createClient();
 
-  // Fetch featured products
-  const { data: featuredProducts } = await supabase
-    .from('products')
-    .select(`
-      id,
-      name,
-      slug,
-      description,
-      short_description,
-      price,
-      sale_price,
-      images,
-      is_featured,
-      is_active,
-      stock_quantity,
-      brands (name),
-      reviews (rating)
-    `)
-    .eq('is_active', true)
-    .eq('is_featured', true)
-    .limit(4);
+  // Fetch all homepage data concurrently in parallel
+  const [
+    { data: featuredProducts },
+    { data: categoriesData },
+    { data: blogPostsData },
+    { data: siteSettings },
+  ] = await Promise.all([
+    supabase
+      .from('products')
+      .select(`
+        id,
+        name,
+        slug,
+        description,
+        short_description,
+        price,
+        sale_price,
+        images,
+        is_featured,
+        is_active,
+        stock_quantity,
+        brands (name),
+        reviews (rating)
+      `)
+      .eq('is_active', true)
+      .eq('is_featured', true)
+      .limit(4),
+    supabase
+      .from('categories')
+      .select('*')
+      .order('name'),
+    supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('is_published', true)
+      .order('published_at', { ascending: false })
+      .limit(3),
+    supabase
+      .from('site_settings')
+      .select('*')
+      .eq('id', 'default')
+      .single(),
+  ]);
 
   // Map to format HomeClient expects (brand name flattening)
   const mappedFeaturedProducts = (featuredProducts || []).map((p: any) => {
@@ -54,12 +76,6 @@ export default async function Homepage() {
     };
   });
 
-  // Fetch categories
-  const { data: categoriesData } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name');
-
   const mappedCategories = (categoriesData || []).map((c: any) => ({
     id: c.id,
     name: c.name,
@@ -67,14 +83,6 @@ export default async function Homepage() {
     description: c.description,
     imageUrl: c.image_url
   }));
-
-  // Fetch blog posts
-  const { data: blogPostsData } = await supabase
-    .from('blog_posts')
-    .select('*')
-    .eq('is_published', true)
-    .order('published_at', { ascending: false })
-    .limit(3);
 
   const mappedBlogPosts = (blogPostsData || []).map((b: any) => ({
     id: b.id,
@@ -88,13 +96,6 @@ export default async function Homepage() {
       day: 'numeric'
     })
   }));
-
-  // Fetch Site Settings
-  const { data: siteSettings } = await supabase
-    .from('site_settings')
-    .select('*')
-    .eq('id', 'default')
-    .single();
 
   return (
     <HomeClient 

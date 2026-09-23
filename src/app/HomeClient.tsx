@@ -55,6 +55,8 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
             {heroVideoUrl ? (
               <video
                 src={heroVideoUrl}
+                poster={heroImageUrl}
+                preload="metadata"
                 className="w-full h-full object-cover opacity-70"
                 autoPlay
                 muted

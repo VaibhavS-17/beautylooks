@@ -1,5 +1,5 @@
 import React from 'react';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import DashboardTab from './tabs/DashboardTab';
 
@@ -13,7 +13,7 @@ export default async function AdminDashboardPage({
     redirect(`/admin/${tab}`);
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Try calling the combined dashboard stats RPC function
   const { data: rpcStats, error: rpcError } = await supabase.rpc('get_admin_dashboard_stats');
