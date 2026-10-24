@@ -2,9 +2,6 @@ import React from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import AccountSidebar from './AccountSidebar';
-import { Menu } from 'lucide-react';
-
-export const runtime = 'edge';
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();

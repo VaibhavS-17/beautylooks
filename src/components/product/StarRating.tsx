@@ -10,8 +10,8 @@ export function StarRating({ rating, size = 16, className = '' }: { rating: numb
           size={size}
           className={
             star <= Math.round(rating)
-              ? 'fill-[#CA8A04] text-[#CA8A04]'
-              : 'fill-none text-[#CA8A04]/30'
+              ? 'fill-accent text-accent'
+              : 'fill-none text-accent/30'
           }
           strokeWidth={1.5}
         />
@@ -45,8 +45,8 @@ export function StarInput({
             size={28}
             className={
               star <= (hover || value)
-                ? 'fill-[#CA8A04] text-[#CA8A04] transition-colors'
-                : 'fill-none text-[#CA8A04]/30 transition-colors'
+                ? 'fill-accent text-accent transition-colors'
+                : 'fill-none text-accent/30 transition-colors'
             }
             strokeWidth={1.5}
           />

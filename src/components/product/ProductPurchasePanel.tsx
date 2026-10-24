@@ -1,7 +1,6 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
-import { Minus, Plus, Heart, Share2, Check, Bell } from 'lucide-react';
-import { formatPrice } from '@/lib/data';
+import React, { useState, useMemo } from 'react';
+import { Minus, Plus, Heart, Share2, Check, Bell, ShieldCheck, Truck } from 'lucide-react';
 import { Product } from '@/lib/types';
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
@@ -10,8 +9,8 @@ interface ProductPurchasePanelProps {
   product: Product;
   quantity: number;
   setQuantity: (q: number) => void;
-  isSubscription: boolean;
-  setIsSubscription: (s: boolean) => void;
+  isSubscription?: boolean;
+  setIsSubscription?: (s: boolean) => void;
   handleShare: () => void;
   isShared: boolean;
   setNotifyModalOpen: (o: boolean) => void;
@@ -21,15 +20,11 @@ export function ProductPurchasePanel({
   product,
   quantity,
   setQuantity,
-  isSubscription,
-  setIsSubscription,
   handleShare,
   isShared,
   setNotifyModalOpen
 }: ProductPurchasePanelProps) {
   const router = useRouter();
-  const [countdownStr, setCountdownStr] = useState('');
-  const [deliveryDate, setDeliveryDate] = useState('');
 
   const addItem = useCartStore((state) => state.addItem);
   const cartItems = useCartStore((state) => state.items);
@@ -38,10 +33,11 @@ export function ProductPurchasePanel({
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
   const [heartPopKey, setHeartPopKey] = useState(0);
 
-  const peopleInCart = useMemo(() => {
-    const hash = product.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-    return (hash % 10) + 3;
-  }, [product.id]);
+  const deliveryDate = useMemo(() => {
+    const del = new Date();
+    del.setDate(del.getDate() + 3);
+    return del.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }, []);
 
   const handleWishlistToggle = () => {
     toggleWishlist(product.id);
@@ -60,202 +56,129 @@ export function ProductPurchasePanel({
   const isMaxStockReached = (existingCartQty + quantity) > product.stockQuantity;
   const isWishlisted = wishlistItems.includes(product.id);
 
-  useEffect(() => {
-    const updateCountdown = () => {
-      const now = new Date();
-      const cutoff = new Date();
-      cutoff.setHours(18, 0, 0, 0);
-      if (now > cutoff) {
-        cutoff.setDate(cutoff.getDate() + 1);
-      }
-      const diff = cutoff.getTime() - now.getTime();
-      const hrs = Math.floor(diff / (1000 * 60 * 60));
-      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      setCountdownStr(`${hrs} hrs ${mins} mins`);
-    };
-    
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 60000);
-    
-    const del = new Date();
-    del.setDate(del.getDate() + 3);
-    setDeliveryDate(del.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
-    
-    return () => clearInterval(interval);
-  }, [product.id]);
-
   return (
     <>
-      <div className="mb-8 border border-border bg-white">
-        <label className={`flex items-start p-4 cursor-pointer transition-colors border-b border-border ${!isSubscription ? 'bg-gray-50' : ''}`}>
-          <div className="flex-shrink-0 mt-0.5">
-            <input type="radio" name="purchaseType" checked={!isSubscription} onChange={() => setIsSubscription(false)} className="w-4 h-4 text-accent border-border focus:ring-accent" />
-          </div>
-          <div className="ml-3 flex-1">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-bold text-text-main">One-time purchase</span>
-              <span className="text-sm font-semibold text-text-main">
-                {formatPrice(product.salePrice ?? product.price)}
-              </span>
-            </div>
-          </div>
-        </label>
-        
-        <label className={`flex items-start p-4 cursor-pointer transition-colors ${isSubscription ? 'bg-gray-50' : ''}`}>
-          <div className="flex-shrink-0 mt-0.5">
-            <input type="radio" name="purchaseType" checked={isSubscription} onChange={() => setIsSubscription(true)} className="w-4 h-4 text-accent border-border focus:ring-accent" />
-          </div>
-          <div className="ml-3 flex-1">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-bold text-text-main">Subscribe & Save 15%</span>
-              <span className="text-sm font-semibold text-text-main">
-                {formatPrice((product.salePrice ?? product.price) * 0.85)}
-              </span>
-            </div>
-            <p className="text-xs text-text-muted mt-1">Deliver every 1, 2, or 3 months. Cancel anytime.</p>
-          </div>
-        </label>
-      </div>
-
-      <div className="flex flex-col gap-2 mb-8 bg-gray-50 p-4 border border-border">
-        {peopleInCart >= 2 && (
-          <div className="flex items-center text-sm font-semibold text-[#DC2626]">
-            <span className="mr-2 animate-pulse">🔥</span> 
-            High demand: Currently in {peopleInCart} people&apos;s carts
-          </div>
-        )}
-        <div className="text-sm text-text-muted font-medium">
-          Want it by <strong className="text-text-main">{deliveryDate}</strong>? Order within <span className="text-[#CA8A04] font-bold">{countdownStr}</span>
+      {/* Guarantees Box */}
+      <div className="mb-8 p-4 rounded-2xl bg-secondary/60 border border-border space-y-3">
+        <div className="flex items-center gap-2.5 text-xs font-medium text-text-main">
+          <Truck size={16} className="text-accent shrink-0" />
+          <span>Estimated Delivery by <strong className="font-semibold">{deliveryDate}</strong></span>
+        </div>
+        <div className="flex items-center gap-2.5 text-xs text-text-muted">
+          <ShieldCheck size={16} className="text-accent shrink-0" />
+          <span>100% Genuine • Free Delivery Above ₹499 • Sourced Direct</span>
         </div>
       </div>
 
       {product.stockQuantity > 0 ? (
-        <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center border-t border-border/50">
-          <div className="flex flex-col gap-1 w-full sm:w-auto">
-            <div className="flex gap-4 items-center w-full">
-              <div className="flex-1 sm:w-36 flex items-center bg-white h-14 rounded-xl overflow-hidden border border-border shrink-0">
-                <button 
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-12 sm:px-5 h-full flex items-center justify-center hover:bg-black/5 transition-colors text-text-main"
-                >
-                  <Minus size={16} />
-                </button>
-                <span className="flex-1 text-center text-base font-semibold text-text-main">{quantity}</span>
-                <button 
-                  onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))}
-                  disabled={quantity >= product.stockQuantity}
-                  className={`w-12 sm:px-5 h-full flex items-center justify-center transition-colors ${
-                    quantity >= product.stockQuantity 
-                      ? 'text-border cursor-not-allowed' 
-                      : 'hover:bg-black/5 text-text-main'
-                  }`}
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
-              
+        <div className="pt-6 flex flex-col gap-5 border-t border-border">
+          <div className="flex items-center gap-4">
+            {/* Quantity Selector */}
+            <div className="w-36 flex items-center bg-white h-12 rounded-xl border border-border overflow-hidden shrink-0">
+              <button 
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="w-11 h-full flex items-center justify-center hover:bg-secondary text-text-main transition-colors"
+                aria-label="Decrease quantity"
+              >
+                <Minus size={15} />
+              </button>
+              <span className="flex-1 text-center text-sm font-semibold text-text-main">{quantity}</span>
+              <button 
+                onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))}
+                disabled={quantity >= product.stockQuantity}
+                className={`w-11 h-full flex items-center justify-center transition-colors ${
+                  quantity >= product.stockQuantity 
+                    ? 'text-border cursor-not-allowed' 
+                    : 'hover:bg-secondary text-text-main'
+                }`}
+                aria-label="Increase quantity"
+              >
+                <Plus size={15} />
+              </button>
+            </div>
+
+            {/* Wishlist & Share Buttons for Desktop and Mobile */}
+            <div className="flex gap-2.5 ml-auto">
               <button 
                 onClick={handleShare}
-                className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border bg-white hover:bg-black/5 transition-colors"
+                className="h-12 w-12 rounded-xl flex items-center justify-center border border-border bg-white hover:bg-secondary text-text-main transition-colors"
                 aria-label="Share product"
               >
-                {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
+                {isShared ? <Check size={18} className="text-emerald-600" /> : <Share2 size={18} />}
               </button>
               <button 
                 onClick={handleWishlistToggle}
-                className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
+                className="h-12 w-12 rounded-xl flex items-center justify-center border border-border bg-white hover:bg-secondary transition-colors"
                 aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
               >
                 <Heart
                   key={heartPopKey}
-                  size={22}
+                  size={18}
                   className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${heartPopKey > 0 ? 'animate-heart-pop' : ''}`}
-                  strokeWidth={1.5}
                 />
               </button>
             </div>
-            {product.stockQuantity === 1 && (
-              <span className="text-red-500 text-[10px] font-bold uppercase tracking-widest px-1">
-                Only 1 left in stock
-              </span>
-            )}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 w-full mt-4 sm:mt-0">
+          {product.stockQuantity === 1 && (
+            <span className="text-amber-800 text-xs font-medium">
+              Only 1 remaining in stock
+            </span>
+          )}
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
             <button 
               onClick={() => {
-                addItem(product, quantity, isSubscription);
+                addItem(product, quantity);
               }}
               disabled={isMaxStockReached}
-              className={`w-full sm:w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center border-2 ${
+              className={`h-13 rounded-xl text-xs font-semibold uppercase tracking-widest transition-all duration-200 border ${
                 isMaxStockReached
-                  ? 'border-[#EFECE6] bg-[#FBF9F6] text-[#8C8885] cursor-not-allowed opacity-75'
-                  : 'border-text-main bg-transparent text-text-main hover:bg-text-main hover:text-white'
+                  ? 'border-border bg-secondary text-text-muted cursor-not-allowed opacity-60'
+                  : 'btn-secondary'
               }`}
             >
-              {isMaxStockReached ? 'Max Stock Reached' : 'Add to Cart'}
+              {isMaxStockReached ? 'Max Stock in Bag' : 'Add to Cart'}
             </button>
             <button 
               onClick={() => {
-                setBuyNowItem({ product, quantity, isSubscription });
+                setBuyNowItem({ product, quantity });
                 router.push('/checkout?mode=buynow');
               }}
-              className="w-full sm:w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] flex items-center justify-center bg-accent text-white hover:bg-black hover:text-white shadow-gold sm:hover:-translate-y-0.5 active:scale-[0.98] transition-transform duration-150 ease-out"
+              className="h-13 rounded-xl text-xs font-semibold uppercase tracking-widest btn-primary active:scale-[0.98] transition-transform duration-150"
             >
               Buy Now
             </button>
           </div>
-
-          <div className="hidden sm:flex gap-4">
-            <button 
-              onClick={handleShare}
-              className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
-              aria-label="Share product"
-            >
-              {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
-            </button>
-            <button 
-              onClick={handleWishlistToggle}
-              className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
-              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-            >
-              <Heart
-                key={heartPopKey}
-                size={22}
-                className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${heartPopKey > 0 ? 'animate-heart-pop' : ''}`}
-                strokeWidth={1.5}
-              />
-            </button>
-          </div>
         </div>
       ) : (
-        <div className="pt-6 sm:pt-8 border-t border-border/50">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="pt-6 border-t border-border">
+          <div className="flex flex-col sm:flex-row gap-4 items-center">
             <button
               onClick={() => setNotifyModalOpen(true)}
-              className="w-full sm:w-auto h-14 px-10 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 bg-accent text-white hover:bg-black hover:text-white shadow-gold sm:hover:-translate-y-0.5 active:scale-[0.98] transition-transform duration-150 ease-out"
+              className="w-full sm:flex-1 h-13 rounded-xl text-xs font-semibold uppercase tracking-widest flex items-center justify-center gap-2 btn-primary"
             >
-              <Bell size={18} />
+              <Bell size={16} />
               Notify Me When Available
             </button>
-            <div className="flex gap-4">
+            <div className="flex gap-2.5">
               <button 
                 onClick={handleShare}
-                className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
+                className="h-13 w-13 rounded-xl flex items-center justify-center border border-border bg-white hover:bg-secondary text-text-main transition-colors"
                 aria-label="Share product"
               >
-                {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
+                {isShared ? <Check size={18} className="text-emerald-600" /> : <Share2 size={18} />}
               </button>
               <button 
                 onClick={handleWishlistToggle}
-                className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
+                className="h-13 w-13 rounded-xl flex items-center justify-center border border-border bg-white hover:bg-secondary transition-colors"
                 aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
               >
                 <Heart
                   key={heartPopKey}
-                  size={22}
+                  size={18}
                   className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${heartPopKey > 0 ? 'animate-heart-pop' : ''}`}
-                  strokeWidth={1.5}
                 />
               </button>
             </div>
