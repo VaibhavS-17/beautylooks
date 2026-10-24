@@ -4,8 +4,6 @@ import Link from 'next/link';
 import ProfileManager from './ProfileManager';
 import SecurityManager from './SecurityManager';
 
-export const runtime = 'edge';
-
 export default async function ProfilePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

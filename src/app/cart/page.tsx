@@ -1,11 +1,9 @@
 'use client';
 
-export const runtime = 'edge';
-
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Trash2, ShoppingBag, Plus, Minus, ArrowRight, ShieldCheck, Truck, Undo, AlertTriangle } from 'lucide-react';
+import { Trash2, ShoppingBag, Plus, Minus, ShieldCheck, Truck, Undo } from 'lucide-react';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/data';
 import { checkCartStock } from '@/app/actions/cartActions';

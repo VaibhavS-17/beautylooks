@@ -1,8 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import AddressManager from './AddressManager';
 
-export const runtime = 'edge';
-
 export default async function AddressesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
