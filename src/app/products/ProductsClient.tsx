@@ -268,29 +268,27 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
       }));
   }, [filteredProducts, allCategories]);
 
-  // No skeleton loader
-
   return (
     <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 text-left">
       
       {/* Header */}
       <div className="text-center mb-8">
-        <h1 className="font-display text-4xl sm:text-5xl text-text-main mb-4 font-bold" style={{ fontFamily: 'Playfair Display, serif' }}>
+        <h1 className="font-serif text-3xl sm:text-5xl text-text-main mb-3 font-normal">
           The Collection
         </h1>
-        <div className="w-16 h-0.5 bg-accent mx-auto mb-4" />
-        <p className="text-xs text-text-muted font-semibold uppercase tracking-[0.25em] max-w-xl mx-auto">
-          Explore Mumbai&apos;s finest premium cosmetics organized visually by category and brand
+        <div className="w-12 h-px bg-accent/60 mx-auto mb-4" />
+        <p className="text-xs text-text-muted font-medium uppercase tracking-[0.25em] max-w-xl mx-auto">
+          Explore Mumbai&apos;s authentic salon-grade cosmetics organized by category and brand
         </p>
       </div>
 
-      {/* Centered Large & Cool Search Bar with Search Button & Autocomplete */}
+      {/* Centered Search Bar with Autocomplete */}
       <div className="max-w-2xl mx-auto mb-14 relative" ref={searchContainerRef}>
-        <div className="relative flex items-center bg-white rounded-2xl border-2 border-[#E8E2D9] focus-within:border-[#C88E75] focus-within:ring-4 focus-within:ring-[#C88E75]/10 shadow-[0_4px_20px_-4px_rgba(44,30,22,0.04)] hover:shadow-[0_8px_30px_rgba(44,30,22,0.08)] transition-all duration-300 p-1.5 z-20">
-          <Search size={22} className="text-accent ml-4 shrink-0" />
+        <div className="relative flex items-center bg-white rounded-2xl border border-border focus-within:border-accent focus-within:ring-4 focus-within:ring-accent/10 shadow-xs hover:shadow-sm transition-all duration-300 p-1.5 z-20">
+          <Search size={20} className="text-accent ml-4 shrink-0" />
           <input
             type="text"
-            placeholder="Search our premium collection (e.g. Lotus, Scrub, Serum)..."
+            placeholder="Search our salon collection (e.g. Oxylife, Facial Kit, Serum)..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -308,7 +306,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                 setShowSuggestions(false);
               }
             }}
-            className="w-full bg-transparent border-none text-base sm:text-lg text-[#2C1E16] placeholder:text-[#6B5C52]/40 focus:outline-none focus:ring-0 px-3 py-2 font-medium"
+            className="w-full bg-transparent border-none text-sm sm:text-base text-text-main placeholder:text-text-muted/50 focus:outline-none focus:ring-0 px-3 py-2 font-normal"
             suppressHydrationWarning
           />
           {searchQuery && (
@@ -318,7 +316,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                 setSearchQuery('');
                 setShowSuggestions(false);
               }}
-              className="p-1.5 rounded-full hover:bg-[#FAF9F6] text-[#6B5C52] mr-2 transition-colors cursor-pointer"
+              className="p-1.5 rounded-full hover:bg-secondary text-text-muted mr-2 transition-colors cursor-pointer"
               aria-label="Clear search"
               suppressHydrationWarning
             >
@@ -328,7 +326,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
           <button
             type="button"
             onClick={() => handleSearchSubmit()}
-            className="bg-[#2C1E16] hover:bg-[#C88E75] text-white text-xs sm:text-sm uppercase tracking-widest font-bold px-7 py-3 rounded-xl transition-all duration-300 cursor-pointer shrink-0 hover:shadow-md active:scale-95"
+            className="btn-primary text-xs uppercase tracking-widest px-6 py-2.5 rounded-xl cursor-pointer shrink-0"
             suppressHydrationWarning
           >
             Search
@@ -337,7 +335,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
 
         {/* Autocomplete / Suggestions Dropdown */}
         {showSuggestions && debouncedSearchQuery.trim() && (
-          <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white rounded-2xl shadow-2xl border border-[#E8E2D9] overflow-hidden z-30 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white rounded-2xl shadow-xl border border-border overflow-hidden z-30 animate-in fade-in slide-in-from-top-2 duration-200">
             {suggestions.brands.length === 0 && suggestions.products.length === 0 ? (
               <div className="p-5 text-center text-sm text-text-muted">
                 No suggestions found for &ldquo;<span className="font-semibold text-text-main">{debouncedSearchQuery}</span>&rdquo;
@@ -346,7 +344,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
               <div className="py-2">
                 {/* Brand Suggestions */}
                 {suggestions.brands.length > 0 && (
-                  <div className="px-4 py-2 border-b border-[#E8E2D9]/60">
+                  <div className="px-4 py-2 border-b border-border/60">
                     <div className="text-[10px] font-bold text-accent uppercase tracking-wider mb-2 flex items-center gap-1.5">
                       <Sparkles size={12} />
                       <span>Brand Suggestions</span>
@@ -357,7 +355,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                           key={brand.id || brand.name}
                           type="button"
                           onClick={() => handleSearchSubmit(brand.name)}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FAF9F6] hover:bg-[#C88E75]/10 border border-[#E8E2D9] hover:border-[#C88E75] text-xs font-semibold text-[#2C1E16] hover:text-[#C88E75] transition-colors cursor-pointer"
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/60 hover:bg-secondary border border-border text-xs font-medium text-text-main hover:text-accent transition-colors cursor-pointer"
                         >
                           <Search size={12} className="text-accent" />
                           <span>{brand.name}</span>
@@ -373,15 +371,15 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                     <div className="px-4 pt-3 pb-1 text-[10px] font-bold text-text-muted uppercase tracking-wider">
                       Product Suggestions
                     </div>
-                    <div className="divide-y divide-[#E8E2D9]/40">
+                    <div className="divide-y divide-border/40">
                       {suggestions.products.map((product) => (
                         <button
                           key={product.id}
                           type="button"
                           onClick={() => handleSearchSubmit(product.name)}
-                          className="w-full text-left px-4 py-2.5 hover:bg-[#FAF9F6] flex items-center gap-3 transition-colors group cursor-pointer"
+                          className="w-full text-left px-4 py-2.5 hover:bg-secondary/40 flex items-center gap-3 transition-colors group cursor-pointer"
                         >
-                          <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-secondary shrink-0 border border-[#E8E2D9]/50">
+                          <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-secondary shrink-0 border border-border/50">
                             <Image
                               src={product.images?.[0] || fallbackProductImage}
                               alt={product.name}
@@ -391,7 +389,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-[10px] font-bold text-accent uppercase tracking-wider line-clamp-1">
+                            <div className="text-[10px] font-bold text-accent tracking-widest uppercase line-clamp-1">
                               {product.brand}
                             </div>
                             <div className="text-xs sm:text-sm font-medium text-text-main group-hover:text-accent transition-colors line-clamp-1">
@@ -399,7 +397,7 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                             </div>
                           </div>
                           <div className="text-right shrink-0">
-                            <span className="text-xs font-bold text-text-main">
+                            <span className="text-xs font-semibold text-text-main">
                               {formatPrice(product.salePrice || product.price)}
                             </span>
                           </div>
@@ -410,9 +408,9 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                 )}
 
                 {/* Bottom Bar: Press Enter to Search */}
-                <div className="p-3 bg-[#FAF9F6] border-t border-[#E8E2D9]/60 flex items-center justify-between text-xs">
+                <div className="p-3 bg-secondary/30 border-t border-border/60 flex items-center justify-between text-xs">
                   <span className="text-text-muted">
-                    Press <kbd className="px-1.5 py-0.5 bg-white border border-[#E8E2D9] rounded text-[11px] font-mono shadow-xs">Enter</kbd> to search
+                    Press <kbd className="px-1.5 py-0.5 bg-white border border-border rounded text-[11px] font-mono shadow-xs">Enter</kbd> to search
                   </span>
                   <button
                     type="button"
@@ -429,12 +427,12 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
       </div>
 
       {/* ================= SHOP BY CATEGORY (VISUAL BUTTONS WITH ICONS) ================= */}
-      <div className="mb-10 pb-4 border-b border-[#E8E2D9]/60">
-        <h2 className="text-xs font-bold text-[#2C1E16] uppercase tracking-[0.2em] mb-5 flex items-center gap-2">
+      <div className="mb-10 pb-4 border-b border-border/60">
+        <h2 className="text-xs font-bold text-text-main uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
           <Layers size={14} className="text-accent" />
           Shop By Category
         </h2>
-        <div className="flex gap-4 overflow-x-auto no-scrollbar py-2">
+        <div className="flex gap-3 overflow-x-auto no-scrollbar py-2">
           {allCategories.map(cat => {
             const isSelected = selectedCategories.includes(cat.slug);
             const icon = getCategoryIcon(cat.name);
@@ -442,14 +440,14 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
               <button
                 key={cat.id}
                 onClick={() => toggleCategory(cat.slug)}
-                className={`flex items-center gap-3 px-5 py-3 rounded-full border text-xs font-semibold uppercase tracking-wider transition-all duration-300 shrink-0 select-none cursor-pointer ${
+                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border text-xs font-semibold uppercase tracking-wider transition-all duration-200 shrink-0 select-none cursor-pointer ${
                   isSelected 
-                    ? 'bg-[#2C1E16] text-white border-[#2C1E16] shadow-md -translate-y-0.5 scale-105' 
-                    : 'bg-white text-[#2C1E16] border-[#E8E2D9] hover:border-accent hover:-translate-y-0.5 hover:shadow-sm'
+                    ? 'bg-brand-dark text-white border-brand-dark shadow-xs' 
+                    : 'bg-white text-text-main border-border hover:border-accent hover:text-accent'
                 }`}
                 suppressHydrationWarning
               >
-                <span className="text-lg">{icon}</span>
+                <span className="text-base">{icon}</span>
                 <span>{cat.name}</span>
                 {isSelected && <Check size={12} className="ml-1 text-accent" />}
               </button>
@@ -459,8 +457,8 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
       </div>
 
       {/* ================= SHOP BY BRAND (VISUAL LOGO BUTTONS) ================= */}
-      <div className="mb-12 pb-6 border-b border-[#E8E2D9]/60">
-        <h2 className="text-xs font-bold text-[#2C1E16] uppercase tracking-[0.2em] mb-5 flex items-center gap-2">
+      <div className="mb-12 pb-6 border-b border-border/60">
+        <h2 className="text-xs font-bold text-text-main uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
           <Sparkles size={14} className="text-accent" />
           Shop By Brand
         </h2>
@@ -472,19 +470,19 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
               <button
                 key={b.id}
                 onClick={() => toggleBrand(b.name)}
-                className={`flex flex-col items-center gap-2 p-2 rounded-2xl transition-all duration-300 shrink-0 cursor-pointer ${
+                className={`flex flex-col items-center gap-2 p-2 rounded-2xl transition-all duration-200 shrink-0 cursor-pointer ${
                   isSelected 
-                    ? 'scale-105 -translate-y-1' 
-                    : 'hover:scale-105 hover:-translate-y-1'
+                    ? 'scale-105' 
+                    : 'hover:scale-105'
                 }`}
                 style={{ width: '80px' }}
                 suppressHydrationWarning
               >
                 {/* Logo Circle */}
-                <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border-2 overflow-hidden shadow-sm transition-all bg-white ${
+                <div className={`relative w-14 h-14 rounded-full flex items-center justify-center border overflow-hidden shadow-xs transition-all bg-white ${
                   isSelected 
-                    ? 'border-[#2C1E16] ring-2 ring-[#C88E75]/30' 
-                    : 'border-[#E8E2D9] group-hover:border-[#C88E75]'
+                    ? 'border-accent ring-2 ring-accent/30' 
+                    : 'border-border hover:border-accent'
                 }`}>
                   {b.logoUrl ? (
                     <Image
@@ -495,14 +493,14 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
                       className="object-contain p-2"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#C88E75]/20 to-[#2C1E16]/10 flex items-center justify-center font-bold text-[#2C1E16] text-xs">
+                    <div className="w-full h-full bg-secondary flex items-center justify-center font-bold text-text-main text-xs">
                       {initials}
                     </div>
                   )}
                 </div>
                 {/* Brand Name */}
                 <span className={`text-[9px] font-bold uppercase tracking-wider text-center line-clamp-1 w-full ${
-                  isSelected ? 'text-[#C88E75]' : 'text-[#6B5C52]'
+                  isSelected ? 'text-accent' : 'text-text-muted'
                 }`}>
                   {b.name}
                 </span>
