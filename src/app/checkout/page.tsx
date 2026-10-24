@@ -1033,7 +1033,7 @@ function CheckoutContent() {
                 </div>
 
                 {errorMessage && (
-                  <div ref={errorRef} className="bg-red-50 text-red-600 p-4 rounded-xl text-xs border border-red-200 mb-6 text-left shadow-sm space-y-1 animate-fadeIn">
+                  <div ref={errorRef} className="bg-red-50 text-red-600 p-4 rounded-xl text-xs border border-red-200 mb-6 text-left shadow-sm space-y-1 animate-fade-in">
                     <p className="font-semibold text-red-700">Unable to place order</p>
                     <p>{errorMessage}</p>
                     {(outOfStockIds.size > 0 || lowStockIds.size > 0) && (

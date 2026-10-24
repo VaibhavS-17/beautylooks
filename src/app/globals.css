@@ -18,28 +18,70 @@
   
   --font-sans: var(--font-inter), sans-serif;
   --font-serif: var(--font-playfair), serif;
+
+  /* Motion Tokens & Timing Curves */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);             /* Snappy UI entrances */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);         /* Continuous morphs */
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);          /* Physical iOS sheet deceleration */
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Micro-delight & badges */
+
+  /* Standard Duration Scale */
+  --duration-instant: 100ms;  /* Press feedback (:active) */
+  --duration-fast: 160ms;     /* Micro-toggles, tooltips */
+  --duration-normal: 240ms;   /* Modals, menus, dropdowns */
+  --duration-drawer: 320ms;   /* Sliding drawers & sheets */
 }
 
 @layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    font-optical-sizing: auto;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans text-foreground tracking-tight;
   }
 
+  /* Prevent iOS Safari auto-zoom on inputs with font-size < 16px */
+  input, textarea, select {
+    font-size: 16px;
+  }
+  @media (min-width: 640px) {
+    input, textarea, select {
+      font-size: 0.875rem;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     ::before,
     ::after {
-      animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
+    }
+    .transform,
+    [class*="translate-"],
+    [class*="scale-"] {
+      transform: none !important;
+      transition-property: opacity !important;
+      transition-duration: 150ms !important;
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .apple-glass,
+    [class*="backdrop-blur"] {
+      background-color: #ffffff !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
     }
   }
 }
@@ -106,8 +148,10 @@
     transition: transform 0.5s ease;
   }
 
-  .product-card:hover .product-image-container img {
-    transform: scale(1.02);
+  @media (hover: hover) and (pointer: fine) {
+    .product-card:hover .product-image-container img {
+      transform: scale(1.02);
+    }
   }
 }
 
@@ -139,7 +183,7 @@
 }
 
 /* =============================================
-   KEYFRAME ANIMATIONS
+   KEYFRAME ANIMATIONS & UTILITIES
    ============================================= */
 
 @keyframes slide-up {
@@ -152,18 +196,88 @@
   to   { opacity: 1; }
 }
 
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes scale-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.96); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes heart-pop {
+  0%   { transform: scale(1); }
+  25%  { transform: scale(0.82); }
+  60%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+@keyframes badge-bump {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.28); }
+  100% { transform: scale(1); }
+}
+
 @keyframes shimmer {
   0%   { background-position: -200% center; }
   100% { background-position: 200% center; }
 }
 
-/* Animation classes */
-.animate-slide-up {
-  animation: slide-up 0.5s ease-out both;
+@keyframes slide-in-from-top-2 {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.3s ease both;
+/* Animation classes */
+.animate-slide-up {
+  animation: slide-up 0.5s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+}
+
+.animate-fade-in,
+.animate-fadeIn {
+  animation: fade-in 0.24s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+}
+
+.animate-scale-in {
+  animation: scale-in var(--duration-normal, 240ms) var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+}
+
+.animate-scale-out {
+  animation: scale-out var(--duration-normal, 240ms) var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up var(--duration-normal, 240ms) var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+}
+
+.animate-heart-pop {
+  animation: heart-pop 320ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+}
+
+.animate-badge-bump {
+  animation: badge-bump 220ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+}
+
+/* Compatibility classes for Tailwind-animate patterns */
+.animate-in {
+  animation-duration: var(--duration-normal, 240ms);
+  animation-timing-function: var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+  animation-fill-mode: both;
+}
+.animate-in.fade-in {
+  animation-name: fade-in;
+}
+.animate-in.zoom-in-95 {
+  animation-name: scale-in;
+}
+.animate-in.slide-in-from-top-2 {
+  animation-name: slide-in-from-top-2;
 }
 
 /* Stagger animation delays */
@@ -184,14 +298,25 @@
   animation: shimmer 1.5s linear infinite;
 }
 
-/* Touch-optimized active states for mobile */
+/* Tactile active press states (both desktop & mobile) */
+.btn-primary:active,
+.btn-secondary:active,
+.btn-tertiary:active {
+  transform: scale(0.97) !important;
+  transition: transform 100ms cubic-bezier(0.23, 1, 0.32, 1) !important;
+}
+
 @media (hover: none) {
-  .btn-primary:active, .btn-secondary:active, .btn-tertiary:active {
-    transform: scale(0.98);
-  }
   .product-card:active {
     opacity: 0.9;
   }
+}
+
+/* Apple Vibrancy Glass */
+.apple-glass {
+  background-color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
 }
 
 /* Scroll-triggered reveal utility class */
