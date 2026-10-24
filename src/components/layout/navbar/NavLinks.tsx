@@ -27,7 +27,7 @@ export default function NavLinks({ links, isTransparent }: { links: NavLinkProps
           <Link
             key={link.name}
             href={link.href}
-            className={`relative text-[11px] tracking-[0.15em] uppercase font-semibold transition-all duration-300 group px-2 py-1 ${
+            className={`relative text-[11px] tracking-[0.15em] uppercase font-semibold transition-[color,transform] duration-200 ease-out group px-2 py-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-accent)] rounded-sm ${
               isActive 
                 ? (isTransparent ? 'text-white' : 'text-[var(--color-accent)]') 
                 : `${isTransparent ? 'text-white/80 hover:text-white' : 'text-[var(--color-text-main)] hover:text-[var(--color-accent)]'} hover:-translate-y-0.5`
@@ -35,7 +35,7 @@ export default function NavLinks({ links, isTransparent }: { links: NavLinkProps
           >
             {link.name}
             <span className={`absolute -bottom-0.5 left-0 w-full h-px origin-left transition-transform duration-200 ease-out ${isTransparent ? 'bg-white' : 'bg-[var(--color-accent)]'} ${
-              isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+              isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100 group-focus-visible:scale-x-100'
             }`} />
           </Link>
         );

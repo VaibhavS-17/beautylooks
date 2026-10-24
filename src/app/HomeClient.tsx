@@ -122,7 +122,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                     alt={concern.title}
                     fill
                     sizes="(max-width: 640px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                    className="object-cover transition-transform duration-300 ease-out motion-safe:sm:group-hover:scale-105"
                   />
                   {/* Gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-500" />
@@ -170,10 +170,10 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                     alt={category.name}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                    className="object-cover transition-transform duration-300 ease-out motion-safe:sm:group-hover:scale-105"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#C88E75] to-[#2C1E16] flex items-center justify-center p-6 text-center text-white transition-transform duration-300 ease-out group-hover:scale-105">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#C88E75] to-[#2C1E16] flex items-center justify-center p-6 text-center text-white transition-transform duration-300 ease-out motion-safe:sm:group-hover:scale-105">
                     <span className="font-serif text-2xl font-bold tracking-tight uppercase" style={{ fontFamily: 'Playfair Display, serif' }}>
                       {category.name}
                     </span>

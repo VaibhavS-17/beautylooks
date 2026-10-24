@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Minus, Plus, Heart, Share2, Check, Bell } from 'lucide-react';
 import { formatPrice } from '@/lib/data';
 import { Product } from '@/lib/types';
@@ -28,7 +28,6 @@ export function ProductPurchasePanel({
   setNotifyModalOpen
 }: ProductPurchasePanelProps) {
   const router = useRouter();
-  const [peopleInCart, setPeopleInCart] = useState(0);
   const [countdownStr, setCountdownStr] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
 
@@ -37,11 +36,16 @@ export function ProductPurchasePanel({
   const setBuyNowItem = useCartStore((state) => state.setBuyNowItem);
   const wishlistItems = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
-  const [isHeartPopping, setIsHeartPopping] = useState(false);
+  const [heartPopKey, setHeartPopKey] = useState(0);
+
+  const peopleInCart = useMemo(() => {
+    const hash = product.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+    return (hash % 10) + 3;
+  }, [product.id]);
 
   const handleWishlistToggle = () => {
     toggleWishlist(product.id);
-    setIsHeartPopping(true);
+    setHeartPopKey((k) => k + 1);
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
       try {
         navigator.vibrate?.([15]);
@@ -57,9 +61,6 @@ export function ProductPurchasePanel({
   const isWishlisted = wishlistItems.includes(product.id);
 
   useEffect(() => {
-    const hash = product.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-    setPeopleInCart((hash % 10) + 3);
-    
     const updateCountdown = () => {
       const now = new Date();
       const cutoff = new Date();
@@ -166,10 +167,10 @@ export function ProductPurchasePanel({
                 aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
               >
                 <Heart
+                  key={heartPopKey}
                   size={22}
-                  className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${isHeartPopping ? 'animate-heart-pop' : ''}`}
+                  className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${heartPopKey > 0 ? 'animate-heart-pop' : ''}`}
                   strokeWidth={1.5}
-                  onAnimationEnd={() => setIsHeartPopping(false)}
                 />
               </button>
             </div>
@@ -219,10 +220,10 @@ export function ProductPurchasePanel({
               aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             >
               <Heart
+                key={heartPopKey}
                 size={22}
-                className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${isHeartPopping ? 'animate-heart-pop' : ''}`}
+                className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${heartPopKey > 0 ? 'animate-heart-pop' : ''}`}
                 strokeWidth={1.5}
-                onAnimationEnd={() => setIsHeartPopping(false)}
               />
             </button>
           </div>
@@ -251,10 +252,10 @@ export function ProductPurchasePanel({
                 aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
               >
                 <Heart
+                  key={heartPopKey}
                   size={22}
-                  className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${isHeartPopping ? 'animate-heart-pop' : ''}`}
+                  className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${heartPopKey > 0 ? 'animate-heart-pop' : ''}`}
                   strokeWidth={1.5}
-                  onAnimationEnd={() => setIsHeartPopping(false)}
                 />
               </button>
             </div>
