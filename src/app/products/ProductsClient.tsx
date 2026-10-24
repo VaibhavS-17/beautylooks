@@ -560,69 +560,12 @@ function ProductCatalogContent({ products, allCategories, allBrands }: ProductsC
 
       {/* Quick View Modal */}
       {quickViewProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setQuickViewProduct(null)} />
-          <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
-            <button 
-              onClick={() => setQuickViewProduct(null)}
-              className="absolute top-4 right-4 z-10 p-2 bg-white/50 hover:bg-white rounded-full transition-colors"
-            >
-              <X size={20} className="text-text-main" />
-            </button>
-            <div className="w-full md:w-1/2 relative bg-secondary min-h-[300px] md:min-h-full">
-              <Image 
-                src={quickViewProduct.images?.[0] || fallbackProductImage} 
-                alt={quickViewProduct.name} 
-                fill 
-                className="object-cover"
-              />
-            </div>
-            <div className="w-full md:w-1/2 p-6 md:p-10 overflow-y-auto">
-              <span className="text-[10px] font-bold text-accent tracking-widest uppercase block mb-2">
-                {quickViewProduct.brand}
-              </span>
-              <h2 className="font-display text-2xl md:text-3xl text-text-main font-semibold mb-4">
-                {quickViewProduct.name}
-              </h2>
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-xl font-semibold text-text-main">
-                  {formatPrice(quickViewProduct.salePrice || quickViewProduct.price)}
-                </span>
-                {quickViewProduct.salePrice && (
-                  <span className="text-sm text-text-muted line-through">
-                    {formatPrice(quickViewProduct.price)}
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-text-muted leading-relaxed mb-8 line-clamp-4">
-                {quickViewProduct.description}
-              </p>
-              
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => {
-                    addItem(quickViewProduct, 1);
-                    setQuickViewProduct(null);
-                  }}
-                  disabled={quickViewProduct.stockQuantity === 0}
-                  className={`w-full py-4 text-xs font-semibold uppercase tracking-widest rounded-xl transition-all ${
-                    quickViewProduct.stockQuantity > 0
-                      ? 'bg-brand-dark text-primary hover:bg-accent hover:text-brand-dark'
-                      : 'bg-border text-text-muted cursor-not-allowed'
-                  }`}
-                >
-                  {quickViewProduct.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}
-                </button>
-                <Link 
-                  href={`/products/${quickViewProduct.slug}`}
-                  className="w-full text-center py-4 text-xs font-semibold uppercase tracking-widest text-text-main hover:text-accent transition-colors"
-                >
-                  View Full Details
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProductQuickView 
+          product={quickViewProduct} 
+          fallbackProductImage={fallbackProductImage} 
+          onClose={() => setQuickViewProduct(null)} 
+          addItem={addItem} 
+        />
       )}
     </div>
   );

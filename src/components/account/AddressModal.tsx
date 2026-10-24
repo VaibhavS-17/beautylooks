@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, AlertTriangle } from 'lucide-react';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 
 interface SavedAddress {
   id?: string;
@@ -55,6 +56,24 @@ export function AddressModal({ isOpen, onClose, editingAddress, onSubmit }: Addr
       setSubmitted(false);
     }
   }, [isOpen, editingAddress]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    lockScroll();
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      unlockScroll();
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -167,19 +186,37 @@ export function AddressModal({ isOpen, onClose, editingAddress, onSubmit }: Addr
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm sm:p-6 pb-20 sm:pb-6">
-      <div className="bg-primary rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col relative overflow-hidden">
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 pb-20 sm:pb-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="address-modal-title"
+      onClick={onClose}
+    >
+      {/* Backdrop with click dismissal and fade-in */}
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+        aria-hidden="true"
+      />
+
+      {/* Modal Dialog container with scale-in */}
+      <div 
+        className="bg-primary rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col relative overflow-hidden animate-scale-in z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
         <div className="bg-primary/90 backdrop-blur-md z-10 px-6 py-5 border-b border-border flex justify-between items-center shrink-0">
           <div>
-            <h3 className="font-display text-xl text-text-main font-semibold">
+            <h3 id="address-modal-title" className="font-display text-xl text-text-main font-semibold">
               {editingAddress ? 'Edit Address' : 'Address'}
             </h3>
           </div>
           <button 
+            type="button"
             onClick={onClose}
-            className="text-text-muted hover:text-text-main transition-colors p-2 -mr-2"
+            className="text-text-muted hover:text-text-main transition-colors p-2 -mr-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            aria-label="Close address modal"
           >
             <X size={20} />
           </button>

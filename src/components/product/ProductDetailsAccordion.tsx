@@ -149,8 +149,11 @@ export function ProductDetailsAccordion({ product, commonFaqs }: ProductDetailsA
             <div key={idx} className="border border-border overflow-hidden">
               <button
                 type="button"
+                id={`faq-btn-${idx}`}
                 onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
-                className="w-full flex items-center justify-between p-5 text-left bg-[#FAFAF9] hover:bg-white transition-colors"
+                className="w-full flex items-center justify-between p-5 text-left bg-[#FAFAF9] hover:bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                aria-expanded={openFaqIndex === idx}
+                aria-controls={`faq-panel-${idx}`}
               >
                 <span className="text-sm font-medium text-text-main">{faq.question}</span>
                 <ChevronDown
@@ -158,16 +161,22 @@ export function ProductDetailsAccordion({ product, commonFaqs }: ProductDetailsA
                   className={`text-text-muted transition-transform duration-300 shrink-0 ${
                     openFaqIndex === idx ? 'rotate-180' : ''
                   }`}
+                  aria-hidden="true"
                 />
               </button>
               <div
-                className={`transition-all duration-300 overflow-hidden ${
-                  openFaqIndex === idx ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'
+                id={`faq-panel-${idx}`}
+                role="region"
+                aria-labelledby={`faq-btn-${idx}`}
+                className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                  openFaqIndex === idx ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 }`}
               >
-                <p className="px-5 pb-5 text-sm text-text-muted font-light leading-relaxed">
-                  {faq.answer}
-                </p>
+                <div className="overflow-hidden min-h-0">
+                  <p className="px-5 pb-5 text-sm text-text-muted font-light leading-relaxed">
+                    {faq.answer}
+                  </p>
+                </div>
               </div>
             </div>
           ))}

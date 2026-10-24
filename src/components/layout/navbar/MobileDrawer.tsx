@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { X } from 'lucide-react';
 import { NavLinkProps } from './NavLinks';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -14,6 +15,16 @@ interface MobileDrawerProps {
 
 export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
+  const drawerContentRef = useRef<HTMLDivElement>(null);
+
+  // Swipe-to-close touch gesture refs (direct DOM manipulation for 120fps motion)
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const touchCurrentXRef = useRef(0);
+  const touchStartTimeRef = useRef(0);
+  const lastSampleXRef = useRef(0);
+  const lastSampleTimeRef = useRef(0);
+  const isSwipingRef = useRef(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -24,19 +35,97 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
 
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
+      lockScroll();
+      if (drawerContentRef.current) {
+        drawerContentRef.current.style.transform = '';
+        drawerContentRef.current.style.transition = '';
+      }
       // Basic focus trap - focus the close button when opened
-      const closeBtn = document.getElementById('mobile-drawer-close');
-      if (closeBtn) closeBtn.focus();
+      const timer = setTimeout(() => {
+        const closeBtn = document.getElementById('mobile-drawer-close');
+        if (closeBtn) closeBtn.focus();
+      }, 50);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        unlockScroll();
+        clearTimeout(timer);
+      };
     } else {
-      document.body.style.overflow = '';
+      unlockScroll();
+      if (drawerContentRef.current) {
+        drawerContentRef.current.style.transform = '';
+        drawerContentRef.current.style.transition = '';
+      }
+    }
+  }, [isOpen, onClose]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const now = Date.now();
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+    touchCurrentXRef.current = e.touches[0].clientX;
+    touchStartTimeRef.current = now;
+    lastSampleXRef.current = e.touches[0].clientX;
+    lastSampleTimeRef.current = now;
+    isSwipingRef.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const deltaX = currentX - touchStartXRef.current;
+    const deltaY = currentY - touchStartYRef.current;
+
+    // Detect horizontal swipe to close (swiping left, deltaX < 0)
+    if (!isSwipingRef.current) {
+      if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX < -8) {
+        isSwipingRef.current = true;
+      }
     }
 
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-    };
-  }, [isOpen, onClose]);
+    if (isSwipingRef.current && deltaX < 0) {
+      const now = Date.now();
+      if (now - lastSampleTimeRef.current > 50) {
+        lastSampleXRef.current = currentX;
+        lastSampleTimeRef.current = now;
+      }
+      touchCurrentXRef.current = currentX;
+      if (drawerContentRef.current) {
+        drawerContentRef.current.style.transition = 'none';
+        drawerContentRef.current.style.transform = `translateX(${deltaX}px)`;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (isSwipingRef.current) {
+      isSwipingRef.current = false;
+      const deltaX = touchCurrentXRef.current - touchStartXRef.current;
+      const totalElapsedMs = Math.max(Date.now() - touchStartTimeRef.current, 1);
+      const totalVelocity = Math.abs(deltaX) / totalElapsedMs;
+
+      const recentDeltaX = touchCurrentXRef.current - lastSampleXRef.current;
+      const recentElapsedMs = Math.max(Date.now() - lastSampleTimeRef.current, 1);
+      const recentVelocity = Math.abs(recentDeltaX) / recentElapsedMs;
+
+      const velocity = Math.max(totalVelocity, recentVelocity);
+
+      if (deltaX < -70 || (deltaX < -20 && velocity > 0.11)) {
+        // Smoothly dismiss by sliding straight left off-screen
+        if (drawerContentRef.current) {
+          drawerContentRef.current.style.transition = 'transform 300ms var(--ease-drawer, cubic-bezier(0.32, 0.72, 0, 1))';
+          drawerContentRef.current.style.transform = 'translateX(-100%)';
+        }
+        onClose();
+      } else {
+        // Spring smoothly back into view
+        if (drawerContentRef.current) {
+          drawerContentRef.current.style.transition = 'transform 300ms var(--ease-drawer, cubic-bezier(0.32, 0.72, 0, 1))';
+          drawerContentRef.current.style.transform = 'translateX(0)';
+        }
+      }
+    }
+  };
 
   // Focus trap
   const handleTabKey = (e: React.KeyboardEvent) => {
@@ -65,19 +154,37 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
 
   return (
     <div
-      className={`fixed inset-0 z-50 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-700 cubic-bezier(0.16, 1, 0.3, 1) md:hidden`}
+      className={`fixed inset-0 z-50 md:hidden transition-[visibility] duration-300 ${
+        isOpen ? 'visible pointer-events-auto' : 'invisible pointer-events-none'
+      }`}
       role="dialog"
       aria-modal="true"
       aria-label="Mobile navigation"
+      aria-hidden={!isOpen}
+      inert={!isOpen ? true : undefined}
       onKeyDown={handleTabKey}
       ref={drawerRef}
     >
+      {/* Decoupled backdrop with pure in-place fade */}
       <div
-        className={`absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-500 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-out ${
+          isOpen ? 'opacity-100' : 'opacity-0'
+        }`}
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="absolute inset-y-0 left-0 w-4/5 max-w-sm bg-white shadow-2xl flex flex-col border-r border-[var(--color-border)]">
+
+      {/* Drawer Container with physical ease-drawer transition and swipe gesture */}
+      <div 
+        ref={drawerContentRef}
+        className={`absolute inset-y-0 left-0 w-4/5 max-w-sm bg-white shadow-2xl flex flex-col border-r border-[var(--color-border)] transform transition-[transform,opacity] duration-300 ease-drawer ${
+          isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full'
+        }`}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+      >
         <div className="px-6 py-6 flex justify-between items-center border-b border-[var(--color-border)]">
           <Link href="/" className="flex items-center gap-3" onClick={onClose}>
             <div className="relative h-9 w-9 overflow-hidden">
@@ -109,11 +216,11 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
           {links.map((link, index) => (
             <div
               key={link.name}
-              className="transform transition-all duration-500"
+              className="transform transition-all duration-300 ease-out"
               style={{
                 opacity: isOpen ? 1 : 0,
-                transform: isOpen ? 'translateX(0)' : 'translateX(-20px)',
-                transitionDelay: `${index * 60}ms`
+                transform: isOpen ? 'translateX(0)' : 'translateX(-16px)',
+                transitionDelay: `${isOpen ? index * 30 : 0}ms`
               }}
             >
               <Link
@@ -128,7 +235,10 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
           ))}
         </div>
 
-        <div className="p-5 bg-[var(--color-primary)] border-t border-[var(--color-border)]">
+        <div 
+          className="p-5 pb-safe bg-[var(--color-primary)] border-t border-[var(--color-border)]"
+          style={{ paddingBottom: 'max(1.25rem, calc(1.25rem + env(safe-area-inset-bottom, 0px)))' }}
+        >
           <p className="text-[10px] tracking-[0.15em] text-[var(--color-text-muted)] text-center uppercase">
             Need help?{' '}
             <a href="tel:+918879655807" className="text-[var(--color-accent)] hover:text-[var(--color-text-main)] transition-colors font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm">

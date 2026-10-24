@@ -62,15 +62,11 @@ export default function MobileBottomNav() {
     },
   ];
 
-  // Hide the global bottom nav on the product detail page because it has its own sticky CTA bar.
-  const isProductDetailPage = pathname?.match(/^\/products\/[^/]+$/);
-  
-  if (isProductDetailPage) {
-    return null;
-  }
-
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-50 pb-[env(safe-area-inset-bottom)]">
+    <nav
+      aria-label="Mobile Navigation"
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-50 pb-[env(safe-area-inset-bottom)]"
+    >
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.slice(0, 2).map((item) => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
@@ -92,12 +88,16 @@ export default function MobileBottomNav() {
         <button
           onClick={openCart}
           className="relative flex flex-col items-center justify-center -mt-6 transition-transform duration-200 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full"
+          aria-label={`Cart, ${cartItemsCount} items`}
           suppressHydrationWarning
         >
           <div className="bg-brand-dark text-primary h-14 w-14 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(202,138,4,0.3)] border-4 border-white">
             <ShoppingBag size={22} strokeWidth={1.5} />
             {mounted && cartItemsCount > 0 && (
-              <span className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-white">
+              <span 
+                key={cartItemsCount}
+                className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-white animate-badge-bump"
+              >
                 {cartItemsCount}
               </span>
             )}
@@ -128,6 +128,6 @@ export default function MobileBottomNav() {
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }

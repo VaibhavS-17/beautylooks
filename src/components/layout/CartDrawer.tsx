@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { X, Plus, Minus, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
@@ -9,11 +9,56 @@ import { formatPrice } from '@/lib/data';
 import { checkCartStock } from '@/app/actions/cartActions';
 import { NotifyMeButton } from '@/components/product/NotifyMeButton';
 import { createClient } from '@/lib/supabase/client';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, updateQuantity, removeItem, getTotalPrice, getTotalItems } = useCartStore();
   const fallbackProductImage = '/images/products/facial-kit-1.png';
   const drawerRef = useRef<HTMLDivElement>(null);
+  const drawerPanelRef = useRef<HTMLDivElement>(null);
+
+  // Enter/Exit animation state
+  const [isMounted, setIsMounted] = useState(isOpen);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Direct touch/pointer drag-to-dismiss interaction refs
+  const pointerStartYRef = useRef(0);
+  const pointerCurrentYRef = useRef(0);
+  const pointerStartTimeRef = useRef(0);
+  const lastSampleYRef = useRef(0);
+  const lastSampleTimeRef = useRef(0);
+  const isDraggingRef = useRef(false);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    let raf1: number;
+    let raf2: number;
+
+    if (isOpen) {
+      setIsMounted(true);
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          setIsVisible(true);
+        });
+      });
+    } else {
+      setIsVisible(false);
+      // Reset any gesture transform on panel
+      if (drawerPanelRef.current) {
+        drawerPanelRef.current.style.transform = '';
+        drawerPanelRef.current.style.transition = '';
+      }
+      timeoutId = setTimeout(() => {
+        setIsMounted(false);
+      }, 320); // 320ms matching --duration-drawer
+    }
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      clearTimeout(timeoutId);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -24,21 +69,97 @@ export default function CartDrawer() {
 
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
+      lockScroll();
+      // Reset inline styles on open
+      if (drawerPanelRef.current) {
+        drawerPanelRef.current.style.transform = '';
+        drawerPanelRef.current.style.transition = '';
+      }
       // Focus close button on open
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const closeBtn = document.getElementById('cart-close-btn');
         if (closeBtn) closeBtn.focus();
       }, 100);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        unlockScroll();
+        clearTimeout(timer);
+      };
     } else {
-      document.body.style.overflow = '';
+      unlockScroll();
+    }
+  }, [isOpen, closeCart]);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Only drag on primary touch/pointer
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    const now = Date.now();
+    pointerStartYRef.current = e.clientY;
+    pointerCurrentYRef.current = e.clientY;
+    pointerStartTimeRef.current = now;
+    lastSampleYRef.current = e.clientY;
+    lastSampleTimeRef.current = now;
+    isDraggingRef.current = true;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Ignore if pointer capture isn't available
+    }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    const now = Date.now();
+    if (now - lastSampleTimeRef.current > 50) {
+      lastSampleYRef.current = pointerCurrentYRef.current;
+      lastSampleTimeRef.current = now;
+    }
+    pointerCurrentYRef.current = e.clientY;
+    const deltaY = pointerCurrentYRef.current - pointerStartYRef.current;
+    if (drawerPanelRef.current) {
+      drawerPanelRef.current.style.transition = 'none';
+      if (deltaY > 0) {
+        drawerPanelRef.current.style.transform = `translateY(${deltaY}px)`;
+      } else {
+        drawerPanelRef.current.style.transform = 'translateY(0)';
+      }
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // Ignore
     }
 
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-    };
-  }, [isOpen, closeCart]);
+    const deltaY = pointerCurrentYRef.current - pointerStartYRef.current;
+    const elapsedMs = Math.max(Date.now() - pointerStartTimeRef.current, 1);
+    const overallVelocity = Math.abs(deltaY) / elapsedMs;
+
+    const recentDeltaY = pointerCurrentYRef.current - lastSampleYRef.current;
+    const recentElapsedMs = Math.max(Date.now() - lastSampleTimeRef.current, 1);
+    const recentVelocity = Math.abs(recentDeltaY) / recentElapsedMs;
+
+    const velocity = Math.max(overallVelocity, recentVelocity);
+
+    if (drawerPanelRef.current) {
+      if (deltaY > 80 || (deltaY > 20 && velocity > 0.11)) {
+        // Smoothly dismiss by sliding straight down off-screen
+        drawerPanelRef.current.style.transition = 'transform 300ms var(--ease-drawer, cubic-bezier(0.32, 0.72, 0, 1))';
+        drawerPanelRef.current.style.transform = 'translateY(100%)';
+        closeCart();
+      } else {
+        // Spring smoothly back to rest position
+        drawerPanelRef.current.style.transition = 'transform 300ms var(--ease-drawer, cubic-bezier(0.32, 0.72, 0, 1))';
+        drawerPanelRef.current.style.transform = 'translateY(0)';
+      }
+    }
+  };
 
   const handleTabKey = (e: React.KeyboardEvent) => {
     if (!drawerRef.current) return;
@@ -97,7 +218,7 @@ export default function CartDrawer() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, items.length]);
 
-  if (!isOpen) return null;
+  if (!isMounted) return null;
 
   const subtotal = getTotalPrice();
   const shipping = subtotal >= 499 ? 0 : 49;
@@ -109,28 +230,49 @@ export default function CartDrawer() {
       role="dialog" 
       aria-modal="true" 
       aria-label="Shopping Cart"
+      aria-hidden={!isVisible}
+      inert={!isVisible ? true : undefined}
       onKeyDown={handleTabKey}
       ref={drawerRef}
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+        className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-[320ms] ease-out ${
+          isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
         onClick={closeCart}
         aria-hidden="true"
       />
 
       {/* Drawer Container */}
-      <div className="absolute inset-0 md:inset-y-0 md:right-0 md:left-auto flex justify-end">
-        <div className="w-full h-[100dvh] md:max-w-md md:h-full bg-white shadow-2xl flex flex-col overflow-hidden relative">
-          
+      <div className="absolute inset-0 md:inset-y-0 md:right-0 md:left-auto flex justify-end pointer-events-none">
+        <div 
+          ref={drawerPanelRef}
+          className={`w-full h-[100dvh] md:max-w-md md:h-full bg-white shadow-2xl flex flex-col overflow-hidden relative pointer-events-auto rounded-t-2xl md:rounded-none transform transition-[transform,opacity] duration-[320ms] ease-drawer ${
+            isVisible 
+              ? 'opacity-100 translate-y-0 md:translate-x-0' 
+              : 'opacity-0 translate-y-full md:translate-x-full md:translate-y-0'
+          }`}
+        >
+          {/* Mobile Drag Pill Affordance */}
+          <div 
+            className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center md:hidden cursor-grab active:cursor-grabbing touch-none z-20"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            aria-label="Drag down to dismiss"
+          >
+            <div className="w-10 h-1 bg-gray-300 rounded-full" />
+          </div>
+
           {/* Header */}
-          <div className="flex-none px-4 py-6 border-b border-gray-100 flex items-center justify-between bg-white z-10 relative">
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 bg-gray-200 rounded-full md:hidden" aria-hidden="true"></div>
+          <div className="flex-none px-4 pt-6 pb-4 md:py-6 border-b border-gray-100 flex items-center justify-between bg-white z-10 relative">
             <h2 className="text-2xl font-display font-light text-text-main">Your Bag ({getTotalItems()})</h2>
             <button
               id="cart-close-btn"
               onClick={closeCart}
-              className="text-text-muted hover:text-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black rounded"
+              className="text-text-muted hover:text-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black rounded p-1"
               aria-label="Close cart"
             >
               <X size={24} strokeWidth={1.5} />
@@ -158,7 +300,7 @@ export default function CartDrawer() {
           {/* Item List */}
           <div className="flex-1 overflow-y-auto overscroll-contain px-4 divide-y divide-gray-100 no-scrollbar">
             {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-6 pb-safe">
                 <ShoppingBag size={48} strokeWidth={1} className="text-gray-300" />
                 <div className="space-y-2">
                   <h3 className="font-display text-2xl text-text-main">Your bag is empty</h3>
@@ -228,7 +370,7 @@ export default function CartDrawer() {
 
                         <div className="flex items-end justify-between mt-4">
                           {/* Quantity */}
-                          <div className="flex items-center border border-gray-200">
+                          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                               className="px-3 py-1 text-text-muted hover:text-black transition-colors"
@@ -284,17 +426,20 @@ export default function CartDrawer() {
             )}
           </div>
 
-          {/* Footer with clean CTA */}
+          {/* Footer with clean CTA and Safe Area insets */}
           {items.length > 0 && (
-            <div className="border-t border-gray-100 px-4 py-6 bg-white flex-none">
-              <div className="flex justify-between items-center mb-6">
+            <div 
+              className="border-t border-gray-100 px-4 pt-4 pb-6 pb-safe bg-white flex-none"
+              style={{ paddingBottom: 'max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom, 0px)))' }}
+            >
+              <div className="flex justify-between items-center mb-4">
                 <span className="text-base text-text-main">Subtotal</span>
                 <span className="text-lg font-medium text-text-main">{formatPrice(subtotal)}</span>
               </div>
               <Link
                 href="/checkout"
                 onClick={closeCart}
-                className="block w-full py-4 bg-black text-white text-center text-sm uppercase tracking-wider hover:bg-gray-900 transition-colors"
+                className="btn-primary block w-full py-4 text-center text-sm uppercase tracking-wider rounded-xl transition-all"
               >
                 Checkout
               </Link>

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Minus, Plus, Heart, Share2, Check, Bell } from 'lucide-react';
 import { formatPrice } from '@/lib/data';
 import { Product } from '@/lib/types';
@@ -28,7 +28,6 @@ export function ProductPurchasePanel({
   setNotifyModalOpen
 }: ProductPurchasePanelProps) {
   const router = useRouter();
-  const [peopleInCart, setPeopleInCart] = useState(0);
   const [countdownStr, setCountdownStr] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
 
@@ -37,6 +36,24 @@ export function ProductPurchasePanel({
   const setBuyNowItem = useCartStore((state) => state.setBuyNowItem);
   const wishlistItems = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
+  const [heartPopKey, setHeartPopKey] = useState(0);
+
+  const peopleInCart = useMemo(() => {
+    const hash = product.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+    return (hash % 10) + 3;
+  }, [product.id]);
+
+  const handleWishlistToggle = () => {
+    toggleWishlist(product.id);
+    setHeartPopKey((k) => k + 1);
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate?.([15]);
+      } catch {
+        // ignore vibrate failures
+      }
+    }
+  };
 
   const existingCartItem = cartItems.find((item) => item.product.id === product.id);
   const existingCartQty = existingCartItem ? existingCartItem.quantity : 0;
@@ -44,9 +61,6 @@ export function ProductPurchasePanel({
   const isWishlisted = wishlistItems.includes(product.id);
 
   useEffect(() => {
-    const hash = product.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-    setPeopleInCart((hash % 10) + 3);
-    
     const updateCountdown = () => {
       const now = new Date();
       const cutoff = new Date();
@@ -119,7 +133,7 @@ export function ProductPurchasePanel({
         <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center border-t border-border/50">
           <div className="flex flex-col gap-1 w-full sm:w-auto">
             <div className="flex gap-4 items-center w-full">
-              <div className="flex-1 sm:w-36 flex items-center bg-white h-14 overflow-hidden border border-border shrink-0">
+              <div className="flex-1 sm:w-36 flex items-center bg-white h-14 rounded-xl overflow-hidden border border-border shrink-0">
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className="w-12 sm:px-5 h-full flex items-center justify-center hover:bg-black/5 transition-colors text-text-main"
@@ -142,16 +156,22 @@ export function ProductPurchasePanel({
               
               <button 
                 onClick={handleShare}
-                className="sm:hidden h-14 w-14 shrink-0 flex items-center justify-center border border-border bg-white hover:bg-black/5 transition-colors"
+                className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border bg-white hover:bg-black/5 transition-colors"
                 aria-label="Share product"
               >
                 {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
               </button>
               <button 
-                onClick={() => toggleWishlist(product.id)}
+                onClick={handleWishlistToggle}
                 className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
+                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
               >
-                <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
+                <Heart
+                  key={heartPopKey}
+                  size={22}
+                  className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${heartPopKey > 0 ? 'animate-heart-pop' : ''}`}
+                  strokeWidth={1.5}
+                />
               </button>
             </div>
             {product.stockQuantity === 1 && (
@@ -180,7 +200,7 @@ export function ProductPurchasePanel({
                 setBuyNowItem({ product, quantity, isSubscription });
                 router.push('/checkout?mode=buynow');
               }}
-              className="w-full sm:w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center bg-accent text-white hover:bg-black hover:text-white shadow-gold hover:-translate-y-1"
+              className="w-full sm:w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] flex items-center justify-center bg-accent text-white hover:bg-black hover:text-white shadow-gold sm:hover:-translate-y-0.5 active:scale-[0.98] transition-transform duration-150 ease-out"
             >
               Buy Now
             </button>
@@ -195,10 +215,16 @@ export function ProductPurchasePanel({
               {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
             </button>
             <button 
-              onClick={() => toggleWishlist(product.id)}
+              onClick={handleWishlistToggle}
               className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
+              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             >
-              <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
+              <Heart
+                key={heartPopKey}
+                size={22}
+                className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${heartPopKey > 0 ? 'animate-heart-pop' : ''}`}
+                strokeWidth={1.5}
+              />
             </button>
           </div>
         </div>
@@ -207,7 +233,7 @@ export function ProductPurchasePanel({
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
             <button
               onClick={() => setNotifyModalOpen(true)}
-              className="w-full sm:w-auto h-14 px-10 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 bg-accent text-white hover:bg-black hover:text-white shadow-gold hover:-translate-y-1"
+              className="w-full sm:w-auto h-14 px-10 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 bg-accent text-white hover:bg-black hover:text-white shadow-gold sm:hover:-translate-y-0.5 active:scale-[0.98] transition-transform duration-150 ease-out"
             >
               <Bell size={18} />
               Notify Me When Available
@@ -221,10 +247,16 @@ export function ProductPurchasePanel({
                 {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
               </button>
               <button 
-                onClick={() => toggleWishlist(product.id)}
+                onClick={handleWishlistToggle}
                 className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
+                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
               >
-                <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
+                <Heart
+                  key={heartPopKey}
+                  size={22}
+                  className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${heartPopKey > 0 ? 'animate-heart-pop' : ''}`}
+                  strokeWidth={1.5}
+                />
               </button>
             </div>
           </div>

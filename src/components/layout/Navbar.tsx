@@ -93,11 +93,11 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
 
       <nav
         suppressHydrationWarning
-        className={`sticky top-0 sm:top-4 w-full max-w-[1920px] mx-auto z-40 transition-all duration-500 sm:px-6 lg:px-8 sm:mb-4 ${
+        className={`sticky top-0 sm:top-4 w-full max-w-[1920px] mx-auto z-40 transition-transform duration-300 sm:px-6 lg:px-8 sm:mb-4 ${
           isScrolled ? 'translate-y-0 sm:translate-y-[-4px]' : ''
         }`}
       >
-        <div suppressHydrationWarning className={`transition-all duration-500 sm:rounded-2xl border-b sm:border ${
+        <div suppressHydrationWarning className={`transition-[background-color,border-color,box-shadow] duration-300 sm:rounded-2xl border-b sm:border ${
           isScrolled
             ? 'bg-white/95 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border-[var(--color-border)]'
             : isTransparent
@@ -106,7 +106,7 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
         }`}>
           {/* Main Navbar Row */}
           <div className="px-4 sm:px-6">
-            <div className={`flex justify-between items-center relative transition-all duration-500 ${isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'}`}>
+            <div className="flex justify-between items-center relative h-16 sm:h-20">
 
               {/* Left: Mobile Menu Button (Hamburger) */}
               <div className="flex items-center md:hidden">
@@ -198,7 +198,10 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
                 >
                   <ShoppingBag size={19} strokeWidth={1.5} />
                   {mounted && cartItemsCount > 0 && (
-                    <span className={`absolute -top-1.5 -right-2 ${isTransparent ? 'bg-white text-black' : 'bg-[var(--color-text-main)] text-white'} text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm`}>
+                    <span 
+                      key={cartItemsCount}
+                      className={`absolute -top-1.5 -right-2 ${isTransparent ? 'bg-white text-black' : 'bg-[var(--color-text-main)] text-white'} text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm animate-badge-bump`}
+                    >
                       {cartItemsCount}
                     </span>
                   )}
