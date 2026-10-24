@@ -7,15 +7,21 @@ export const revalidate = 3600;
 
 // ── Pre-generate static HTML for active products at build time ──
 export async function generateStaticParams() {
-  const supabase = createPublicClient();
-  const { data: products } = await supabase
-    .from('products')
-    .select('slug')
-    .eq('is_active', true);
+  try {
+    const supabase = createPublicClient();
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('slug')
+      .eq('is_active', true);
 
-  return (products || []).map((p) => ({
-    slug: p.slug,
-  }));
+    if (error || !products) return [];
+
+    return products.map((p) => ({
+      slug: p.slug,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 // ── Dynamic SEO & Open Graph ──

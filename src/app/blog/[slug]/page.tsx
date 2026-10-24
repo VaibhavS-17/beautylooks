@@ -5,15 +5,21 @@ import { notFound } from 'next/navigation';
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  const supabase = createPublicClient();
-  const { data: posts } = await supabase
-    .from('blog_posts')
-    .select('slug')
-    .eq('is_published', true);
+  try {
+    const supabase = createPublicClient();
+    const { data: posts, error } = await supabase
+      .from('blog_posts')
+      .select('slug')
+      .eq('is_published', true);
 
-  return (posts || []).map((p) => ({
-    slug: p.slug,
-  }));
+    if (error || !posts) return [];
+
+    return posts.map((p) => ({
+      slug: p.slug,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export default async function BlogPostDetailPage({ params }: { params: Promise<{ slug: string }> }) {

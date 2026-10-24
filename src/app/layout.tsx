@@ -39,11 +39,17 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = createPublicClient();
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('id, name, slug')
-    .order('created_at', { ascending: true });
+  let categories: any[] = [];
+  try {
+    const supabase = createPublicClient();
+    const { data } = await supabase
+      .from('categories')
+      .select('id, name, slug')
+      .order('created_at', { ascending: true });
+    categories = data || [];
+  } catch {
+    categories = [];
+  }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
