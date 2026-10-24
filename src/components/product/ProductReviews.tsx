@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, ThumbsUp } from 'lucide-react';
-import { createReview, incrementHelpfulCount } from '@/app/actions/reviewActions';
+import { createReview, incrementHelpfulCount, checkReviewEligibility } from '@/app/actions/reviewActions';
 
 import { Review } from '@/lib/types';
 interface ProductReviewsProps {
@@ -10,9 +10,9 @@ interface ProductReviewsProps {
   reviews: Review[];
   averageRating: number;
   reviewCount: number;
-  canReview: boolean;
-  hasReviewed: boolean;
-  currentUserId: string | null;
+  canReview?: boolean;
+  hasReviewed?: boolean;
+  currentUserId?: string | null;
 }
 
 export function ProductReviews({
@@ -20,12 +20,29 @@ export function ProductReviews({
   reviews,
   averageRating,
   reviewCount,
-  canReview,
-  hasReviewed,
-  currentUserId
+  canReview = false,
+  hasReviewed = false,
+  currentUserId = null
 }: ProductReviewsProps) {
   const reviewsSectionRef = useRef<HTMLDivElement>(null);
   
+  // Asynchronous eligibility check for logged-in users without blocking SSR/ISR
+  const [eligibility, setEligibility] = useState({
+    canReview,
+    hasReviewed,
+    currentUserId,
+  });
+
+  useEffect(() => {
+    if (!currentUserId) {
+      checkReviewEligibility(productId).then((res) => {
+        if (res && res.currentUserId) {
+          setEligibility(res);
+        }
+      });
+    }
+  }, [productId, currentUserId]);
+
   // Review form state
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
@@ -149,7 +166,7 @@ export function ProductReviews({
         </div>
 
         {/* Review Form (Authenticated Users) */}
-        {canReview && currentUserId && !hasReviewed && (
+        {eligibility.canReview && eligibility.currentUserId && !eligibility.hasReviewed && (
           <div className="bg-[#FAFAF9] p-6 sm:p-8 border border-border">
             <h3 className="font-display text-lg text-text-main mb-4">Write a Review</h3>
             <form onSubmit={handleSubmitReview} className="space-y-4">
@@ -202,13 +219,13 @@ export function ProductReviews({
           </div>
         )}
 
-        {hasReviewed && (
+        {eligibility.hasReviewed && (
           <div className="p-4 bg-[#FAFAF9] border border-border text-center text-sm text-text-muted">
             You have already reviewed this product. Thank you for your feedback!
           </div>
         )}
 
-        {currentUserId && !canReview && !hasReviewed && (
+        {eligibility.currentUserId && !eligibility.canReview && !eligibility.hasReviewed && (
           <div className="p-4 bg-[#FAFAF9] border border-border text-center text-sm text-text-muted rounded-xl">
             Only verified customers whose order for this product has been <span className="font-semibold text-text-main">delivered</span> can write a review.
           </div>
@@ -233,32 +250,27 @@ export function ProductReviews({
                 .slice(0, 3);
 
               return (
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-text-muted mb-4">Featured Reviews</h3>
-                  <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 no-scrollbar">
+                <div className="bg-[#FAF8F5] border border-border/70 p-6 rounded-2xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-semibold text-accent uppercase tracking-[0.2em]">Featured Reviews</span>
+                    <span className="text-xs text-text-muted">Top Rated by Customers</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {topReviews.map((rev) => (
-                      <div
-                        key={`featured-${rev.id}`}
-                        className="min-w-[280px] sm:min-w-[320px] snap-start p-5 bg-gradient-to-br from-[#FDFBF7] to-[#F5F0E8] border border-accent/20 rounded-xl space-y-3 flex-shrink-0"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 bg-accent/10 text-accent rounded-full">
-                              ★ Featured
-                            </span>
-                          </div>
-                          <div className="flex text-accent text-xs">
+                      <div key={rev.id} className="bg-white p-4 rounded-xl border border-border/50 shadow-2xs flex flex-col justify-between">
+                        <div>
+                          <div className="flex text-accent text-xs mb-2">
                             {[...Array(5)].map((_, i) => (
-                              <span key={i} className={i < rev.rating ? 'text-accent' : 'text-border'}>★</span>
+                              <span key={i} className={i < rev.rating ? 'text-accent' : 'text-border'}>
+                                ★
+                              </span>
                             ))}
                           </div>
+                          <p className="text-xs text-text-main font-medium line-clamp-3 mb-2">&ldquo;{rev.comment}&rdquo;</p>
                         </div>
-                        <p className="text-sm text-text-muted font-light leading-relaxed line-clamp-3">{rev.comment}</p>
-                        <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                          <span className="text-xs font-medium text-text-main">{rev.userName || 'Verified Buyer'}</span>
-                          <span className="text-[10px] text-text-muted">
-                            {new Date(rev.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
-                          </span>
+                        <div className="flex items-center justify-between text-[10px] text-text-muted pt-2 border-t border-border/40">
+                          <span className="font-semibold text-text-main">{rev.userName}</span>
+                          <span>{new Date(rev.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}</span>
                         </div>
                       </div>
                     ))}
@@ -267,34 +279,37 @@ export function ProductReviews({
               );
             })()}
 
-            {/* Full Reviews List with Helpful Button */}
-            <div className="space-y-6">
+            <div className="divide-y divide-border">
               {reviews.slice(0, visibleReviewCount).map((rev) => (
-                <div key={rev.id} className="p-6 bg-white border border-border space-y-3">
+                <div key={rev.id} className="py-6 first:pt-0 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="font-medium text-sm text-text-main">
-                        {rev.userName || 'Verified Buyer'}
-                      </span>
-                      <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 bg-[#FAFAF9] border border-border text-text-muted">
-                        Verified
-                      </span>
+                      <div className="w-8 h-8 rounded-full bg-border flex items-center justify-center text-xs font-semibold text-text-main uppercase">
+                        {rev.userName.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-text-main">{rev.userName}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded font-medium">
+                            Verified Buyer
+                          </span>
+                        </div>
+                        <span className="text-xs text-text-muted">
+                          {new Date(rev.createdAt).toLocaleDateString('en-IN', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-xs text-text-muted">
-                      {new Date(rev.createdAt).toLocaleDateString('en-IN', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                  </div>
-
-                  <div className="flex text-accent text-xs">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className={i < rev.rating ? 'text-accent' : 'text-border'}>
-                        ★
-                      </span>
-                    ))}
+                    <div className="flex text-accent text-xs">
+                      {[...Array(5)].map((_, i) => (
+                        <span key={i} className={i < rev.rating ? 'text-accent' : 'text-border'}>
+                          ★
+                        </span>
+                      ))}
+                    </div>
                   </div>
 
                   <p className="text-sm text-text-muted font-light leading-relaxed">{rev.comment}</p>

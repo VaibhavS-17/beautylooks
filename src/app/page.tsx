@@ -1,9 +1,10 @@
-import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/public';
 import HomeClient from './HomeClient';
+
 export const revalidate = 3600;
 
 export default async function Homepage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   // Fetch all homepage data concurrently in parallel
   const [
@@ -34,11 +35,11 @@ export default async function Homepage() {
       .limit(4),
     supabase
       .from('categories')
-      .select('*')
+      .select('id, name, slug, description, image_url')
       .order('name'),
     supabase
       .from('blog_posts')
-      .select('*')
+      .select('id, title, slug, excerpt, cover_image, published_at, created_at')
       .eq('is_published', true)
       .order('published_at', { ascending: false })
       .limit(3),

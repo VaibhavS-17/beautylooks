@@ -1,6 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/public';
 import ProductsClient from './ProductsClient';
-
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -11,31 +10,45 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function ProductsPage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
-  // Fetch all products
-  const { data: productsData } = await supabase
-    .from('products')
-    .select(`
-      id,
-      name,
-      slug,
-      description,
-      short_description,
-      price,
-      sale_price,
-      images,
-      is_featured,
-      is_active,
-      stock_quantity,
-      category_id,
-      skin_type,
-      brands (name),
-      categories (name),
-      reviews (rating)
-    `)
-    .eq('is_active', true)
-    .order('created_at', { ascending: false });
+  // Fetch products, categories, and brands concurrently in parallel
+  const [
+    { data: productsData },
+    { data: categoriesData },
+    { data: brandsData },
+  ] = await Promise.all([
+    supabase
+      .from('products')
+      .select(`
+        id,
+        name,
+        slug,
+        description,
+        short_description,
+        price,
+        sale_price,
+        images,
+        is_featured,
+        is_active,
+        stock_quantity,
+        category_id,
+        skin_type,
+        brands (name),
+        categories (name),
+        reviews (rating)
+      `)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('categories')
+      .select('id, name, slug, description, image_url')
+      .order('name'),
+    supabase
+      .from('brands')
+      .select('id, name, slug, logo_url')
+      .order('name'),
+  ]);
 
   const mappedProducts = (productsData || []).map((p: any) => {
     const revs = p.reviews || [];
@@ -66,12 +79,6 @@ export default async function ProductsPage() {
     };
   });
 
-  // Fetch categories
-  const { data: categoriesData } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name');
-
   const mappedCategories = (categoriesData || []).map((c: any) => ({
     id: c.id,
     name: c.name,
@@ -79,12 +86,6 @@ export default async function ProductsPage() {
     description: c.description,
     imageUrl: c.image_url
   }));
-
-  // Fetch brands
-  const { data: brandsData } = await supabase
-    .from('brands')
-    .select('*')
-    .order('name');
 
   const mappedBrands = (brandsData || []).map((b: any) => ({
     id: b.id,

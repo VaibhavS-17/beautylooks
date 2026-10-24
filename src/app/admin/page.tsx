@@ -6,9 +6,10 @@ import DashboardTab from './tabs/DashboardTab';
 export default async function AdminDashboardPage({
   searchParams,
 }: {
-  searchParams?: { tab?: string };
+  searchParams?: Promise<{ tab?: string }>;
 }) {
-  const tab = searchParams?.tab;
+  const resolvedSearchParams = await searchParams;
+  const tab = resolvedSearchParams?.tab;
   if (tab && tab !== 'dashboard') {
     redirect(`/admin/${tab}`);
   }

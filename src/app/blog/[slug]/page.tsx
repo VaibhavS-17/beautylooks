@@ -1,10 +1,30 @@
-import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/public';
 import BlogDetailClient from './BlogDetailClient';
 import { notFound } from 'next/navigation';
 
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  try {
+    const supabase = createPublicClient();
+    const { data: posts, error } = await supabase
+      .from('blog_posts')
+      .select('slug')
+      .eq('is_published', true);
+
+    if (error || !posts) return [];
+
+    return posts.map((p) => ({
+      slug: p.slug,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function BlogPostDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data: postData, error } = await supabase
     .from('blog_posts')
