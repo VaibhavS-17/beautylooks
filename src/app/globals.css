@@ -92,6 +92,13 @@
       transition-property: opacity !important;
       transition-duration: 150ms !important;
     }
+    button:not(:disabled):active,
+    [role="button"]:not([aria-disabled="true"]):active,
+    .btn-primary:active,
+    .btn-secondary:active,
+    .btn-tertiary:active {
+      transform: none !important;
+    }
   }
 
   @media (prefers-reduced-transparency: reduce) {

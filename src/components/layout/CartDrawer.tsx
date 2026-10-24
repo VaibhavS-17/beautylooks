@@ -25,6 +25,8 @@ export default function CartDrawer() {
   const pointerStartYRef = useRef(0);
   const pointerCurrentYRef = useRef(0);
   const pointerStartTimeRef = useRef(0);
+  const lastSampleYRef = useRef(0);
+  const lastSampleTimeRef = useRef(0);
   const isDraggingRef = useRef(false);
 
   useEffect(() => {
@@ -91,9 +93,12 @@ export default function CartDrawer() {
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     // Only drag on primary touch/pointer
     if (e.button !== 0 && e.pointerType === 'mouse') return;
+    const now = Date.now();
     pointerStartYRef.current = e.clientY;
     pointerCurrentYRef.current = e.clientY;
-    pointerStartTimeRef.current = Date.now();
+    pointerStartTimeRef.current = now;
+    lastSampleYRef.current = e.clientY;
+    lastSampleTimeRef.current = now;
     isDraggingRef.current = true;
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
@@ -104,6 +109,11 @@ export default function CartDrawer() {
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current) return;
+    const now = Date.now();
+    if (now - lastSampleTimeRef.current > 50) {
+      lastSampleYRef.current = pointerCurrentYRef.current;
+      lastSampleTimeRef.current = now;
+    }
     pointerCurrentYRef.current = e.clientY;
     const deltaY = pointerCurrentYRef.current - pointerStartYRef.current;
     if (drawerPanelRef.current) {
@@ -129,7 +139,13 @@ export default function CartDrawer() {
 
     const deltaY = pointerCurrentYRef.current - pointerStartYRef.current;
     const elapsedMs = Math.max(Date.now() - pointerStartTimeRef.current, 1);
-    const velocity = Math.abs(deltaY) / elapsedMs;
+    const overallVelocity = Math.abs(deltaY) / elapsedMs;
+
+    const recentDeltaY = pointerCurrentYRef.current - lastSampleYRef.current;
+    const recentElapsedMs = Math.max(Date.now() - lastSampleTimeRef.current, 1);
+    const recentVelocity = Math.abs(recentDeltaY) / recentElapsedMs;
+
+    const velocity = Math.max(overallVelocity, recentVelocity);
 
     if (drawerPanelRef.current) {
       if (deltaY > 80 || (deltaY > 20 && velocity > 0.11)) {
@@ -232,10 +248,10 @@ export default function CartDrawer() {
       <div className="absolute inset-0 md:inset-y-0 md:right-0 md:left-auto flex justify-end pointer-events-none">
         <div 
           ref={drawerPanelRef}
-          className={`w-full h-[100dvh] md:max-w-md md:h-full bg-white shadow-2xl flex flex-col overflow-hidden relative pointer-events-auto rounded-t-2xl md:rounded-none transform transition-transform duration-[320ms] ease-drawer ${
+          className={`w-full h-[100dvh] md:max-w-md md:h-full bg-white shadow-2xl flex flex-col overflow-hidden relative pointer-events-auto rounded-t-2xl md:rounded-none transform transition-[transform,opacity] duration-[320ms] ease-drawer ${
             isVisible 
-              ? 'translate-y-0 md:translate-x-0' 
-              : 'translate-y-full md:translate-x-full md:translate-y-0'
+              ? 'opacity-100 translate-y-0 md:translate-x-0' 
+              : 'opacity-0 translate-y-full md:translate-x-full md:translate-y-0'
           }`}
         >
           {/* Mobile Drag Pill Affordance */}

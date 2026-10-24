@@ -22,6 +22,8 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
   const touchStartYRef = useRef(0);
   const touchCurrentXRef = useRef(0);
   const touchStartTimeRef = useRef(0);
+  const lastSampleXRef = useRef(0);
+  const lastSampleTimeRef = useRef(0);
   const isSwipingRef = useRef(false);
 
   useEffect(() => {
@@ -58,10 +60,13 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
   }, [isOpen, onClose]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    const now = Date.now();
     touchStartXRef.current = e.touches[0].clientX;
     touchStartYRef.current = e.touches[0].clientY;
     touchCurrentXRef.current = e.touches[0].clientX;
-    touchStartTimeRef.current = Date.now();
+    touchStartTimeRef.current = now;
+    lastSampleXRef.current = e.touches[0].clientX;
+    lastSampleTimeRef.current = now;
     isSwipingRef.current = false;
   };
 
@@ -79,6 +84,11 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
     }
 
     if (isSwipingRef.current && deltaX < 0) {
+      const now = Date.now();
+      if (now - lastSampleTimeRef.current > 50) {
+        lastSampleXRef.current = currentX;
+        lastSampleTimeRef.current = now;
+      }
       touchCurrentXRef.current = currentX;
       if (drawerContentRef.current) {
         drawerContentRef.current.style.transition = 'none';
@@ -91,8 +101,14 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
     if (isSwipingRef.current) {
       isSwipingRef.current = false;
       const deltaX = touchCurrentXRef.current - touchStartXRef.current;
-      const elapsedMs = Math.max(Date.now() - touchStartTimeRef.current, 1);
-      const velocity = Math.abs(deltaX) / elapsedMs;
+      const totalElapsedMs = Math.max(Date.now() - touchStartTimeRef.current, 1);
+      const totalVelocity = Math.abs(deltaX) / totalElapsedMs;
+
+      const recentDeltaX = touchCurrentXRef.current - lastSampleXRef.current;
+      const recentElapsedMs = Math.max(Date.now() - lastSampleTimeRef.current, 1);
+      const recentVelocity = Math.abs(recentDeltaX) / recentElapsedMs;
+
+      const velocity = Math.max(totalVelocity, recentVelocity);
 
       if (deltaX < -70 || (deltaX < -20 && velocity > 0.11)) {
         // Smoothly dismiss by sliding straight left off-screen
@@ -161,8 +177,8 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
       {/* Drawer Container with physical ease-drawer transition and swipe gesture */}
       <div 
         ref={drawerContentRef}
-        className={`absolute inset-y-0 left-0 w-4/5 max-w-sm bg-white shadow-2xl flex flex-col border-r border-[var(--color-border)] transform transition-transform duration-300 ease-drawer ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`absolute inset-y-0 left-0 w-4/5 max-w-sm bg-white shadow-2xl flex flex-col border-r border-[var(--color-border)] transform transition-[transform,opacity] duration-300 ease-drawer ${
+          isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full'
         }`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
