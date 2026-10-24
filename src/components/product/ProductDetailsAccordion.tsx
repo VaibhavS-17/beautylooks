@@ -161,13 +161,15 @@ export function ProductDetailsAccordion({ product, commonFaqs }: ProductDetailsA
                 />
               </button>
               <div
-                className={`transition-all duration-300 overflow-hidden ${
-                  openFaqIndex === idx ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'
+                className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                  openFaqIndex === idx ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 }`}
               >
-                <p className="px-5 pb-5 text-sm text-text-muted font-light leading-relaxed">
-                  {faq.answer}
-                </p>
+                <div className="overflow-hidden min-h-0">
+                  <p className="px-5 pb-5 text-sm text-text-muted font-light leading-relaxed">
+                    {faq.answer}
+                  </p>
+                </div>
               </div>
             </div>
           ))}

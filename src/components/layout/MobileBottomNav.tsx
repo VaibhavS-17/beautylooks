@@ -62,13 +62,6 @@ export default function MobileBottomNav() {
     },
   ];
 
-  // Hide the global bottom nav on the product detail page because it has its own sticky CTA bar.
-  const isProductDetailPage = pathname?.match(/^\/products\/[^/]+$/);
-  
-  if (isProductDetailPage) {
-    return null;
-  }
-
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-50 pb-[env(safe-area-inset-bottom)]">
       <div className="flex items-center justify-around h-16 px-2">

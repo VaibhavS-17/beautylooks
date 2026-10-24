@@ -34,8 +34,8 @@ export default function NavLinks({ links, isTransparent }: { links: NavLinkProps
             }`}
           >
             {link.name}
-            <span className={`absolute -bottom-0.5 left-0 h-px transition-all duration-300 ${isTransparent ? 'bg-white' : 'bg-[var(--color-accent)]'} ${
-              isActive ? 'w-full' : 'w-0 group-hover:w-full'
+            <span className={`absolute -bottom-0.5 left-0 w-full h-px origin-left transition-transform duration-200 ease-out ${isTransparent ? 'bg-white' : 'bg-[var(--color-accent)]'} ${
+              isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
             }`} />
           </Link>
         );

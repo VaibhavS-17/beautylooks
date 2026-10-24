@@ -48,7 +48,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
   return (
     <div className="w-full bg-primary overflow-hidden -mt-[96px] sm:-mt-[127px]">
       {/* ================= HERO SECTION ================= */}
-      <div className="relative w-full h-[100dvh] overflow-hidden bg-gray-900">
+      <div className="relative w-full h-[100svh] min-h-[100svh] overflow-hidden bg-gray-900">
         {/* Background Media */}
         <div className="absolute inset-0 z-0">
           <div className="hidden sm:block absolute inset-0">
@@ -122,7 +122,7 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                     alt={concern.title}
                     fill
                     sizes="(max-width: 640px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
                   />
                   {/* Gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent transition-opacity duration-500" />
@@ -138,9 +138,9 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                   <p className="text-[10px] sm:text-xs text-white/70 tracking-wide font-light mb-3 sm:mb-4">
                     {concern.desc}
                   </p>
-                  <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs text-white/90 font-semibold uppercase tracking-[0.15em] group-hover:tracking-[0.2em] transition-all duration-500">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs text-white/90 font-semibold uppercase tracking-[0.15em]">
                     Explore
-                    <ArrowRight size={12} className="transform group-hover:translate-x-1 transition-transform duration-300" />
+                    <ArrowRight size={12} className="transform group-hover:translate-x-1.5 transition-transform duration-200 ease-out" />
                   </span>
                 </div>
               </Link>
@@ -170,10 +170,10 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
                     alt={category.name}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#C88E75] to-[#2C1E16] flex items-center justify-center p-6 text-center text-white transition-transform duration-700 group-hover:scale-105">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#C88E75] to-[#2C1E16] flex items-center justify-center p-6 text-center text-white transition-transform duration-300 ease-out group-hover:scale-105">
                     <span className="font-serif text-2xl font-bold tracking-tight uppercase" style={{ fontFamily: 'Playfair Display, serif' }}>
                       {category.name}
                     </span>

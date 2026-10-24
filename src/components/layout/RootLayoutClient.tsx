@@ -27,8 +27,10 @@ export default function RootLayoutClient({ children, categories = [] }: { childr
       <Suspense fallback={<div className="h-20 bg-[var(--color-primary)]" />}>
         <Navbar categories={categories} />
       </Suspense>
-      <main id="main-content" className="flex-grow pb-24 md:pb-0">{children}</main>
-      <Footer categories={categories} />
+      <main id="main-content" className="flex-grow">{children}</main>
+      <div className="pb-20 md:pb-0">
+        <Footer categories={categories} />
+      </div>
       <MobileBottomNav />
       <CartDrawer />
       <ScrollToTop />

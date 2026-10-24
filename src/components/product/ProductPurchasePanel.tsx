@@ -37,6 +37,19 @@ export function ProductPurchasePanel({
   const setBuyNowItem = useCartStore((state) => state.setBuyNowItem);
   const wishlistItems = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
+  const [isHeartPopping, setIsHeartPopping] = useState(false);
+
+  const handleWishlistToggle = () => {
+    toggleWishlist(product.id);
+    setIsHeartPopping(true);
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate?.([15]);
+      } catch {
+        // ignore vibrate failures
+      }
+    }
+  };
 
   const existingCartItem = cartItems.find((item) => item.product.id === product.id);
   const existingCartQty = existingCartItem ? existingCartItem.quantity : 0;
@@ -148,10 +161,16 @@ export function ProductPurchasePanel({
                 {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
               </button>
               <button 
-                onClick={() => toggleWishlist(product.id)}
+                onClick={handleWishlistToggle}
                 className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors"
+                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
               >
-                <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
+                <Heart
+                  size={22}
+                  className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${isHeartPopping ? 'animate-heart-pop' : ''}`}
+                  strokeWidth={1.5}
+                  onAnimationEnd={() => setIsHeartPopping(false)}
+                />
               </button>
             </div>
             {product.stockQuantity === 1 && (
@@ -180,7 +199,7 @@ export function ProductPurchasePanel({
                 setBuyNowItem({ product, quantity, isSubscription });
                 router.push('/checkout?mode=buynow');
               }}
-              className="w-full sm:w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center bg-accent text-white hover:bg-black hover:text-white shadow-gold hover:-translate-y-1"
+              className="w-full sm:w-1/2 h-14 shrink-0 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] flex items-center justify-center bg-accent text-white hover:bg-black hover:text-white shadow-gold sm:hover:-translate-y-0.5 active:scale-[0.98] transition-transform duration-150 ease-out"
             >
               Buy Now
             </button>
@@ -195,10 +214,16 @@ export function ProductPurchasePanel({
               {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
             </button>
             <button 
-              onClick={() => toggleWishlist(product.id)}
+              onClick={handleWishlistToggle}
               className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
+              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             >
-              <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
+              <Heart
+                size={22}
+                className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${isHeartPopping ? 'animate-heart-pop' : ''}`}
+                strokeWidth={1.5}
+                onAnimationEnd={() => setIsHeartPopping(false)}
+              />
             </button>
           </div>
         </div>
@@ -207,7 +232,7 @@ export function ProductPurchasePanel({
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
             <button
               onClick={() => setNotifyModalOpen(true)}
-              className="w-full sm:w-auto h-14 px-10 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 bg-accent text-white hover:bg-black hover:text-white shadow-gold hover:-translate-y-1"
+              className="w-full sm:w-auto h-14 px-10 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-2 bg-accent text-white hover:bg-black hover:text-white shadow-gold sm:hover:-translate-y-0.5 active:scale-[0.98] transition-transform duration-150 ease-out"
             >
               <Bell size={18} />
               Notify Me When Available
@@ -221,10 +246,16 @@ export function ProductPurchasePanel({
                 {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}
               </button>
               <button 
-                onClick={() => toggleWishlist(product.id)}
+                onClick={handleWishlistToggle}
                 className="h-14 w-14 shrink-0 rounded-xl items-center justify-center border border-border/50 bg-white/80 backdrop-blur shadow-sm hover:bg-black/5 transition-colors flex"
+                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
               >
-                <Heart size={22} className={isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} strokeWidth={1.5} />
+                <Heart
+                  size={22}
+                  className={`${isWishlisted ? 'fill-accent text-accent' : 'text-text-main'} ${isHeartPopping ? 'animate-heart-pop' : ''}`}
+                  strokeWidth={1.5}
+                  onAnimationEnd={() => setIsHeartPopping(false)}
+                />
               </button>
             </div>
           </div>
