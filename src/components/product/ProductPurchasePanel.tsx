@@ -1,7 +1,6 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Minus, Plus, Heart, Share2, Check, Bell, ShieldCheck, Truck } from 'lucide-react';
-import { formatPrice } from '@/lib/data';
 import { Product } from '@/lib/types';
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
@@ -26,7 +25,6 @@ export function ProductPurchasePanel({
   setNotifyModalOpen
 }: ProductPurchasePanelProps) {
   const router = useRouter();
-  const [deliveryDate, setDeliveryDate] = useState('');
 
   const addItem = useCartStore((state) => state.addItem);
   const cartItems = useCartStore((state) => state.items);
@@ -34,6 +32,12 @@ export function ProductPurchasePanel({
   const wishlistItems = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
   const [heartPopKey, setHeartPopKey] = useState(0);
+
+  const deliveryDate = useMemo(() => {
+    const del = new Date();
+    del.setDate(del.getDate() + 3);
+    return del.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }, []);
 
   const handleWishlistToggle = () => {
     toggleWishlist(product.id);
@@ -52,19 +56,13 @@ export function ProductPurchasePanel({
   const isMaxStockReached = (existingCartQty + quantity) > product.stockQuantity;
   const isWishlisted = wishlistItems.includes(product.id);
 
-  useEffect(() => {
-    const del = new Date();
-    del.setDate(del.getDate() + 3);
-    setDeliveryDate(del.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
-  }, [product.id]);
-
   return (
     <>
       {/* Guarantees Box */}
       <div className="mb-8 p-4 rounded-2xl bg-secondary/60 border border-border space-y-3">
         <div className="flex items-center gap-2.5 text-xs font-medium text-text-main">
           <Truck size={16} className="text-accent shrink-0" />
-          <span>Estimated Delivery by <strong className="font-semibold">{deliveryDate || '3-4 business days'}</strong></span>
+          <span>Estimated Delivery by <strong className="font-semibold">{deliveryDate}</strong></span>
         </div>
         <div className="flex items-center gap-2.5 text-xs text-text-muted">
           <ShieldCheck size={16} className="text-accent shrink-0" />

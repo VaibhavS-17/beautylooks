@@ -26,8 +26,6 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ featuredProducts, categories, blogPosts, siteSettings }: HomeClientProps) {
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
   const heroImageUrl = siteSettings.hero_image_url || '/images/hero-beauty.png';
   const heroMobileImageUrl = siteSettings.hero_mobile_image_url || heroImageUrl;
   const heroVideoUrl = siteSettings.hero_video_url;
@@ -35,15 +33,6 @@ export default function HomeClient({ featuredProducts, categories, blogPosts, si
 
   const addItem = useCartStore((state) => state.addItem);
   const [notifyProduct, setNotifyProduct] = useState<{ id: string; name: string } | null>(null);
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email.trim()) {
-      setSubscribed(true);
-      setEmail('');
-      setTimeout(() => setSubscribed(false), 5000);
-    }
-  };
 
   return (
     <div className="w-full bg-primary overflow-hidden -mt-[96px] sm:-mt-[127px]">
