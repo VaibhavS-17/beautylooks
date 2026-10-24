@@ -15,6 +15,56 @@ const reviewSchema = z.object({
 const uuidSchema = z.string().uuid('Invalid ID format.');
 
 /**
+ * Check review eligibility for current user asynchronously from the client,
+ * keeping SSR/ISR pages completely static and fast.
+ */
+export async function checkReviewEligibility(productId: string) {
+  const parsed = uuidSchema.safeParse(productId);
+  if (!parsed.success) {
+    return { canReview: false, hasReviewed: false, currentUserId: null };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { canReview: false, hasReviewed: false, currentUserId: null };
+  }
+
+  try {
+    const [{ data: existingReview }, { data: eligibleOrders }] = await Promise.all([
+      supabase
+        .from('reviews')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('product_id', parsed.data)
+        .single(),
+      supabase
+        .from('order_items')
+        .select(`
+          id,
+          orders!inner (
+            user_id,
+            status
+          )
+        `)
+        .eq('product_id', parsed.data)
+        .eq('orders.user_id', user.id)
+        .in('orders.status', ['delivered', 'Delivered']),
+    ]);
+
+    return {
+      canReview: (eligibleOrders && eligibleOrders.length > 0) || false,
+      hasReviewed: !!existingReview,
+      currentUserId: user.id,
+    };
+  } catch (err) {
+    console.error('Error checking review eligibility:', err);
+    return { canReview: false, hasReviewed: false, currentUserId: user.id };
+  }
+}
+
+/**
  * Create a product review.
  * Only allows reviews from users who have a paid order (confirmed/shipped/delivered)
  * containing the target product, and who haven't already reviewed it.

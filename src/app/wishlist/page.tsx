@@ -1,6 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/public';
 import WishlistClient from './WishlistClient';
-
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -8,9 +7,10 @@ export const metadata: Metadata = {
   description: "View your saved products.",
 };
 
+export const revalidate = 3600;
 
 export default async function WishlistPage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data: productsData } = await supabase
     .from('products')

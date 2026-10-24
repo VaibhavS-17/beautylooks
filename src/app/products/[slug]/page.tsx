@@ -1,13 +1,27 @@
-import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/public';
 import type { Metadata } from 'next';
 import ProductDetailClient from './ProductDetailClient';
 import { notFound } from 'next/navigation';
+
 export const revalidate = 3600;
+
+// ── Pre-generate static HTML for active products at build time ──
+export async function generateStaticParams() {
+  const supabase = createPublicClient();
+  const { data: products } = await supabase
+    .from('products')
+    .select('slug')
+    .eq('is_active', true);
+
+  return (products || []).map((p) => ({
+    slug: p.slug,
+  }));
+}
 
 // ── Dynamic SEO & Open Graph ──
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from('products')
     .select('name, short_description, images, price, sale_price')
@@ -31,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data: productData, error } = await supabase
     .from('products')
@@ -80,29 +94,52 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     faqs: (productData as any).faqs || []
   };
 
-  // Fetch related products
-  const { data: relatedProductsData } = await supabase
-    .from('products')
-    .select(`
-      id,
-      name,
-      slug,
-      description,
-      short_description,
-      price,
-      sale_price,
-      images,
-      is_featured,
-      is_active,
-      stock_quantity,
-      category_id,
-      brands (name),
-      categories (name),
-      reviews (rating)
-    `)
-    .eq('category_id', mappedProduct.categoryId)
-    .neq('id', mappedProduct.id)
-    .limit(4);
+  // Fetch related products, reviews, and site settings concurrently in parallel
+  const [
+    { data: relatedProductsData },
+    { data: reviewsData },
+    { data: siteSettingsData }
+  ] = await Promise.all([
+    supabase
+      .from('products')
+      .select(`
+        id,
+        name,
+        slug,
+        description,
+        short_description,
+        price,
+        sale_price,
+        images,
+        is_featured,
+        is_active,
+        stock_quantity,
+        category_id,
+        brands (name),
+        categories (name),
+        reviews (rating)
+      `)
+      .eq('category_id', mappedProduct.categoryId)
+      .neq('id', mappedProduct.id)
+      .limit(4),
+    supabase
+      .from('reviews')
+      .select(`
+        id,
+        rating,
+        comment,
+        created_at,
+        helpful_count,
+        profiles (full_name, avatar_url)
+      `)
+      .eq('product_id', mappedProduct.id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('site_settings')
+      .select('common_faqs')
+      .eq('id', 'default')
+      .single(),
+  ]);
 
   const mappedRelatedProducts = (relatedProductsData || []).map((p: any) => {
     const pReviews = p.reviews || [];
@@ -132,20 +169,6 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     };
   });
 
-  // ── Fetch Reviews ──
-  const { data: reviewsData } = await supabase
-    .from('reviews')
-    .select(`
-      id,
-      rating,
-      comment,
-      created_at,
-      helpful_count,
-      profiles (full_name, avatar_url)
-    `)
-    .eq('product_id', mappedProduct.id)
-    .order('created_at', { ascending: false });
-
   const reviews = (reviewsData || []).map((r: any) => ({
     id: r.id,
     userName: r.profiles?.full_name || 'Anonymous',
@@ -156,56 +179,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     helpfulCount: (r.helpful_count as number) || 0,
   }));
 
-  // Compute aggregate stats
   const reviewCount = reviews.length;
   const averageRating =
     reviewCount > 0
       ? reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / reviewCount
       : 0;
-
-  // ── Check user eligibility ──
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let hasReviewed = false;
-  let canReview = false;
-  const currentUserId = user?.id ?? null;
-
-  if (user) {
-    // Has the user already reviewed this product?
-    const { data: existingReview } = await supabase
-      .from('reviews')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('product_id', mappedProduct.id)
-      .single();
-
-    hasReviewed = !!existingReview;
-
-    // Has the user purchased this product with a qualifying order?
-    const { data: eligibleOrders } = await supabase
-      .from('order_items')
-      .select(`
-        id,
-        orders!inner (
-          user_id,
-          status
-        )
-      `)
-      .eq('product_id', mappedProduct.id)
-      .eq('orders.user_id', user.id)
-      .eq('orders.status', 'delivered');
-
-    canReview = (eligibleOrders && eligibleOrders.length > 0) || false;
-  }
-
-  // Fetch admin-editable common FAQs from site_settings
-  const { data: siteSettingsData } = await supabase
-    .from('site_settings')
-    .select('common_faqs')
-    .eq('id', 'default')
-    .single();
 
   const commonFaqs = siteSettingsData?.common_faqs || [];
 
@@ -216,9 +194,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       reviews={reviews as any}
       averageRating={Math.round(averageRating * 10) / 10}
       reviewCount={reviewCount}
-      canReview={canReview}
-      hasReviewed={hasReviewed}
-      currentUserId={currentUserId}
+      canReview={false}
+      hasReviewed={false}
+      currentUserId={null}
       commonFaqs={commonFaqs}
     />
   );

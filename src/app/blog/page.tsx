@@ -1,6 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/public';
 import BlogClient from './BlogClient';
-
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -8,14 +7,14 @@ export const metadata: Metadata = {
   description: "Read the latest beauty tips and news from Beauty Looks Mumbai.",
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export default async function BlogPage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data: blogPostsData } = await supabase
     .from('blog_posts')
-    .select('*')
+    .select('id, title, slug, content, excerpt, cover_image, author_name, is_published, read_time, published_at, created_at')
     .eq('is_published', true)
     .order('published_at', { ascending: false });
 
