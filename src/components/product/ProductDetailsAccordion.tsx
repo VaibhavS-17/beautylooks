@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { ChevronDown, CheckCircle2, Leaf, Ban, Rabbit, Sparkles } from 'lucide-react';
+import { ChevronDown, CheckCircle2, ShieldCheck, Truck, RefreshCw, MessageCircle } from 'lucide-react';
 import { Product } from '@/lib/types';
 
 interface ProductDetailsAccordionProps {
@@ -13,20 +13,20 @@ export function ProductDetailsAccordion({ product, commonFaqs }: ProductDetailsA
 
   const DEFAULT_FAQS = [
     {
-      question: 'Is this product suitable for sensitive skin?',
-      answer: 'Yes, all our formulations are dermatologically tested and crafted with gentle botanical actives. We recommend a quick patch test prior to full application.',
+      question: 'How do I know this product is 100% authentic?',
+      answer: 'Beauty Looks Mumbai sources inventory directly from official brand distributors and manufacturer-authorized partners. Every kit and serum includes genuine brand packaging and batch verification codes.',
     },
     {
-      question: 'What are your shipping timelines and return policy?',
-      answer: 'We dispatch within 24 hours. Express delivery takes 2-4 business days across India. We offer a 7-day hassle-free return policy on unopened items.',
+      question: 'What are your delivery timelines across Mumbai and India?',
+      answer: 'Orders are dispatched within 24 hours directly from our Mumbai hub. Standard delivery takes 2-4 business days across India, with expedited same-day/next-day options available for Mumbai, Thane, and Navi Mumbai.',
     },
     {
-      question: 'Are your products 100% vegan and cruelty-free?',
-      answer: 'Absolutely. Beauty Looks Mumbai is certified cruelty-free and 100% vegan with zero animal testing.',
+      question: 'Can I get product guidance or recommendations?',
+      answer: 'Yes! Our beauty curators provide complimentary consultation via WhatsApp to help you choose the right facial kit, skin regime, or salon-grade treatment for your skin concern.',
     },
     {
-      question: 'How long until I see visible results?',
-      answer: 'Most users notice improved hydration and radiance immediately. For significant changes in tone and texture, consistent daily use for 2 to 4 weeks is recommended.',
+      question: 'What is your return policy?',
+      answer: 'We offer a 7-day hassle-free return or replacement policy on unopened, intact items in their original packaging. For hygiene reasons, opened cosmetic and skincare items cannot be accepted.',
     },
   ];
 
@@ -39,75 +39,76 @@ export function ProductDetailsAccordion({ product, commonFaqs }: ProductDetailsA
                      product.name.toLowerCase().includes('keratin');
 
   const defaultDescription = isHaircare 
-    ? "Crafted with salon-grade botanicals and restorative proteins, this formula penetrates deeply to nourish the scalp and strengthen hair fibers. Formulated to integrate effortlessly into your daily hair care routine."
-    : "Crafted using clinical-grade botanicals and dermatologically verified actives, this formula penetrates deeply to nourish and restore balance. Formulated to integrate effortlessly into both morning and evening skincare rituals.";
+    ? "Crafted with professional-grade salon botanicals and restorative proteins to nourish scalp health and strengthen hair fibers. Sourced directly from verified salon supply distributors."
+    : "Professional salon-quality formulation crafted for targeted skin rejuvenation. Tested by beauty professionals and trusted by salons across Mumbai.";
 
   return (
-    <div className="mt-20 space-y-20">
-      <div className="pt-12 border-t border-border">
-        <h2 className="font-display text-2xl text-text-main mb-8">Formulation &amp; Efficacy</h2>
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
-          <div className="md:col-span-7 space-y-6">
-            <p className="text-base text-text-muted font-light leading-relaxed">
+    <div className="mt-16 sm:mt-20 space-y-16">
+      {/* Formulation & Sourcing */}
+      <div className="pt-10 border-t border-border">
+        <h2 className="font-serif text-2xl text-text-main mb-6 font-normal">Formulation &amp; Professional Standard</h2>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
+          <div className="md:col-span-7 space-y-4">
+            <p className="text-sm sm:text-base text-text-muted font-light leading-relaxed">
               {product.description}
             </p>
             <p className="text-sm text-text-muted font-light leading-relaxed">
               {defaultDescription}
             </p>
-            <div className="pt-4 space-y-2">
+            <div className="pt-4 space-y-2.5">
               <div className="flex items-center gap-3">
                 <CheckCircle2 size={16} className="text-accent shrink-0" />
-                <span className="text-sm text-text-main">Dermatologically tested and non-comedogenic</span>
+                <span className="text-sm text-text-main">100% Genuine product sourced directly from official brand distributors</span>
               </div>
               <div className="flex items-center gap-3">
                 <CheckCircle2 size={16} className="text-accent shrink-0" />
-                <span className="text-sm text-text-main">Free from artificial dyes, sulfates, and harsh fillers</span>
+                <span className="text-sm text-text-main">Fresh batch stock with intact seal and manufacturer warranty</span>
               </div>
               <div className="flex items-center gap-3">
                 <CheckCircle2 size={16} className="text-accent shrink-0" />
-                <span className="text-sm text-text-main">Eco-conscious glass vessel preserves active stability</span>
+                <span className="text-sm text-text-main">Direct Mumbai dispatch with careful protective packaging</span>
               </div>
             </div>
           </div>
 
-          <div className="md:col-span-5 space-y-8 bg-[#FAFAF9] p-8 border border-border">
+          <div className="md:col-span-5 space-y-6 bg-secondary/40 p-6 sm:p-8 rounded-2xl border border-border">
             <div>
-              <h3 className="text-[10px] font-bold text-text-muted mb-4 uppercase tracking-widest">Premium Actives</h3>
+              <h3 className="text-[10px] font-bold text-accent mb-3 uppercase tracking-widest">Targeted Actives</h3>
               <div className="flex flex-wrap gap-2">
                 {isHaircare ? (
                   <>
-                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">Keratin</span>
-                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">Argan Oil</span>
-                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">Biotin</span>
+                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white rounded-lg">Keratin</span>
+                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white rounded-lg">Argan Oil</span>
+                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white rounded-lg">Biotin</span>
                   </>
                 ) : (
                   <>
-                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">Hyaluronic Acid</span>
-                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">Vitamin C</span>
-                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white">24K Gold Extracts</span>
+                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white rounded-lg">Hyaluronic</span>
+                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white rounded-lg">Vitamin C</span>
+                    <span className="px-3 py-1.5 border border-border text-[10px] font-semibold text-text-main tracking-widest uppercase bg-white rounded-lg">Botanical Actives</span>
                   </>
                 )}
               </div>
             </div>
 
             <div>
-              <h3 className="text-[10px] font-bold text-text-muted mb-4 uppercase tracking-widest">Our Promise</h3>
-              <div className="grid grid-cols-2 gap-y-4 gap-x-4">
+              <h3 className="text-[10px] font-bold text-accent mb-3 uppercase tracking-widest">Our Authenticity Guarantee</h3>
+              <div className="grid grid-cols-2 gap-3">
                 <div className="flex items-center gap-2">
-                  <Leaf size={14} className="text-text-muted" strokeWidth={1.5} />
-                  <span className="text-[10px] font-semibold tracking-widest uppercase text-text-main">100% Vegan</span>
+                  <ShieldCheck size={15} className="text-accent shrink-0" />
+                  <span className="text-[10px] font-semibold tracking-wider uppercase text-text-main">Genuine Stock</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Ban size={14} className="text-text-muted" strokeWidth={1.5} />
-                  <span className="text-[10px] font-semibold tracking-widest uppercase text-text-main">Paraben-Free</span>
+                  <Truck size={15} className="text-accent shrink-0" />
+                  <span className="text-[10px] font-semibold tracking-wider uppercase text-text-main">Fast Delivery</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Rabbit size={14} className="text-text-muted" strokeWidth={1.5} />
-                  <span className="text-[10px] font-semibold tracking-widest uppercase text-text-main">Cruelty-Free</span>
+                  <RefreshCw size={15} className="text-accent shrink-0" />
+                  <span className="text-[10px] font-semibold tracking-wider uppercase text-text-main">7-Day Return</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Sparkles size={14} className="text-text-muted" strokeWidth={1.5} />
-                  <span className="text-[10px] font-semibold tracking-widest uppercase text-text-main">Authentic</span>
+                  <MessageCircle size={15} className="text-accent shrink-0" />
+                  <span className="text-[10px] font-semibold tracking-wider uppercase text-text-main">Curator Advice</span>
                 </div>
               </div>
             </div>
@@ -115,43 +116,30 @@ export function ProductDetailsAccordion({ product, commonFaqs }: ProductDetailsA
         </div>
       </div>
 
-      <div className="pt-12 border-t border-border">
-        <h2 className="font-display text-2xl text-text-main mb-6">Complete Ingredients</h2>
+      {/* Ingredients */}
+      <div className="pt-10 border-t border-border">
+        <h2 className="font-serif text-2xl text-text-main mb-4 font-normal">Complete Ingredients &amp; Usage</h2>
         <div className="max-w-3xl text-sm text-text-muted font-light leading-relaxed space-y-3">
           <p>
-            {product.ingredients || 'Aqua/Water/Eau, Glycerin, Niacinamide, Squalane, Butylene Glycol, Caprylic/Capric Triglyceride, Sodium Hyaluronate, Tocopherol, Allantoin, Panthenol, Phenoxyethanol, Ethylhexylglycerin.'}
+            {product.ingredients || 'Aqua, Glycerin, Niacinamide, Sodium Hyaluronate, Botanical Extracts, Tocopherol Acetate, Panthenol, Phenoxyethanol.'}
           </p>
-          <p className="italic text-xs text-text-muted">
-            Please refer to the physical product packaging for the most accurate and up-to-date list of ingredients.
-          </p>
-        </div>
-      </div>
-
-      <div className="pt-12 border-t border-border">
-        <h2 className="font-display text-2xl text-text-main mb-6">Shipping &amp; Returns</h2>
-        <div className="max-w-3xl text-sm text-text-muted font-light leading-relaxed space-y-4">
-          <p>
-            <strong>Standard Delivery:</strong> 2-4 business days across India. Complimentary shipping on orders above ₹499.
-          </p>
-          <p>
-            <strong>Express Delivery:</strong> Same-day or next-day delivery available for select Mumbai and NCR pin codes.
-          </p>
-          <p>
-            <strong>Returns Policy:</strong> We accept returns of unopened and unused items within 7 days of delivery. For hygiene and safety reasons, opened skincare products cannot be returned.
+          <p className="italic text-xs text-text-muted/80">
+            Always inspect physical product packaging for the batch-specific ingredient list and instructions for use.
           </p>
         </div>
       </div>
 
-      <div className="pt-12 border-t border-border" id="faqs">
-        <h2 className="font-display text-2xl text-text-main mb-6">Frequently Asked Questions</h2>
+      {/* FAQs */}
+      <div className="pt-10 border-t border-border" id="faqs">
+        <h2 className="font-serif text-2xl text-text-main mb-6 font-normal">Frequently Asked Questions</h2>
         <div className="space-y-3 max-w-3xl">
           {faqsToRender.map((faq, idx) => (
-            <div key={idx} className="border border-border overflow-hidden">
+            <div key={idx} className="border border-border rounded-xl overflow-hidden bg-white">
               <button
                 type="button"
                 id={`faq-btn-${idx}`}
                 onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
-                className="w-full flex items-center justify-between p-5 text-left bg-[#FAFAF9] hover:bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="w-full flex items-center justify-between p-4 sm:p-5 text-left bg-secondary/30 hover:bg-secondary/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 aria-expanded={openFaqIndex === idx}
                 aria-controls={`faq-panel-${idx}`}
               >
@@ -173,7 +161,7 @@ export function ProductDetailsAccordion({ product, commonFaqs }: ProductDetailsA
                 }`}
               >
                 <div className="overflow-hidden min-h-0">
-                  <p className="px-5 pb-5 text-sm text-text-muted font-light leading-relaxed">
+                  <p className="p-4 sm:p-5 text-sm text-text-muted font-light leading-relaxed border-t border-border/50">
                     {faq.answer}
                   </p>
                 </div>
