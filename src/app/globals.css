@@ -32,6 +32,19 @@
   --duration-drawer: 320ms;   /* Sliding drawers & sheets */
 }
 
+:root {
+  /* Motion Tokens & Timing Curves (guaranteed runtime CSS custom properties) */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  --duration-instant: 100ms;
+  --duration-fast: 160ms;
+  --duration-normal: 240ms;
+  --duration-drawer: 320ms;
+}
+
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
@@ -50,10 +63,15 @@
     @apply font-sans text-foreground tracking-tight;
   }
 
-  /* Prevent iOS Safari auto-zoom on inputs with font-size < 16px */
-  input, textarea, select {
-    font-size: 16px;
+  /* Prevent iOS Safari auto-zoom by enforcing 16px on mobile viewports (< 640px) */
+  @media (max-width: 639.98px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
   }
+
   @media (min-width: 640px) {
     input, textarea, select {
       font-size: 0.875rem;
@@ -61,7 +79,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    *,
+    *:not(.animate-spin):not([class*="animate-spin"]),
     ::before,
     ::after {
       animation-iteration-count: 1 !important;
@@ -180,6 +198,31 @@
   .transform-3d {
     transform-style: preserve-3d;
   }
+
+  /* Safe Area Insets for iOS Home Indicator and Notch */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Explicit Motion Utilities (ensures availability even without dynamic scanning) */
+  .ease-drawer {
+    transition-timing-function: var(--ease-drawer);
+  }
+  .ease-spring {
+    transition-timing-function: var(--ease-spring);
+  }
+  .duration-instant {
+    transition-duration: var(--duration-instant);
+  }
+  .duration-fast {
+    transition-duration: var(--duration-fast);
+  }
+  .duration-drawer {
+    transition-duration: var(--duration-drawer);
+  }
 }
 
 /* =============================================
@@ -194,6 +237,11 @@
 @keyframes fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 @keyframes scale-in {
@@ -234,6 +282,16 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slide-in-from-bottom-2 {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-from-bottom-3 {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Animation classes */
 .animate-slide-up {
   animation: slide-up 0.5s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
@@ -242,6 +300,10 @@
 .animate-fade-in,
 .animate-fadeIn {
   animation: fade-in 0.24s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+}
+
+.animate-fade-out {
+  animation: fade-out 0.2s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
 }
 
 .animate-scale-in {
@@ -279,11 +341,31 @@
 .animate-in.slide-in-from-top-2 {
   animation-name: slide-in-from-top-2;
 }
+.animate-in.slide-in-from-bottom-2 {
+  animation-name: slide-in-from-bottom-2;
+}
+.animate-in.slide-in-from-bottom-3 {
+  animation-name: slide-in-from-bottom-3;
+}
+.animate-in.duration-200 {
+  animation-duration: 200ms;
+}
+.animate-in.duration-300 {
+  animation-duration: 300ms;
+}
+.animate-in.duration-500 {
+  animation-duration: 500ms;
+}
+.fill-mode-both {
+  animation-fill-mode: both;
+}
 
 /* Stagger animation delays */
 .delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
 .delay-200 { animation-delay: 200ms; }
 .delay-300 { animation-delay: 300ms; }
+.animate-in.delay-150 { animation-delay: 150ms; }
 
 /* Shimmer loading effect */
 .shimmer {
@@ -298,12 +380,14 @@
   animation: shimmer 1.5s linear infinite;
 }
 
-/* Tactile active press states (both desktop & mobile) */
+/* Tactile active press states (desktop click & mobile tap feedback) */
 .btn-primary:active,
 .btn-secondary:active,
-.btn-tertiary:active {
-  transform: scale(0.97) !important;
-  transition: transform 100ms cubic-bezier(0.23, 1, 0.32, 1) !important;
+.btn-tertiary:active,
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active {
+  transform: scale(0.97);
+  transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @media (hover: none) {

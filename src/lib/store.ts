@@ -46,7 +46,7 @@ export const useCartStore = create<CartState>()(
                 {
                   className: `${
                     t.visible ? 'animate-fade-in-up' : 'opacity-0 translate-y-2'
-                  } max-w-md w-full bg-white shadow-2xl rounded-2xl pointer-events-auto border border-border/80 overflow-hidden`,
+                  } max-w-md w-full bg-white shadow-2xl rounded-2xl pointer-events-auto border border-border/80 overflow-hidden transition-all duration-200 ease-out`,
                 },
                 // Top row: checkmark + text
                 React.createElement(

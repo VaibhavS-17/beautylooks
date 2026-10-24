@@ -163,7 +163,7 @@ export default function NotifyMeModal({ isOpen, onClose, productId, productName 
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-label="Notify me when available"
