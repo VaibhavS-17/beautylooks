@@ -85,9 +85,9 @@
       animation-iteration-count: 1 !important;
       scroll-behavior: auto !important;
     }
-    .transform,
-    [class*="translate-"],
-    [class*="scale-"] {
+    .transform:not([class*="-translate-x-1/2"]):not([class*="-translate-y-1/2"]):not([class*="translate-x-1/2"]):not([class*="translate-y-1/2"]),
+    [class*="translate-"]:not([class*="-translate-x-1/2"]):not([class*="-translate-y-1/2"]):not([class*="translate-x-1/2"]):not([class*="translate-y-1/2"]),
+    [class*="scale-"]:not([class*="-translate-x-1/2"]):not([class*="-translate-y-1/2"]):not([class*="translate-x-1/2"]):not([class*="translate-y-1/2"]) {
       transform: none !important;
       transition-property: opacity !important;
       transition-duration: 150ms !important;

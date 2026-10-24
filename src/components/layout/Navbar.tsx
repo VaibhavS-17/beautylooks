@@ -198,7 +198,10 @@ export default function Navbar({ categories = [] }: { categories?: { id: string,
                 >
                   <ShoppingBag size={19} strokeWidth={1.5} />
                   {mounted && cartItemsCount > 0 && (
-                    <span className={`absolute -top-1.5 -right-2 ${isTransparent ? 'bg-white text-black' : 'bg-[var(--color-text-main)] text-white'} text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm`}>
+                    <span 
+                      key={cartItemsCount}
+                      className={`absolute -top-1.5 -right-2 ${isTransparent ? 'bg-white text-black' : 'bg-[var(--color-text-main)] text-white'} text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm animate-badge-bump`}
+                    >
                       {cartItemsCount}
                     </span>
                   )}

@@ -114,7 +114,7 @@ export function ProductGrid({
                           )}
                         </div>
                       </Link>
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20 pointer-events-none">
+                      <div className="absolute inset-0 bg-black/20 hidden sm:flex opacity-0 sm:group-hover:opacity-100 transition-opacity items-center justify-center z-20 pointer-events-none">
                         <button 
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickViewProduct(product); }}
                           className="bg-white text-text-main text-xs font-bold uppercase tracking-widest px-8 py-4 hover:bg-black hover:text-white transition-colors pointer-events-auto"

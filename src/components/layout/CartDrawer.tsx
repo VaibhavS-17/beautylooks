@@ -24,6 +24,7 @@ export default function CartDrawer() {
   // Direct touch/pointer drag-to-dismiss interaction refs
   const pointerStartYRef = useRef(0);
   const pointerCurrentYRef = useRef(0);
+  const pointerStartTimeRef = useRef(0);
   const isDraggingRef = useRef(false);
 
   useEffect(() => {
@@ -92,6 +93,7 @@ export default function CartDrawer() {
     if (e.button !== 0 && e.pointerType === 'mouse') return;
     pointerStartYRef.current = e.clientY;
     pointerCurrentYRef.current = e.clientY;
+    pointerStartTimeRef.current = Date.now();
     isDraggingRef.current = true;
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
@@ -126,8 +128,11 @@ export default function CartDrawer() {
     }
 
     const deltaY = pointerCurrentYRef.current - pointerStartYRef.current;
+    const elapsedMs = Math.max(Date.now() - pointerStartTimeRef.current, 1);
+    const velocity = Math.abs(deltaY) / elapsedMs;
+
     if (drawerPanelRef.current) {
-      if (deltaY > 80) {
+      if (deltaY > 80 || (deltaY > 20 && velocity > 0.11)) {
         // Smoothly dismiss by sliding straight down off-screen
         drawerPanelRef.current.style.transition = 'transform 300ms var(--ease-drawer, cubic-bezier(0.32, 0.72, 0, 1))';
         drawerPanelRef.current.style.transform = 'translateY(100%)';
@@ -349,7 +354,7 @@ export default function CartDrawer() {
 
                         <div className="flex items-end justify-between mt-4">
                           {/* Quantity */}
-                          <div className="flex items-center border border-gray-200">
+                          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
                             <button
                               onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                               className="px-3 py-1 text-text-muted hover:text-black transition-colors"

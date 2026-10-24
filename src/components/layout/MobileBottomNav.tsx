@@ -94,7 +94,10 @@ export default function MobileBottomNav() {
           <div className="bg-brand-dark text-primary h-14 w-14 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(202,138,4,0.3)] border-4 border-white">
             <ShoppingBag size={22} strokeWidth={1.5} />
             {mounted && cartItemsCount > 0 && (
-              <span className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-white">
+              <span 
+                key={cartItemsCount}
+                className="absolute top-0 right-0 bg-accent text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-white animate-badge-bump"
+              >
                 {cartItemsCount}
               </span>
             )}

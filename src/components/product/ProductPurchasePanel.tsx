@@ -133,7 +133,7 @@ export function ProductPurchasePanel({
         <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center border-t border-border/50">
           <div className="flex flex-col gap-1 w-full sm:w-auto">
             <div className="flex gap-4 items-center w-full">
-              <div className="flex-1 sm:w-36 flex items-center bg-white h-14 overflow-hidden border border-border shrink-0">
+              <div className="flex-1 sm:w-36 flex items-center bg-white h-14 rounded-xl overflow-hidden border border-border shrink-0">
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className="w-12 sm:px-5 h-full flex items-center justify-center hover:bg-black/5 transition-colors text-text-main"
@@ -156,7 +156,7 @@ export function ProductPurchasePanel({
               
               <button 
                 onClick={handleShare}
-                className="sm:hidden h-14 w-14 shrink-0 flex items-center justify-center border border-border bg-white hover:bg-black/5 transition-colors"
+                className="sm:hidden h-14 w-14 shrink-0 rounded-xl flex items-center justify-center border border-border bg-white hover:bg-black/5 transition-colors"
                 aria-label="Share product"
               >
                 {isShared ? <Check size={22} className="text-green-600" strokeWidth={1.5} /> : <Share2 size={22} className="text-text-main" strokeWidth={1.5} />}

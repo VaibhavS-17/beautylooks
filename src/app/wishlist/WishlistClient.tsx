@@ -65,7 +65,7 @@ export default function WishlistClient({ products }: WishlistClientProps) {
               const currentPrice = product.salePrice || product.price;
 
               return (
-                <div key={product.id} className="group flex flex-col h-full relative product-card transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] rounded-2xl p-3 border border-border/50 bg-white">
+                <div key={product.id} className="group flex flex-col h-full relative product-card transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] rounded-3xl p-3 border border-border/50 bg-white">
                   <div className="relative h-[300px] w-full bg-primary/20 rounded-xl overflow-hidden mb-4">
                     <Image
                       src={product.images?.[0] || fallbackProductImage}

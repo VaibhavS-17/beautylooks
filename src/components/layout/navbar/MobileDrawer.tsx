@@ -21,6 +21,7 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
   const touchStartXRef = useRef(0);
   const touchStartYRef = useRef(0);
   const touchCurrentXRef = useRef(0);
+  const touchStartTimeRef = useRef(0);
   const isSwipingRef = useRef(false);
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
     touchStartXRef.current = e.touches[0].clientX;
     touchStartYRef.current = e.touches[0].clientY;
     touchCurrentXRef.current = e.touches[0].clientX;
+    touchStartTimeRef.current = Date.now();
     isSwipingRef.current = false;
   };
 
@@ -89,7 +91,10 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
     if (isSwipingRef.current) {
       isSwipingRef.current = false;
       const deltaX = touchCurrentXRef.current - touchStartXRef.current;
-      if (deltaX < -70) {
+      const elapsedMs = Math.max(Date.now() - touchStartTimeRef.current, 1);
+      const velocity = Math.abs(deltaX) / elapsedMs;
+
+      if (deltaX < -70 || (deltaX < -20 && velocity > 0.11)) {
         // Smoothly dismiss by sliding straight left off-screen
         if (drawerContentRef.current) {
           drawerContentRef.current.style.transition = 'transform 300ms var(--ease-drawer, cubic-bezier(0.32, 0.72, 0, 1))';
