@@ -15,6 +15,35 @@ export default function CartDrawer() {
   const fallbackProductImage = '/images/products/facial-kit-1.png';
   const drawerRef = useRef<HTMLDivElement>(null);
 
+  // Enter/Exit animation state
+  const [isMounted, setIsMounted] = useState(isOpen);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Direct touch drag-to-dismiss interaction states
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const touchStartYRef = useRef(0);
+  const touchCurrentYRef = useRef(0);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (isOpen) {
+      setIsMounted(true);
+      const rafId = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsVisible(true);
+        });
+      });
+      return () => cancelAnimationFrame(rafId);
+    } else {
+      setIsVisible(false);
+      timeoutId = setTimeout(() => {
+        setIsMounted(false);
+      }, 320); // 320ms matching --duration-drawer
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -39,6 +68,31 @@ export default function CartDrawer() {
       document.body.style.overflow = '';
     };
   }, [isOpen, closeCart]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartYRef.current = e.touches[0].clientY;
+    touchCurrentYRef.current = e.touches[0].clientY;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchCurrentYRef.current = e.touches[0].clientY;
+    const deltaY = touchCurrentYRef.current - touchStartYRef.current;
+    if (deltaY > 0) {
+      setDragOffset(deltaY);
+    } else {
+      setDragOffset(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    const deltaY = touchCurrentYRef.current - touchStartYRef.current;
+    if (deltaY > 80) {
+      closeCart();
+    }
+    setDragOffset(0);
+  };
 
   const handleTabKey = (e: React.KeyboardEvent) => {
     if (!drawerRef.current) return;
@@ -97,7 +151,7 @@ export default function CartDrawer() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, items.length]);
 
-  if (!isOpen) return null;
+  if (!isMounted) return null;
 
   const subtotal = getTotalPrice();
   const shipping = subtotal >= 499 ? 0 : 49;
@@ -114,23 +168,52 @@ export default function CartDrawer() {
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+        className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-[320ms] ease-out ${
+          isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
         onClick={closeCart}
         aria-hidden="true"
       />
 
       {/* Drawer Container */}
-      <div className="absolute inset-0 md:inset-y-0 md:right-0 md:left-auto flex justify-end">
-        <div className="w-full h-[100dvh] md:max-w-md md:h-full bg-white shadow-2xl flex flex-col overflow-hidden relative">
-          
+      <div className="absolute inset-0 md:inset-y-0 md:right-0 md:left-auto flex justify-end pointer-events-none">
+        <div 
+          className={`w-full h-[100dvh] md:max-w-md md:h-full bg-white shadow-2xl flex flex-col overflow-hidden relative pointer-events-auto rounded-t-2xl md:rounded-none transform transition-transform duration-[320ms] ease-drawer ${
+            isVisible 
+              ? 'translate-y-0 md:translate-x-0' 
+              : 'translate-y-full md:translate-x-full md:translate-y-0'
+          }`}
+          style={{
+            transform: isDragging && dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
+            transition: isDragging ? 'none' : undefined,
+          }}
+        >
+          {/* Mobile Drag Pill Affordance */}
+          <div 
+            className="absolute top-0 left-0 right-0 h-7 flex items-center justify-center md:hidden cursor-grab active:cursor-grabbing touch-none z-20"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
+            aria-label="Drag down to dismiss"
+          >
+            <div className="w-10 h-1 bg-gray-300 rounded-full" />
+          </div>
+
           {/* Header */}
-          <div className="flex-none px-4 py-6 border-b border-gray-100 flex items-center justify-between bg-white z-10 relative">
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 bg-gray-200 rounded-full md:hidden" aria-hidden="true"></div>
+          <div 
+            className="flex-none px-4 pt-6 pb-4 md:py-6 border-b border-gray-100 flex items-center justify-between bg-white z-10 relative touch-none md:touch-auto"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
+          >
             <h2 className="text-2xl font-display font-light text-text-main">Your Bag ({getTotalItems()})</h2>
             <button
               id="cart-close-btn"
               onClick={closeCart}
-              className="text-text-muted hover:text-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black rounded"
+              onTouchStart={(e) => e.stopPropagation()}
+              className="text-text-muted hover:text-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black rounded p-1"
               aria-label="Close cart"
             >
               <X size={24} strokeWidth={1.5} />
@@ -284,17 +367,20 @@ export default function CartDrawer() {
             )}
           </div>
 
-          {/* Footer with clean CTA */}
+          {/* Footer with clean CTA and Safe Area insets */}
           {items.length > 0 && (
-            <div className="border-t border-gray-100 px-4 py-6 bg-white flex-none">
-              <div className="flex justify-between items-center mb-6">
+            <div 
+              className="border-t border-gray-100 px-4 pt-4 pb-6 pb-safe bg-white flex-none"
+              style={{ paddingBottom: 'max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom, 0px)))' }}
+            >
+              <div className="flex justify-between items-center mb-4">
                 <span className="text-base text-text-main">Subtotal</span>
                 <span className="text-lg font-medium text-text-main">{formatPrice(subtotal)}</span>
               </div>
               <Link
                 href="/checkout"
                 onClick={closeCart}
-                className="block w-full py-4 bg-black text-white text-center text-sm uppercase tracking-wider hover:bg-gray-900 transition-colors"
+                className="btn-primary block w-full py-4 text-center text-sm uppercase tracking-wider rounded-xl transition-all"
               >
                 Checkout
               </Link>

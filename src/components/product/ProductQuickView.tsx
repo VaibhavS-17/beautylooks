@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { X } from 'lucide-react';
@@ -20,15 +20,43 @@ export function ProductQuickView({
   onClose,
   addItem
 }: ProductQuickViewProps) {
+  useEffect(() => {
+    if (!product) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [product, onClose]);
+
   if (!product) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="quickview-title"
+    >
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" 
+        onClick={onClose} 
+        aria-hidden="true"
+      />
+      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] animate-scale-in">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 z-10 p-2 bg-white/50 hover:bg-white rounded-full transition-colors"
+          aria-label="Close dialog"
         >
           <X size={20} className="text-text-main" />
         </button>
@@ -44,7 +72,7 @@ export function ProductQuickView({
           <span className="text-[10px] font-bold text-accent tracking-widest uppercase block mb-2">
             {product.brand}
           </span>
-          <h2 className="font-display text-2xl md:text-3xl text-text-main font-semibold mb-4">
+          <h2 id="quickview-title" className="font-display text-2xl md:text-3xl text-text-main font-semibold mb-4">
             {product.name}
           </h2>
           <div className="flex items-center gap-3 mb-6">

@@ -173,7 +173,7 @@ export default function SearchBar({ isOpen, onClose }: SearchBarProps) {
 
   return (
     <div 
-      className={`fixed inset-0 z-[100] flex items-start justify-center pt-20 sm:pt-32 transition-all duration-500 ease-in-out ${
+      className={`fixed inset-0 z-[100] flex items-start justify-center pt-20 sm:pt-32 transition-all duration-[220ms] ease-out ${
         isOpen 
           ? 'opacity-100 pointer-events-auto bg-white/80 backdrop-blur-xl' 
           : 'opacity-0 pointer-events-none bg-white/0 backdrop-blur-none'
@@ -186,8 +186,8 @@ export default function SearchBar({ isOpen, onClose }: SearchBarProps) {
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
       <div 
         ref={searchContainerRef}
-        className={`w-full max-w-3xl mx-4 relative bg-white rounded-2xl shadow-2xl border border-[var(--color-border)] overflow-hidden transition-all duration-500 delay-100 ${
-          isOpen ? 'transform translate-y-0 scale-100' : 'transform -translate-y-8 scale-95'
+        className={`w-full max-w-3xl mx-4 relative bg-white rounded-2xl shadow-2xl border border-[var(--color-border)] overflow-hidden origin-top transition-all duration-[220ms] ease-out ${
+          isOpen ? 'transform translate-y-0 scale-100 opacity-100' : 'transform -translate-y-6 scale-95 opacity-0'
         }`}
         onClick={e => e.stopPropagation()}
       >

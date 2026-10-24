@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 
 interface Category {
@@ -53,19 +53,38 @@ export function ProductFilters({
 }: ProductFiltersProps) {
   const hasFilters = selectedCategories.length > 0 || selectedBrands.length > 0 || selectedSkinTypes.length > 0 || selectedPriceRanges.length > 0 || searchQuery;
 
+  useEffect(() => {
+    if (!mobileFiltersOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileFiltersOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [mobileFiltersOpen, setMobileFiltersOpen]);
+
   return (
     <aside 
-      className={`fixed inset-y-0 left-0 z-50 w-full sm:w-80 bg-primary shadow-2xl transform transition-transform duration-500 ease-in-out lg:relative lg:translate-x-0 lg:z-auto lg:w-1/4 lg:bg-transparent lg:shadow-none lg:block ${
-        mobileFiltersOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 hidden lg:block'
+      className={`fixed inset-y-0 left-0 z-50 w-full sm:w-80 bg-primary shadow-2xl transform transition-transform duration-300 ease-drawer lg:relative lg:translate-x-0 lg:z-auto lg:w-1/4 lg:bg-transparent lg:shadow-none lg:block ${
+        mobileFiltersOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 pointer-events-none lg:pointer-events-auto'
       }`}
     >
-      {/* Mobile Overlay */}
-      {mobileFiltersOpen && (
-        <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm -z-10 lg:hidden"
-          onClick={() => setMobileFiltersOpen(false)}
-        />
-      )}
+      {/* Mobile Backdrop */}
+      <div 
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm -z-10 lg:hidden transition-opacity duration-300 ease-out ${
+          mobileFiltersOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setMobileFiltersOpen(false)}
+        aria-hidden="true"
+      />
 
       <div className="h-full overflow-y-auto p-6 lg:p-0 lg:sticky lg:top-28 space-y-10 lg:h-auto lg:overflow-visible">
         <div className="flex justify-between items-center lg:hidden mb-6">
