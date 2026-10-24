@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { X, Plus, Minus, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
@@ -9,39 +9,52 @@ import { formatPrice } from '@/lib/data';
 import { checkCartStock } from '@/app/actions/cartActions';
 import { NotifyMeButton } from '@/components/product/NotifyMeButton';
 import { createClient } from '@/lib/supabase/client';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, updateQuantity, removeItem, getTotalPrice, getTotalItems } = useCartStore();
   const fallbackProductImage = '/images/products/facial-kit-1.png';
   const drawerRef = useRef<HTMLDivElement>(null);
+  const drawerPanelRef = useRef<HTMLDivElement>(null);
 
   // Enter/Exit animation state
   const [isMounted, setIsMounted] = useState(isOpen);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Direct touch drag-to-dismiss interaction states
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const touchStartYRef = useRef(0);
-  const touchCurrentYRef = useRef(0);
+  // Direct touch/pointer drag-to-dismiss interaction refs
+  const pointerStartYRef = useRef(0);
+  const pointerCurrentYRef = useRef(0);
+  const isDraggingRef = useRef(false);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
+    let raf1: number;
+    let raf2: number;
+
     if (isOpen) {
       setIsMounted(true);
-      const rafId = requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
           setIsVisible(true);
         });
       });
-      return () => cancelAnimationFrame(rafId);
     } else {
       setIsVisible(false);
+      // Reset any gesture transform on panel
+      if (drawerPanelRef.current) {
+        drawerPanelRef.current.style.transform = '';
+        drawerPanelRef.current.style.transition = '';
+      }
       timeoutId = setTimeout(() => {
         setIsMounted(false);
       }, 320); // 320ms matching --duration-drawer
-      return () => clearTimeout(timeoutId);
     }
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      clearTimeout(timeoutId);
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -53,45 +66,78 @@ export default function CartDrawer() {
 
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
+      lockScroll();
+      // Reset inline styles on open
+      if (drawerPanelRef.current) {
+        drawerPanelRef.current.style.transform = '';
+        drawerPanelRef.current.style.transition = '';
+      }
       // Focus close button on open
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const closeBtn = document.getElementById('cart-close-btn');
         if (closeBtn) closeBtn.focus();
       }, 100);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        unlockScroll();
+        clearTimeout(timer);
+      };
     } else {
-      document.body.style.overflow = '';
+      unlockScroll();
     }
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-    };
   }, [isOpen, closeCart]);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartYRef.current = e.touches[0].clientY;
-    touchCurrentYRef.current = e.touches[0].clientY;
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    touchCurrentYRef.current = e.touches[0].clientY;
-    const deltaY = touchCurrentYRef.current - touchStartYRef.current;
-    if (deltaY > 0) {
-      setDragOffset(deltaY);
-    } else {
-      setDragOffset(0);
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Only drag on primary touch/pointer
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    pointerStartYRef.current = e.clientY;
+    pointerCurrentYRef.current = e.clientY;
+    isDraggingRef.current = true;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Ignore if pointer capture isn't available
     }
   };
 
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    const deltaY = touchCurrentYRef.current - touchStartYRef.current;
-    if (deltaY > 80) {
-      closeCart();
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    pointerCurrentYRef.current = e.clientY;
+    const deltaY = pointerCurrentYRef.current - pointerStartYRef.current;
+    if (drawerPanelRef.current) {
+      drawerPanelRef.current.style.transition = 'none';
+      if (deltaY > 0) {
+        drawerPanelRef.current.style.transform = `translateY(${deltaY}px)`;
+      } else {
+        drawerPanelRef.current.style.transform = 'translateY(0)';
+      }
     }
-    setDragOffset(0);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // Ignore
+    }
+
+    const deltaY = pointerCurrentYRef.current - pointerStartYRef.current;
+    if (drawerPanelRef.current) {
+      if (deltaY > 80) {
+        // Smoothly dismiss by sliding straight down off-screen
+        drawerPanelRef.current.style.transition = 'transform 300ms var(--ease-drawer, cubic-bezier(0.32, 0.72, 0, 1))';
+        drawerPanelRef.current.style.transform = 'translateY(100%)';
+        closeCart();
+      } else {
+        // Spring smoothly back to rest position
+        drawerPanelRef.current.style.transition = 'transform 300ms var(--ease-drawer, cubic-bezier(0.32, 0.72, 0, 1))';
+        drawerPanelRef.current.style.transform = 'translateY(0)';
+      }
+    }
   };
 
   const handleTabKey = (e: React.KeyboardEvent) => {
@@ -163,6 +209,8 @@ export default function CartDrawer() {
       role="dialog" 
       aria-modal="true" 
       aria-label="Shopping Cart"
+      aria-hidden={!isVisible}
+      inert={!isVisible ? true : undefined}
       onKeyDown={handleTabKey}
       ref={drawerRef}
     >
@@ -178,41 +226,31 @@ export default function CartDrawer() {
       {/* Drawer Container */}
       <div className="absolute inset-0 md:inset-y-0 md:right-0 md:left-auto flex justify-end pointer-events-none">
         <div 
+          ref={drawerPanelRef}
           className={`w-full h-[100dvh] md:max-w-md md:h-full bg-white shadow-2xl flex flex-col overflow-hidden relative pointer-events-auto rounded-t-2xl md:rounded-none transform transition-transform duration-[320ms] ease-drawer ${
             isVisible 
               ? 'translate-y-0 md:translate-x-0' 
               : 'translate-y-full md:translate-x-full md:translate-y-0'
           }`}
-          style={{
-            transform: isDragging && dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
-            transition: isDragging ? 'none' : undefined,
-          }}
         >
           {/* Mobile Drag Pill Affordance */}
           <div 
-            className="absolute top-0 left-0 right-0 h-7 flex items-center justify-center md:hidden cursor-grab active:cursor-grabbing touch-none z-20"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchEnd}
+            className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center md:hidden cursor-grab active:cursor-grabbing touch-none z-20"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
             aria-label="Drag down to dismiss"
           >
             <div className="w-10 h-1 bg-gray-300 rounded-full" />
           </div>
 
           {/* Header */}
-          <div 
-            className="flex-none px-4 pt-6 pb-4 md:py-6 border-b border-gray-100 flex items-center justify-between bg-white z-10 relative touch-none md:touch-auto"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchEnd}
-          >
+          <div className="flex-none px-4 pt-6 pb-4 md:py-6 border-b border-gray-100 flex items-center justify-between bg-white z-10 relative">
             <h2 className="text-2xl font-display font-light text-text-main">Your Bag ({getTotalItems()})</h2>
             <button
               id="cart-close-btn"
               onClick={closeCart}
-              onTouchStart={(e) => e.stopPropagation()}
               className="text-text-muted hover:text-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black rounded p-1"
               aria-label="Close cart"
             >
@@ -241,7 +279,7 @@ export default function CartDrawer() {
           {/* Item List */}
           <div className="flex-1 overflow-y-auto overscroll-contain px-4 divide-y divide-gray-100 no-scrollbar">
             {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-6 pb-safe">
                 <ShoppingBag size={48} strokeWidth={1} className="text-gray-300" />
                 <div className="space-y-2">
                   <h3 className="font-display text-2xl text-text-main">Your bag is empty</h3>

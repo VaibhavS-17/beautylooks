@@ -5,6 +5,7 @@ import { X, Bell, Check, Mail, Loader2 } from 'lucide-react';
 import { subscribeRestockNotification } from '@/app/actions/notificationActions';
 import { useNotificationStore } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 
 interface NotifyMeModalProps {
   isOpen: boolean;
@@ -61,18 +62,19 @@ export default function NotifyMeModal({ isOpen, onClose, productId, productName 
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      lockScroll();
       // Focus email input or close button
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const input = document.getElementById('notify-email');
         if (input) input.focus();
       }, 100);
+      return () => {
+        unlockScroll();
+        clearTimeout(timer);
+      };
     } else {
-      document.body.style.overflow = '';
+      unlockScroll();
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen]);
 
   const handleTabKey = (e: React.KeyboardEvent) => {

@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { X } from 'lucide-react';
 import { formatPrice } from '@/lib/data';
 import { Product } from '@/lib/types';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 
 interface ProductQuickViewProps {
   product: Product;
@@ -20,6 +21,8 @@ export function ProductQuickView({
   onClose,
   addItem
 }: ProductQuickViewProps) {
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     if (!product) return;
 
@@ -30,11 +33,16 @@ export function ProductQuickView({
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
+    lockScroll();
+
+    const timer = setTimeout(() => {
+      if (closeBtnRef.current) closeBtnRef.current.focus();
+    }, 50);
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
+      unlockScroll();
+      clearTimeout(timer);
     };
   }, [product, onClose]);
 
@@ -46,16 +54,20 @@ export function ProductQuickView({
       role="dialog"
       aria-modal="true"
       aria-labelledby="quickview-title"
+      onClick={onClose}
     >
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" 
-        onClick={onClose} 
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] animate-scale-in">
+      <div 
+        className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button 
+          ref={closeBtnRef}
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 bg-white/50 hover:bg-white rounded-full transition-colors"
+          className="absolute top-4 right-4 z-10 p-2 bg-white/50 hover:bg-white rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black"
           aria-label="Close dialog"
         >
           <X size={20} className="text-text-main" />

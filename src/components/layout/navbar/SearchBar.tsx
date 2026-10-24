@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Search, X, Loader2, ArrowRight, Sparkles } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 
 interface SearchBarProps {
   isOpen: boolean;
@@ -103,21 +104,30 @@ export default function SearchBar({ isOpen, onClose }: SearchBarProps) {
   }, [debouncedSearchVal]);
 
   useEffect(() => {
+    let closeTimer: NodeJS.Timeout;
+
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      lockScroll();
       // Focus input when opened
-      setTimeout(() => {
+      const focusTimer = setTimeout(() => {
         if (inputRef.current) inputRef.current.focus();
-      }, 100);
+      }, 50);
+      return () => {
+        clearTimeout(focusTimer);
+        unlockScroll();
+      };
     } else {
-      document.body.style.overflow = '';
-      setSearchVal('');
-      setSearchResults({ brands: [], products: [] });
+      unlockScroll();
+      // Delay clearing search results until the 220ms exit transition finishes
+      // to prevent jarring content disappearance during modal scale-out
+      closeTimer = setTimeout(() => {
+        setSearchVal('');
+        setSearchResults({ brands: [], products: [] });
+      }, 220);
+      return () => {
+        clearTimeout(closeTimer);
+      };
     }
-    
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isOpen]);
 
   // Focus trap
@@ -181,9 +191,12 @@ export default function SearchBar({ isOpen, onClose }: SearchBarProps) {
       role="dialog"
       aria-modal="true"
       aria-label="Search products"
+      aria-hidden={!isOpen}
+      inert={!isOpen ? true : undefined}
       onKeyDown={handleKeyDown}
+      onClick={onClose}
     >
-      <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0" aria-hidden="true" />
       <div 
         ref={searchContainerRef}
         className={`w-full max-w-3xl mx-4 relative bg-white rounded-2xl shadow-2xl border border-[var(--color-border)] overflow-hidden origin-top transition-all duration-[220ms] ease-out ${

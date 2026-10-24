@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 
 interface Category {
   id: string;
@@ -63,36 +64,44 @@ export function ProductFilters({
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
+    lockScroll();
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
+      unlockScroll();
     };
   }, [mobileFiltersOpen, setMobileFiltersOpen]);
 
   return (
-    <aside 
-      className={`fixed inset-y-0 left-0 z-50 w-full sm:w-80 bg-primary shadow-2xl transform transition-transform duration-300 ease-drawer lg:relative lg:translate-x-0 lg:z-auto lg:w-1/4 lg:bg-transparent lg:shadow-none lg:block ${
-        mobileFiltersOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 pointer-events-none lg:pointer-events-auto'
-      }`}
-    >
-      {/* Mobile Backdrop */}
+    <>
+      {/* Mobile Backdrop - Decoupled from transformed aside containing block */}
       <div 
-        className={`fixed inset-0 bg-black/40 backdrop-blur-sm -z-10 lg:hidden transition-opacity duration-300 ease-out ${
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ease-out ${
           mobileFiltersOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setMobileFiltersOpen(false)}
         aria-hidden="true"
       />
 
-      <div className="h-full overflow-y-auto p-6 lg:p-0 lg:sticky lg:top-28 space-y-10 lg:h-auto lg:overflow-visible">
-        <div className="flex justify-between items-center lg:hidden mb-6">
-          <h2 className="font-display text-2xl font-semibold">Filters</h2>
-          <button onClick={() => setMobileFiltersOpen(false)} className="p-2 bg-secondary rounded-full">
-            <X size={20} />
-          </button>
-        </div>
+      <aside 
+        className={`fixed inset-y-0 left-0 z-50 w-full sm:w-80 bg-primary shadow-2xl transform transition-[transform,visibility] duration-300 ease-drawer lg:relative lg:translate-x-0 lg:z-auto lg:w-1/4 lg:bg-transparent lg:shadow-none lg:block lg:visible ${
+          mobileFiltersOpen 
+            ? 'translate-x-0 visible pointer-events-auto' 
+            : '-translate-x-full invisible pointer-events-none lg:pointer-events-auto'
+        }`}
+        aria-hidden={!mobileFiltersOpen}
+      >
+        <div className="h-full overflow-y-auto p-6 pb-safe lg:p-0 lg:sticky lg:top-28 space-y-10 lg:h-auto lg:overflow-visible">
+          <div className="flex justify-between items-center lg:hidden mb-6">
+            <h2 className="font-display text-2xl font-semibold">Filters</h2>
+            <button 
+              onClick={() => setMobileFiltersOpen(false)} 
+              className="p-2 bg-secondary rounded-full"
+              aria-label="Close filters"
+            >
+              <X size={20} />
+            </button>
+          </div>
 
         {/* Categories */}
         <div>
@@ -261,5 +270,6 @@ export function ProductFilters({
         )}
       </div>
     </aside>
+    </>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, AlertTriangle } from 'lucide-react';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 
 interface SavedAddress {
   id?: string;
@@ -66,11 +67,11 @@ export function AddressModal({ isOpen, onClose, editingAddress, onSubmit }: Addr
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
+    lockScroll();
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
+      unlockScroll();
     };
   }, [isOpen, onClose]);
 
@@ -190,11 +191,11 @@ export function AddressModal({ isOpen, onClose, editingAddress, onSubmit }: Addr
       role="dialog"
       aria-modal="true"
       aria-labelledby="address-modal-title"
+      onClick={onClose}
     >
       {/* Backdrop with click dismissal and fade-in */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
-        onClick={onClose}
         aria-hidden="true"
       />
 

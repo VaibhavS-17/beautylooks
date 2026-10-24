@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { X } from 'lucide-react';
 import { NavLinkProps } from './NavLinks';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -14,10 +15,9 @@ interface MobileDrawerProps {
 
 export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
+  const drawerContentRef = useRef<HTMLDivElement>(null);
 
-  // Swipe-to-close touch gesture states
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  // Swipe-to-close touch gesture refs (direct DOM manipulation for 120fps motion)
   const touchStartXRef = useRef(0);
   const touchStartYRef = useRef(0);
   const touchCurrentXRef = useRef(0);
@@ -32,18 +32,28 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
 
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
+      lockScroll();
+      if (drawerContentRef.current) {
+        drawerContentRef.current.style.transform = '';
+        drawerContentRef.current.style.transition = '';
+      }
       // Basic focus trap - focus the close button when opened
-      const closeBtn = document.getElementById('mobile-drawer-close');
-      if (closeBtn) closeBtn.focus();
+      const timer = setTimeout(() => {
+        const closeBtn = document.getElementById('mobile-drawer-close');
+        if (closeBtn) closeBtn.focus();
+      }, 50);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        unlockScroll();
+        clearTimeout(timer);
+      };
     } else {
-      document.body.style.overflow = '';
+      unlockScroll();
+      if (drawerContentRef.current) {
+        drawerContentRef.current.style.transform = '';
+        drawerContentRef.current.style.transition = '';
+      }
     }
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-    };
   }, [isOpen, onClose]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -63,26 +73,37 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
     if (!isSwipingRef.current) {
       if (Math.abs(deltaX) > Math.abs(deltaY) && deltaX < -8) {
         isSwipingRef.current = true;
-        setIsDragging(true);
       }
     }
 
     if (isSwipingRef.current && deltaX < 0) {
       touchCurrentXRef.current = currentX;
-      setDragOffset(deltaX);
+      if (drawerContentRef.current) {
+        drawerContentRef.current.style.transition = 'none';
+        drawerContentRef.current.style.transform = `translateX(${deltaX}px)`;
+      }
     }
   };
 
   const handleTouchEnd = () => {
     if (isSwipingRef.current) {
+      isSwipingRef.current = false;
       const deltaX = touchCurrentXRef.current - touchStartXRef.current;
       if (deltaX < -70) {
+        // Smoothly dismiss by sliding straight left off-screen
+        if (drawerContentRef.current) {
+          drawerContentRef.current.style.transition = 'transform 300ms var(--ease-drawer, cubic-bezier(0.32, 0.72, 0, 1))';
+          drawerContentRef.current.style.transform = 'translateX(-100%)';
+        }
         onClose();
+      } else {
+        // Spring smoothly back into view
+        if (drawerContentRef.current) {
+          drawerContentRef.current.style.transition = 'transform 300ms var(--ease-drawer, cubic-bezier(0.32, 0.72, 0, 1))';
+          drawerContentRef.current.style.transform = 'translateX(0)';
+        }
       }
     }
-    setIsDragging(false);
-    isSwipingRef.current = false;
-    setDragOffset(0);
   };
 
   // Focus trap
@@ -112,10 +133,14 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
 
   return (
     <div
-      className={`fixed inset-0 z-50 md:hidden transition-colors ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      className={`fixed inset-0 z-50 md:hidden transition-[visibility] duration-300 ${
+        isOpen ? 'visible pointer-events-auto' : 'invisible pointer-events-none'
+      }`}
       role="dialog"
       aria-modal="true"
       aria-label="Mobile navigation"
+      aria-hidden={!isOpen}
+      inert={!isOpen ? true : undefined}
       onKeyDown={handleTabKey}
       ref={drawerRef}
     >
@@ -130,13 +155,10 @@ export default function MobileDrawer({ isOpen, onClose, links }: MobileDrawerPro
 
       {/* Drawer Container with physical ease-drawer transition and swipe gesture */}
       <div 
+        ref={drawerContentRef}
         className={`absolute inset-y-0 left-0 w-4/5 max-w-sm bg-white shadow-2xl flex flex-col border-r border-[var(--color-border)] transform transition-transform duration-300 ease-drawer ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
-        style={{
-          transform: isDragging && dragOffset < 0 ? `translateX(${dragOffset}px)` : undefined,
-          transition: isDragging ? 'none' : undefined,
-        }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
